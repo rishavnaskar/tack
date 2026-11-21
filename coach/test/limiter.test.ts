@@ -79,6 +79,18 @@ test('a pause from the provider holds every lane, and a waiter whose request wen
   assert.ok(b.estimate() >= 0);
 });
 
+test('after a refusal the budget sends less, then wins its rate back a request a minute; a pause never runs past a minute', async () => {
+  const c = manual();
+  const b = new Budget({ rpm: () => 10, now: c.now, schedule: c.schedule });
+  b.pause(67_794_000);
+  assert.equal(b.stats().limit, 6);
+  assert.ok(b.stats().pausedMs <= 65_000, 'a per-day quota does not freeze the app for hours');
+  await c.advance(60_000);
+  assert.equal(b.limit(), 7);
+  await c.advance(4 * 60_000);
+  assert.equal(b.limit(), 10);
+});
+
 test('the lane is the session Tack names in the goal', () => {
   assert.equal(laneOf('{"messages":[{"content":"Apply ... Reference for this task: tack-p05-orbitly-ab12."}]}'), 'tack-p05-orbitly-ab12');
   assert.equal(laneOf('{"messages":[]}'), 'engine');

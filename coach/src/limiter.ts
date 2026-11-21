@@ -8,6 +8,7 @@ import type { AddressInfo } from 'node:net';
 import { emit } from './trace.ts';
 
 const WINDOW_MS = 60_000;
+export const MAX_PAUSE_MS = 65_000;
 
 interface Waiter { lane: string; resolve: (waitedMs: number) => void; reject: (e: Error) => void; at: number; done: boolean }
 
@@ -34,6 +35,8 @@ export class Budget {
   readonly #ring: string[] = [];
   #pos = 0;
   #pausedUntil = 0;
+  #cap: number | null = null;
+  #cutAt = 0;
   #timer: { cancel(): void } | null = null;
   #timerAt = 0;
 
@@ -64,10 +67,26 @@ export class Budget {
     });
   }
 
-  /** The provider said to slow down: nobody sends until then. */
+  /**
+   * The provider said to slow down: nobody sends until then. A per-day quota can name hours; the
+   * pause stops at a minute so the app keeps answering and the person sees the provider's refusals.
+   */
   pause(ms: number): void {
-    this.#pausedUntil = Math.max(this.#pausedUntil, this.#o.now() + Math.max(0, ms));
+    const now = this.#o.now();
+    this.#pausedUntil = Math.max(this.#pausedUntil, now + Math.min(MAX_PAUSE_MS, Math.max(0, ms)));
+    // The provider's real limit is lower than ours: send less from now on, and win it back a request a minute.
+    this.#cap = Math.max(2, Math.floor(this.limit() * 0.6));
+    this.#cutAt = now;
     this.#pump();
+  }
+
+  /** Requests a minute allowed now: the configured rate, or less for a while after the provider said no. */
+  limit(): number {
+    const max = Math.max(1, this.#o.rpm());
+    if (this.#cap == null) return max;
+    const v = Math.min(max, this.#cap + Math.floor((this.#o.now() - this.#cutAt) / WINDOW_MS));
+    if (v >= max) this.#cap = null;
+    return v;
   }
 
   /** How long a request asked for now would wait, roughly. */
@@ -75,7 +94,7 @@ export class Budget {
     const now = this.#o.now();
     this.#trim(now);
     const queued = this.queued();
-    const rpm = Math.max(1, this.#o.rpm());
+    const rpm = this.limit();
     const free = Math.max(0, rpm - this.#stamps.length);
     const pause = Math.max(0, this.#pausedUntil - now);
     if (queued < free) return pause;
@@ -89,11 +108,11 @@ export class Budget {
     return n;
   }
 
-  stats(): { rpm: number; used: number; queued: Record<string, number>; pausedMs: number } {
+  stats(): { rpm: number; limit: number; used: number; queued: Record<string, number>; pausedMs: number } {
     const now = this.#o.now();
     this.#trim(now);
     return {
-      rpm: this.#o.rpm(), used: this.#stamps.length, pausedMs: Math.max(0, this.#pausedUntil - now),
+      rpm: this.#o.rpm(), limit: this.limit(), used: this.#stamps.length, pausedMs: Math.max(0, this.#pausedUntil - now),
       queued: Object.fromEntries([...this.#queues].map(([k, v]) => [k, v.length])),
     };
   }
@@ -128,7 +147,7 @@ export class Budget {
       if (!this.#queues.size) return;
       const now = this.#o.now();
       this.#trim(now);
-      const full = this.#stamps.length >= Math.max(1, this.#o.rpm());
+      const full = this.#stamps.length >= this.limit();
       const wait = Math.max(this.#pausedUntil - now, full ? this.#stamps[0] + WINDOW_MS - now + 5 : 0);
       if (wait > 0) {
         const at = now + wait;
@@ -237,12 +256,13 @@ export async function startModelProxy(o: ProxyOpts): Promise<ModelProxy> {
         });
         const text = await up.text();
         if (up.status === 429 && paced) {
-          const wait = retryDelayMs(up.headers, text);
+          const wait = Math.min(MAX_PAUSE_MS, retryDelayMs(up.headers, text));
           budget.pause(wait);
-          if (attempt === 0 && wait <= retryWithin) {
-            try { emit({ run: 'model', step: 'pace', detail: `${lane}: the provider asked for ${Math.ceil(wait / 1000)} s; every session waits its turn`, status: 'start' }); } catch { /* best effort */ }
-            continue;
-          }
+          const again = attempt === 0 && wait <= retryWithin;
+          try {
+            emit({ run: 'model', step: 'pace', detail: `${lane}: the provider is out of requests for now; ${again ? `every session waits ${Math.ceil(wait / 1000)} s` : 'passed back to the engine'}`, status: again ? 'start' : 'fail' });
+          } catch { /* best effort */ }
+          if (again) continue;
         }
         res.writeHead(up.status, {
           'content-type': up.headers.get('content-type') ?? 'application/json',

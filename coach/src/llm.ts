@@ -4,7 +4,7 @@ import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { stateDir } from './store.ts';
 import { emit } from './trace.ts';
-import { modelRpm, sharedBudget } from './limiter.ts';
+import { MAX_PAUSE_MS, modelRpm, sharedBudget } from './limiter.ts';
 
 const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';
 const DEFAULT_MODEL = 'gemini-3.5-flash-lite';
@@ -87,11 +87,12 @@ function sha(s: string): string {
   return createHash('sha256').update(s).digest('hex');
 }
 
+// A per-day quota can ask for hours; a call gives up on its retries sooner than that.
 function retryDelay(res: Response, body: string, attempt: number, base: number): number {
   const header = Number(res.headers.get('retry-after'));
-  if (header > 0) return header * 1000;
+  if (header > 0) return Math.min(MAX_PAUSE_MS, header * 1000);
   const m = body.match(/"retryDelay"\s*:\s*"(\d+(?:\.\d+)?)s"/);
-  if (m) return Math.ceil(Number(m[1]) * 1000) + 250;
+  if (m) return Math.min(MAX_PAUSE_MS, Math.ceil(Number(m[1]) * 1000) + 250);
   return base * 2 ** attempt + Math.floor(Math.random() * base * 0.25);
 }
 
