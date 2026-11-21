@@ -100,6 +100,16 @@ export function setConsent(on: boolean, now = new Date()): Consent {
 /** Everything for real up to, but not including, the final Submit. */
 export const isDryRun = () => process.env.TACK_APPLY_DRY_RUN === '1';
 
+/** Where the form is: Lever and Ashby keep it a page past the posting; Greenhouse shows it on the posting. */
+export function applicationUrl(url: string): string {
+  let u: URL;
+  try { u = new URL(url); } catch { return url; }
+  const path = u.pathname.replace(/\/$/, '');
+  if (u.hostname === 'jobs.lever.co' && /^\/[^/]+\/[0-9a-f-]{20,}$/i.test(path)) u.pathname = `${path}/apply`;
+  else if (u.hostname === 'jobs.ashbyhq.com' && /^\/[^/]+\/[0-9a-f-]{20,}$/i.test(path)) u.pathname = `${path}/application`;
+  return u.toString();
+}
+
 /** The demo person applies to Tack's practice form; a real person always to the real posting. */
 export function targetFor(p: Posting): 'practice' | 'live' {
   return isDemo() || !p.live ? 'practice' : 'live';
@@ -244,7 +254,7 @@ export function goalFor(o: GoalInput): string {
         + 'Fanfold checks that press and holds it for the person when it has to. Do not stop with ask_user to confirm the Submit.',
     ];
   head.push(`Use their saved profile: ${facts}.`);
-  head.push('Upload their résumé document wherever the form asks for a résumé or CV. Choose the closest option in each dropdown.');
+  head.push('Upload their résumé document to the form\'s own résumé or CV field; ignore any box that offers to autofill the form from a résumé and fill the fields yourself. Choose the closest option in each dropdown.');
   head.push('If the site wants a sign-in or a new account, or shows a CAPTCHA or bot check, stop and say so. Never create an account.');
   if (o.saved) {
     head.push(`Their own answers to this form's written questions${o.consentSaved ? ' and its consent box (Yes)' : ''} are already saved in Fanfold for this job: use them as they are${o.consentSaved ? ', and tick the consent box' : ''}.`);
@@ -346,24 +356,77 @@ export function submitRef(snapshot: string): string | null {
   return best?.ref ?? null;
 }
 
-const CONTROL = /\b(textbox|combobox|listbox|checkbox|radio|spinbutton|searchbox|textarea|file)\b/i;
+// A line of the engine's snapshot: "  - textbox "Email" [ref=e14] [required]: "avery@mail.example"".
+const NODE = /^(\s*)- (\w+)(?: "((?:[^"\\]|\\.)*)")?(.*)$/;
+const CONTROLS = new Set(['textbox', 'combobox', 'listbox', 'checkbox', 'radio', 'spinbutton', 'searchbox']);
+const FILE_NAME = /[\w.-]+\.(?:pdf|docx?|rtf|txt)\b/i;
+const GENERIC = /^(type your response|select\.*|choose\.*|cards\[|file$|upload file$)/i;
 
-/** What a form held, read from the engine's snapshot of it: each control, whether it has a value, and the résumé. */
+/**
+ * What a form held, read from the engine's snapshot of it: one entry per question (a group of radio
+ * buttons is one), whether it has a value, which required ones are blank, and whether a résumé is on it.
+ */
 export function inspectSnapshot(snapshot: string): FormInspection {
-  const fields: FormInspection['fields'] = [];
+  const fields: (FormInspection['fields'][number] & { required: boolean })[] = [];
+  const parents: { indent: number; label: string }[] = [];
   let resume = false;
-  for (const line of unfence(snapshot).split('\n')) {
-    if (!/\[ref=e\d+\]/.test(line) || !CONTROL.test(line)) continue;
-    const kind = (line.match(CONTROL)?.[1] ?? 'field').toLowerCase();
-    const label = (line.match(/["“]([^"”]*)["”]/)?.[1] ?? '').trim() || kind;
-    const valued = /\bvalue[=:]\s*["“]?[^"”\s]/i.test(line) || /\b(?:checked|selected)\b(?![=:]\s*false)/i.test(line) || /:\s*["“][^"”]+["”]\s*(?:\[|$)/.test(line);
-    const file = kind === 'file' || /résumé|resume|\bcv\b|attach/i.test(label);
-    const attached = file && /\.(pdf|docx?|txt|rtf)\b/i.test(line);
-    if (attached) resume = true;
-    fields.push({ label: cut(label, 80), kind, filled: valued || attached });
-  }
-  if (/\.(pdf|docx?)\b[^\n]*(?:attached|uploaded|remove)/i.test(snapshot) || /(?:attached|uploaded)[^\n]*\.(pdf|docx?)\b/i.test(snapshot)) resume = true;
-  return { found: fields.length, filled: fields.filter((f) => f.filled).length, unfilled: fields.filter((f) => !f.filled).map((f) => f.label).slice(0, 20), resume, fields: fields.slice(0, 60) };
+  let group: { key: string; field: (typeof fields)[number] } | null = null;
+  const lines = unfence(snapshot).split('\n');
+  lines.forEach((line, i) => {
+    const m = line.match(NODE);
+    if (!m) return;
+    const [, pad, role, rawLabel = '', rest] = m;
+    const indent = pad.length;
+    while (parents.length && parents.at(-1)!.indent >= indent) parents.pop();
+    const label = rawLabel.replace(/\s*✱\s*/g, ' ').trim();
+    if (!/\[ref=e\d+\]/.test(rest) || role === 'link') {
+      if (role === 'paragraph' || role === 'text') {
+        // Greenhouse shows an attached file as its name with a Remove button beside it.
+        const named = (rest.match(/:\s*"([^"]*)"/)?.[1] ?? '').trim();
+        if (FILE_NAME.test(named) && /Remove file/i.test(lines[i + 1] ?? '')) {
+          resume = true;
+          fields.push({ label: 'Résumé', kind: 'file', filled: true, required: false });
+        }
+      }
+      return;
+    }
+    const file = /\[file\]/.test(rest);
+    if (!CONTROLS.has(role) && !file) {
+      if (label) parents.push({ indent, label });
+      return;
+    }
+    // An option wrapped in a list item named after itself belongs to the question above that item.
+    const own = (role === 'radio' || role === 'checkbox') && parents.at(-1)?.label === label;
+    const parent = (own ? parents.at(-2)?.label : parents.at(-1)?.label) ?? '';
+    // An unnamed file box outside the form ("autofill from résumé") is not one of its questions.
+    if (file && !label && !/\[required\]/.test(rest)) return;
+    const name = cut((!label || GENERIC.test(label) || role === 'radio' || role === 'checkbox' ? parent || label : label).replace(/\s+(Yes|No|Not Applicable)(\s+(Yes|No|Not Applicable))*$/, ''), 80) || role;
+    const value = (rest.match(/\]:\s*"([^"]*)"/)?.[1] ?? '').trim();
+    const checked = /\[(?:checked|selected)(?:=true)?\]/.test(rest);
+    const required = /\[required\]/.test(rest);
+    if (role === 'radio' || role === 'checkbox') {
+      const key = `${parent}|${indent}`;
+      if (group?.key === key) {
+        group.field.filled ||= checked;
+        group.field.required ||= required;
+        return;
+      }
+      const field = { label: name, kind: role, filled: checked, required };
+      fields.push(field);
+      group = { key, field };
+      return;
+    }
+    group = null;
+    const attached = file && (FILE_NAME.test(value) || FILE_NAME.test(label));
+    if (attached && /résumé|resume|\bcv\b/i.test(`${label} ${parent}`)) resume = true;
+    fields.push({ label: file ? (/(résumé|resume|\bcv\b)/i.test(`${label} ${parent}`) ? 'Résumé' : name.replace(FILE_NAME, '').trim() || 'File') : name, kind: file ? 'file' : role, filled: attached || !!value || checked, required });
+  });
+  const left = fields.filter((f) => !f.filled);
+  return {
+    found: fields.length, filled: fields.length - left.length, unfilled: left.map((f) => f.label).slice(0, 20), resume,
+    required: fields.filter((f) => f.required).length, requiredLeft: left.filter((f) => f.required).map((f) => f.label).slice(0, 20),
+    fields: fields.slice(0, 60).map(({ required: _r, ...f }) => f),
+  };
 }
 
 // ---------------------------------------------------------------- batches
@@ -444,8 +507,8 @@ export interface Runner {
   run(session: string, goal: string, onProgress: (m: string) => void): Promise<{ status: string; message: string }>;
   /** Presses the form's final Submit as the host, so the engine judges it on the person's standing yes. */
   submit(session: string): Promise<SubmitResult>;
-  /** What the form on the session's page holds. */
-  inspect(session: string): Promise<FormInspection | undefined>;
+  /** What the form on the session's page holds, with the snapshot it was read from. */
+  inspect(session: string): Promise<(FormInspection & { raw?: string }) | undefined>;
   /** Ends approvals the engine holds for this page (a host, or an address prefix), so nothing is left to send. */
   release(since: string, where: string): Promise<number>;
   /** A picture of the session's page as it is now. */
@@ -495,7 +558,7 @@ async function engineRunner(h: EngineHandle): Promise<Runner> {
     },
     async inspect(session) {
       const r = await mcp.call('browser_snapshot', { session }).catch(() => null);
-      return r && !r.isError ? inspectSnapshot(r.text) : undefined;
+      return r && !r.isError ? { ...inspectSnapshot(r.text), raw: unfence(r.text) } : undefined;
     },
     async release(since, where) {
       if (!h.ownerToken) return 0;
@@ -573,7 +636,7 @@ export function startBatch(postings: Posting[], deps: BatchDeps = {}, opts: Batc
     const target = targetFor(p);
     batch.runs.push({
       id: newId('run'), batchId: batch.id, postingId: p.id, company: p.company, title: p.title, target,
-      url: target === 'practice' ? practiceUrl(p.id) : p.url,
+      url: target === 'practice' ? practiceUrl(p.id) : applicationUrl(p.url),
       session: `tack-${p.id.replace(/[^a-z0-9_-]/gi, '').toLowerCase().slice(0, 18)}-${randomUUID().slice(0, 4)}`,
       status: 'queued', steps: [], fields: 0, startedAt: batch.startedAt,
       ...(opts.jobs?.get(p.id) ? { jobId: opts.jobs.get(p.id) } : {}), ...(dry ? { dryRun: true } : {}),
@@ -692,6 +755,8 @@ export function startBatch(postings: Posting[], deps: BatchDeps = {}, opts: Batc
             }
             if (hold === 'captcha') { outcome = { kind: 'fail', why: res.message, code: 'captcha' }; break; }
             if (hold === 'login') { outcome = { kind: 'fail', why: res.message, code: 'login-required' }; break; }
+            // A dry run measures the form: wherever it stopped short of Submit, what was filled is the result.
+            if (dry && (hold === 'question' || (hold === 'other' && res.status !== 'failed'))) { outcome = { kind: 'dry', text: `Stopped before Submit: ${res.message}` }; break; }
             if (hold === 'other') { outcome = { kind: 'fail', why: res.message || `The engine ended with status ${res.status}.`, code: queue.classifyFailure(res.message, res.status) }; break; }
             if (hold === 'question') { outcome = { kind: 'fail', why: res.message, code: 'answer-missing', question: questionIn(res.message) }; break; }
             if (hold === 'consent') {
@@ -723,7 +788,20 @@ export function startBatch(postings: Posting[], deps: BatchDeps = {}, opts: Batc
             outcome = { kind: 'fail', why: `The engine held the Submit: ${s.held ?? 'no reason given'}.`, code: queue.classifyFailure(s.held ?? '') };
           }
           if (!outcome) outcome = submitted() ? { kind: 'sent', text: res.message } : { kind: 'fail', why: `Stopped after ${MAX_TURNS} turns without a confirmation: ${res.message}`, code: 'timeout' };
-          if (dry || run.target === 'live') run.inspection = await runner!.inspect(run.session).catch(() => undefined);
+          if (dry || run.target === 'live') {
+            const seen = await runner!.inspect(run.session).catch(() => undefined);
+            if (seen) {
+              const { raw, ...inspection } = seen;
+              run.inspection = inspection;
+              // The page as the engine read it when Tack left, kept beside the picture.
+              if (raw) { try { mkdirSync(shotDir(), { recursive: true }); writeFileSync(shotPath(run.id).replace(/\.png$/, '.txt'), raw); } catch { /* best effort */ } }
+            }
+          }
+          // Held for blank required answers: the person is asked the first of them by name.
+          const blank = run.inspection?.requiredLeft ?? [];
+          if (outcome.kind === 'fail' && outcome.code === 'answer-missing' && blank.length && (!outcome.question || /required field/i.test(outcome.question))) {
+            outcome = { ...outcome, question: blank[0], why: `${outcome.why} Required and still blank: ${blank.slice(0, 6).join('; ')}.` };
+          }
           shot = await runner!.shot(run.session).catch(() => undefined);
         } finally {
           // Nothing the engine still holds for this page may go out after Tack leaves it.

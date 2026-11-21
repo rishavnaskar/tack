@@ -116,6 +116,8 @@ export interface ApplicationDetails {
 export interface ApplyStep { at: string; kind: 'open' | 'form' | 'fill' | 'upload' | 'next' | 'submit' | 'confirm' | 'note' | 'error'; label: string }
 export interface FormInspection {
   found: number; filled: number; unfilled: string[]; resume: boolean;
+  /** Questions the form marks required, and the ones of them still blank. */
+  required?: number; requiredLeft?: string[];
   fields: { label: string; kind: string; filled: boolean }[];
 }
 export type FailureCode = 'form-not-found' | 'login-required' | 'captcha' | 'answer-missing' | 'consent-needed' | 'timeout' | 'site-error';

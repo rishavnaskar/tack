@@ -265,6 +265,30 @@ test('at the Submit the engine holds, Tack presses it once on the standing conse
   assert.ok(end.runs[0].steps.some((s) => s.kind === 'submit'));
   assert.equal(apply.waitsOnYes('failed', 'Shall I?'), false);
   assert.equal(apply.waitsOnYes('done', 'Application submitted. Reference TQ-1.'), false);
+  // Lines in the engine's own snapshot format, as read from real Greenhouse, Lever and Ashby forms.
+  const seen = apply.inspectSnapshot([
+    '- button [ref=e12] [file]',
+    '- textbox "First Name" [ref=e18] [required]: "Avery"',
+    '- textbox "Preferred First Name" [ref=e20]',
+    '- text: "Resume/CV"',
+    '- paragraph: "avery-quinn-resume.pdf"',
+    '- button "Remove file" [ref=e40]',
+    '- listitem "As part of our commitment, disclose your gender" [ref=e32]',
+    '  - listitem "Male" [ref=e34]',
+    '    - radio "Male" [ref=e35] [checked=false] [required] [post]',
+    '  - listitem "Female" [ref=e36]',
+    '    - radio "Female" [ref=e37] [checked=false] [required] [post]',
+    '- listitem "Total Years of Experience ✱" [ref=e42]',
+    '  - textbox "Type your response" [ref=e43] [required] [post]: "5"',
+    '- button "Submit application" [ref=e64] [post]',
+  ].join('\n'));
+  assert.deepEqual({ found: seen.found, filled: seen.filled, resume: seen.resume, required: seen.required }, { found: 5, filled: 3, resume: true, required: 3 });
+  assert.deepEqual(seen.requiredLeft, ['As part of our commitment, disclose your gender']);
+  assert.equal(seen.fields.find((f) => f.label === 'Total Years of Experience')?.filled, true);
+  assert.equal(apply.applicationUrl('https://jobs.lever.co/meesho/1c0052a9-6664-4602-9aad-0e250d9c0980'), 'https://jobs.lever.co/meesho/1c0052a9-6664-4602-9aad-0e250d9c0980/apply');
+  assert.equal(apply.applicationUrl('https://jobs.ashbyhq.com/sarvam/c4bb3b2c-7608-4d57-8761-650b4222ac13'), 'https://jobs.ashbyhq.com/sarvam/c4bb3b2c-7608-4d57-8761-650b4222ac13/application');
+  assert.equal(apply.applicationUrl('https://job-boards.greenhouse.io/inmobi/jobs/8349134'), 'https://job-boards.greenhouse.io/inmobi/jobs/8349134');
+  assert.equal(apply.applicationUrl('https://jobs.lever.co/meesho/1c0052a9-6664-4602-9aad-0e250d9c0980/apply'), 'https://jobs.lever.co/meesho/1c0052a9-6664-4602-9aad-0e250d9c0980/apply');
   // Seen on a real run: the agent asks for the yes in its own words.
   assert.equal(apply.holdOf('awaiting_approval', 'The application for the Product Manager role at Marigold Media is ready to be submitted. Please confirm if you would like me to proceed with the final submission.'), 'submit');
   assert.equal(apply.holdOf('awaiting_approval', 'The form asks: "Do you agree to the privacy notice?" before it can be submitted. Should I tick it?'), 'consent');

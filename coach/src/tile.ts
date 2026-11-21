@@ -20,7 +20,7 @@ export function grid(n: number, screen: Rect): Rect[] {
 
 function run(cmd: string, args: string[], timeoutMs = 8000): Promise<string> {
   return new Promise((ok, fail) => {
-    execFile(cmd, args, { timeout: timeoutMs }, (err, stdout, stderr) => (err ? fail(new Error((stderr || err.message).trim())) : ok(stdout.trim())));
+    execFile(cmd, args, { timeout: timeoutMs }, (err, stdout, stderr) => (err ? fail(Object.assign(new Error(`${err.message}\n${stderr}`.trim()), { killed: err.killed })) : ok(stdout.trim())));
   });
 }
 
@@ -49,8 +49,11 @@ export async function tileWindows(pages: { key: string; hosts: string[] }[], o: 
   if (!screen) return { moved: 0, note: 'could not read the screen size' };
   const cells = grid(pages.length, screen);
   const want = pages.map((p, i) => ({ hosts: p.hosts.map((h) => h.toLowerCase()), b: cells[i] }));
+  if (blocked) return { moved: 0, note: blocked };
+  // Asking a browser that is not running would start one: check first.
   const js = `
 const app = Application(${JSON.stringify(appName(o.chromePath))});
+if (!app.running()) { '0'; } else {
 const want = ${JSON.stringify(want)};
 let moved = 0; const used = {};
 const wins = app.windows();
@@ -64,15 +67,20 @@ for (const w of want) {
     used[i] = true; moved++; break;
   }
 }
-String(moved)`;
+String(moved); }`;
   try {
     const moved = Number(await run('osascript', ['-l', 'JavaScript', '-e', js])) || 0;
     return { moved, note: `${moved} of ${pages.length} windows side by side` };
   } catch (e) {
-    const msg = (e as Error).message;
-    const note = /-1743|not authori[sz]ed|not allowed/i.test(msg)
-      ? 'macOS has not allowed Tack to arrange Chrome\'s windows: allow it under System Settings, Privacy & Security, Automation'
-      : `could not arrange the windows: ${msg.slice(0, 120)}`;
-    return { moved: 0, note };
+    const err = e as Error & { killed?: boolean };
+    const msg = err.message.replace(/^Command failed: osascript[\s\S]*?\n(?=\S)/, '');
+    // Waiting on the person's answer to macOS's Automation question, or refused: asked once, not again this run.
+    if (err.killed || /-1743|not authori[sz]ed|not allowed|timed out/i.test(msg)) {
+      blocked = 'macOS has not allowed Tack to arrange Chrome\'s windows yet: allow it under System Settings, Privacy & Security, Automation';
+      return { moved: 0, note: blocked };
+    }
+    return { moved: 0, note: `could not arrange the windows: ${msg.split('\n').slice(-2).join(' ').slice(0, 160)}` };
   }
 }
+
+let blocked = '';
