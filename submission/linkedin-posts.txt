@@ -54,3 +54,57 @@ Screenshot attached: the gap map for a backend engineer moving to AI Product Man
 
 Tag: @Product Space
 Hashtags: #AgenticAI #Hackathon #BuildInPublic #ProductManagement
+POST 3 (final post, with the demo video attached)
+
+I built Tack in one day for the Product Space Agentic AI Hackathon.
+The problem statement was to build a career pivot coach.
+
+Most career tools stop at giving advice.
+Tack actually closes the loop.
+
+Here is what it does:
+
+It checks the market live.
+It scanned 10,654 roles on 60 real company boards.
+It read 40 AI Product Manager postings in about 11 seconds.
+
+It maps skill gaps with proof.
+Every skill points to the exact line in your resume and the exact lines in the job post, with company names.
+
+It plans your career move week by week.
+If you fall behind, it replans and explains what moved and why.
+
+It runs mock interviews scored on five criteria.
+Every score quotes your own words back to you.
+
+It applies for you in a real browser.
+It can run several job applications at the same time.
+
+It reads replies and learns what types of roles answer you.
+
+Autopilot runs that whole loop on a schedule.
+
+How I built it:
+
+The browser engine is Fanfold, a project I built earlier.
+Everything else was built today.
+
+The model reads and judges.
+Code handles the maths.
+Every quote is checked against its source, or dropped.
+
+It has 176 automated tests.
+It works as a desktop app, a web version, and an MCP server.
+
+What I was careful about:
+I did not send fake applications to real companies.
+The demo applies to a practice form.
+On real Greenhouse, Lever, and Ashby forms, I ran dry runs that fill everything out and stop before submit.
+
+My takeaway:
+An agent is only useful when you can check its work.
+Quotes, numbers from code, and a visible trace made the difference.
+
+Code and desktop app: https://github.com/rishavnaskar/tack
+Tag: @Product Space
+Hashtags: #AgenticAI #Hackathon #BuildInPublic #ProductManagement
