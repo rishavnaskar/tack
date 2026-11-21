@@ -4,6 +4,7 @@ import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { stateDir } from './store.ts';
 import { emit } from './trace.ts';
+import { chargeModelCall } from './hosted.ts';
 
 const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';
 const DEFAULT_MODEL = 'gemini-3.5-flash-lite';
@@ -208,6 +209,8 @@ export async function json<T>(opts: JsonOpts): Promise<T> {
   const messages: Message[] = [{ role: 'system', content: opts.system }, { role: 'user', content: opts.prompt }];
   const call: CallOpts = { task: opts.task, timeoutMs: opts.timeoutMs, retries: opts.retries };
   try {
+    // Hosted mode only: every cache miss counts against the visitor's and the preview's allowance.
+    chargeModelCall();
     let raw: string;
     if (opts.pdfBase64) {
       const filename = opts.filename || 'resume.pdf';
