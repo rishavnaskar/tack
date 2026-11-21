@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'">
+  <title>Set model key</title>
+  <link rel="stylesheet" href="key.css">
+</head>
+<body>
+  <form id="form" autocomplete="off">
+    <h1>Model key</h1>
+    <p class="lead">Tack uses Gemini for résumé reading, plans and interviews. The demo works without a key.</p>
+    <label for="key">Gemini API key</label>
+    <input id="key" type="password" spellcheck="false" placeholder="Paste a key from Google AI Studio" autofocus>
+    <p id="status" class="status" aria-live="polite">Checking…</p>
+    <div class="actions">
+      <button type="button" id="clear" class="quiet" hidden>Remove key</button>
+      <span class="grow"></span>
+      <button type="button" id="cancel" class="quiet">Cancel</button>
+      <button type="submit" id="save">Save and restart</button>
+    </div>
+  </form>
+  <script src="key.js"></script>
+</body>
+</html>

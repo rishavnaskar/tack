@@ -1,0 +1,84 @@
+{
+  "name": "tack-desktop",
+  "productName": "Tack",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Tack desktop app",
+  "author": "BuildForge",
+  "type": "module",
+  "main": "src/main.js",
+  "scripts": {
+    "dev": "electron .",
+    "icon": "node scripts/icon.mjs",
+    "dist": "node scripts/icon.mjs && electron-builder --mac --arm64"
+  },
+  "devDependencies": {
+    "electron": "45.4.1",
+    "electron-builder": "26.18.0"
+  },
+  "build": {
+    "appId": "top.buildforge.tack",
+    "productName": "Tack",
+    "copyright": "Copyright © 2026 BuildForge",
+    "directories": {
+      "output": "out",
+      "buildResources": "build"
+    },
+    "files": [
+      "package.json",
+      "src/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "../coach",
+        "to": "tack/coach",
+        "filter": [
+          "package.json",
+          "bin/serve.ts",
+          "src/**/*"
+        ]
+      },
+      {
+        "from": "../engine",
+        "to": "tack/engine",
+        "filter": [
+          "package.json",
+          "src/**/*"
+        ]
+      },
+      {
+        "from": "../ui/dist",
+        "to": "tack/ui/dist"
+      },
+      {
+        "from": "runtime",
+        "to": "tack/runtime"
+      }
+    ],
+    "npmRebuild": false,
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "arm64"
+          ]
+        }
+      ],
+      "category": "public.app-category.productivity",
+      "icon": "build/icon.icns",
+      "identity": "-",
+      "hardenedRuntime": false,
+      "darkModeSupport": true
+    },
+    "dmg": {
+      "title": "Tack ${version}"
+    }
+  }
+}
