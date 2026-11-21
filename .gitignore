@@ -1,0 +1,12 @@
+node_modules
+dist
+out
+.env
+.env.*
+!.env.example
+state
+*.log
+.DS_Store
+CLAUDE.md
+.claude
+coverage

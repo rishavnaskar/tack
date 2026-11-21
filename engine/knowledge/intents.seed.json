@@ -1,0 +1,1092 @@
+[
+{
+"q": "Full legal name",
+"intent": "contact.name"
+},
+{
+"q": "Legal name",
+"intent": "contact.name"
+},
+{
+"q": "Your name",
+"intent": "contact.name"
+},
+{
+"q": "Name (as on passport)",
+"intent": "contact.name"
+},
+{
+"q": "Contact number",
+"intent": "contact.phone"
+},
+{
+"q": "Mobile no.",
+"intent": "contact.phone"
+},
+{
+"q": "Phone (including country code)",
+"intent": "contact.phone"
+},
+{
+"q": "Email ID",
+"intent": "contact.email"
+},
+{
+"q": "Preferred email",
+"intent": "contact.email"
+},
+{
+"q": "GitHub username",
+"intent": "link.github",
+"exact": false
+},
+{
+"q": "Website, blog or portfolio",
+"intent": "link.portfolio"
+},
+{
+"q": "Personal website or blog",
+"intent": "link.portfolio"
+},
+{
+"q": "Link to your work",
+"intent": "link.portfolio"
+},
+{
+"q": "LinkedIn",
+"intent": "link.linkedin"
+},
+{
+"q": "Link to your LinkedIn profile",
+"intent": "link.linkedin"
+},
+{
+"q": "Where are you located?",
+"intent": "location.current"
+},
+{
+"q": "What city do you live in?",
+"intent": "location.current"
+},
+{
+"q": "Current location (city, country)",
+"intent": "location.current"
+},
+{
+"q": "Where are you currently located?",
+"intent": "location.current"
+},
+{
+"q": "Location",
+"intent": "location.current"
+},
+{
+"q": "Your location",
+"intent": "location.current"
+},
+{
+"q": "Are you willing to relocate?",
+"intent": "location.relocate"
+},
+{
+"q": "Are you open to relocation?",
+"intent": "location.relocate"
+},
+{
+"q": "Would you be willing to relocate for this role?",
+"intent": "location.relocate"
+},
+{
+"q": "Are you open to relocating?",
+"intent": "location.relocate"
+},
+{
+"q": "Willing to relocate?",
+"intent": "location.relocate"
+},
+{
+"q": "Are you comfortable working from the office?",
+"intent": "location.onsite_ok"
+},
+{
+"q": "This role is hybrid. Are you able to work on site?",
+"intent": "location.onsite_ok"
+},
+{
+"q": "Are you able to commute to the office?",
+"intent": "location.onsite_ok"
+},
+{
+"q": "Are you comfortable with a hybrid work model?",
+"intent": "location.onsite_ok"
+},
+{
+"q": "Can you work from our office 3 days a week?",
+"intent": "location.onsite_ok"
+},
+{
+"q": "Are you okay working onsite?",
+"intent": "location.onsite_ok"
+},
+{
+"q": "Are you open to working in the office?",
+"intent": "location.onsite_ok"
+},
+{
+"q": "Preferred office location",
+"intent": "location.preferred"
+},
+{
+"q": "Which location are you applying for?",
+"intent": "location.preferred"
+},
+{
+"q": "Which office would you like to work from?",
+"intent": "location.preferred"
+},
+{
+"q": "Are you legally authorized to work in the United States?",
+"intent": "work.authorisation",
+"params": {
+"country": "united states"
+}
+},
+{
+"q": "Are you authorized to work in the US?",
+"intent": "work.authorisation",
+"params": {
+"country": "united states"
+}
+},
+{
+"q": "Are you legally eligible to work in the United States?",
+"intent": "work.authorisation",
+"params": {
+"country": "united states"
+}
+},
+{
+"q": "Do you have the right to work in the United Kingdom?",
+"intent": "work.authorisation",
+"params": {
+"country": "united kingdom"
+}
+},
+{
+"q": "Do you have the right to work in the UK?",
+"intent": "work.authorisation",
+"params": {
+"country": "united kingdom"
+}
+},
+{
+"q": "Are you legally authorised to work in India?",
+"intent": "work.authorisation",
+"params": {
+"country": "india"
+}
+},
+{
+"q": "Are you legally allowed to work in Canada?",
+"intent": "work.authorisation",
+"params": {
+"country": "canada"
+}
+},
+{
+"q": "Are you eligible to work in the EU?",
+"intent": "work.authorisation",
+"params": {
+"country": "european union"
+}
+},
+{
+"q": "Do you have the right to work in the European Union?",
+"intent": "work.authorisation",
+"params": {
+"country": "european union"
+}
+},
+{
+"q": "Do you have permission to work in Germany?",
+"intent": "work.authorisation",
+"params": {
+"country": "germany"
+}
+},
+{
+"q": "Work authorization status",
+"intent": "work.authorisation"
+},
+{
+"q": "What is your current work authorization?",
+"intent": "work.authorisation"
+},
+{
+"q": "Do you have a valid work permit?",
+"intent": "work.authorisation"
+},
+{
+"q": "Will you now or in the future require sponsorship for employment visa status?",
+"intent": "work.sponsorship"
+},
+{
+"q": "Do you require visa sponsorship?",
+"intent": "work.sponsorship"
+},
+{
+"q": "Will you require a visa to work here?",
+"intent": "work.sponsorship"
+},
+{
+"q": "Do you need a work visa?",
+"intent": "work.sponsorship"
+},
+{
+"q": "Will you need sponsorship now or in the future?",
+"intent": "work.sponsorship"
+},
+{
+"q": "Will you now or in the future require sponsorship to work in the United States?",
+"intent": "work.sponsorship",
+"params": {
+"country": "united states"
+}
+},
+{
+"q": "How long is your notice period?",
+"intent": "notice.period"
+},
+{
+"q": "What is your notice period?",
+"intent": "notice.period"
+},
+{
+"q": "Notice period",
+"intent": "notice.period"
+},
+{
+"q": "Official notice period",
+"intent": "notice.period"
+},
+{
+"q": "Notice period in days",
+"intent": "notice.period",
+"params": {
+"unit": "day"
+}
+},
+{
+"q": "Notice period (days)",
+"intent": "notice.period",
+"params": {
+"unit": "day"
+}
+},
+{
+"q": "Are you currently serving notice?",
+"intent": "notice.serving"
+},
+{
+"q": "Are you serving your notice period?",
+"intent": "notice.serving"
+},
+{
+"q": "Have you resigned from your current job?",
+"intent": "notice.serving"
+},
+{
+"q": "When can you start?",
+"intent": "start.earliest"
+},
+{
+"q": "When could you join?",
+"intent": "start.earliest"
+},
+{
+"q": "Earliest joining date",
+"intent": "start.earliest"
+},
+{
+"q": "Availability to start",
+"intent": "start.earliest"
+},
+{
+"q": "How soon can you join?",
+"intent": "start.earliest"
+},
+{
+"q": "What is your earliest available start date?",
+"intent": "start.earliest"
+},
+{
+"q": "Current CTC",
+"intent": "salary.current"
+},
+{
+"q": "Current salary",
+"intent": "salary.current"
+},
+{
+"q": "Current annual compensation",
+"intent": "salary.current"
+},
+{
+"q": "What is your current salary?",
+"intent": "salary.current"
+},
+{
+"q": "Current CTC (LPA)",
+"intent": "salary.current"
+},
+{
+"q": "Expected CTC",
+"intent": "salary.expected"
+},
+{
+"q": "Expected salary",
+"intent": "salary.expected"
+},
+{
+"q": "What are your salary expectations?",
+"intent": "salary.expected"
+},
+{
+"q": "Desired salary",
+"intent": "salary.expected"
+},
+{
+"q": "Expected compensation",
+"intent": "salary.expected"
+},
+{
+"q": "Salary expectations for this role",
+"intent": "salary.expected"
+},
+{
+"q": "What is your expected CTC?",
+"intent": "salary.expected"
+},
+{
+"q": "Minimum salary you would accept",
+"intent": "salary.expected",
+"exact": false
+},
+{
+"q": "Current CTC breakup (fixed + variable)",
+"intent": "salary.split"
+},
+{
+"q": "Fixed and variable components of your current pay",
+"intent": "salary.split"
+},
+{
+"q": "Expected hike",
+"intent": "salary.other"
+},
+{
+"q": "Are you comfortable with the salary range for this role?",
+"intent": "salary.other"
+},
+{
+"q": "Do you have any other offers? If so, what CTC?",
+"intent": "salary.other"
+},
+{
+"q": "Total work experience",
+"intent": "experience.total_years"
+},
+{
+"q": "Total experience",
+"intent": "experience.total_years"
+},
+{
+"q": "Total experience (years)",
+"intent": "experience.total_years"
+},
+{
+"q": "Work experience",
+"intent": "experience.total_years"
+},
+{
+"q": "How much work experience do you have?",
+"intent": "experience.total_years"
+},
+{
+"q": "Years of professional experience",
+"intent": "experience.total_years"
+},
+{
+"q": "How many years of relevant experience do you have?",
+"intent": "experience.total_years",
+"exact": false
+},
+{
+"q": "Relevant experience (years)",
+"intent": "experience.total_years",
+"exact": false
+},
+{
+"q": "Years of relevant experience",
+"intent": "experience.total_years",
+"exact": false
+},
+{
+"q": "Current employer (if any)",
+"intent": "employer.current"
+},
+{
+"q": "Who do you work for?",
+"intent": "employer.current"
+},
+{
+"q": "Current company name",
+"intent": "employer.current"
+},
+{
+"q": "Current organisation",
+"intent": "employer.current"
+},
+{
+"q": "Current or most recent employer",
+"intent": "employer.current"
+},
+{
+"q": "Most recent employer",
+"intent": "employer.current"
+},
+{
+"q": "Company name (current)",
+"intent": "employer.current"
+},
+{
+"q": "Current designation",
+"intent": "title.current"
+},
+{
+"q": "Current job title",
+"intent": "title.current"
+},
+{
+"q": "Your current role",
+"intent": "title.current"
+},
+{
+"q": "Current position",
+"intent": "title.current"
+},
+{
+"q": "Most recent job title",
+"intent": "title.current"
+},
+{
+"q": "Have you ever worked for {company}?",
+"intent": "employer.worked_here",
+"params": {
+"company": "{company}"
+}
+},
+{
+"q": "Have you previously been employed by {company}?",
+"intent": "employer.worked_here",
+"params": {
+"company": "{company}"
+}
+},
+{
+"q": "Are you a former employee of {company}?",
+"intent": "employer.worked_here",
+"params": {
+"company": "{company}"
+}
+},
+{
+"q": "Have you worked at {company} or any of its subsidiaries before?",
+"intent": "employer.worked_here",
+"params": {
+"company": "{company}"
+}
+},
+{
+"q": "Have you applied to {company} before?",
+"intent": "application.applied_before",
+"params": {
+"company": "{company}"
+}
+},
+{
+"q": "Have you previously applied for a position at {company}?",
+"intent": "application.applied_before",
+"params": {
+"company": "{company}"
+}
+},
+{
+"q": "Have you interviewed with {company} in the past?",
+"intent": "application.applied_before",
+"params": {
+"company": "{company}"
+}
+},
+{
+"q": "Have you applied to us in the last 12 months?",
+"intent": "application.applied_before",
+"params": {
+"company": "{company}"
+}
+},
+{
+"q": "Where did you hear about this position?",
+"intent": "application.source"
+},
+{
+"q": "How did you find out about this role?",
+"intent": "application.source"
+},
+{
+"q": "Source of application",
+"intent": "application.source"
+},
+{
+"q": "How did you come across this opening?",
+"intent": "application.source"
+},
+{
+"q": "Do you know anyone at {company}?",
+"intent": "referral.know_anyone",
+"params": {
+"company": "{company}"
+}
+},
+{
+"q": "Do you know anyone at the company?",
+"intent": "referral.know_anyone",
+"params": {
+"company": "{company}"
+}
+},
+{
+"q": "Do you know anyone who works at {company}?",
+"intent": "referral.know_anyone",
+"params": {
+"company": "{company}"
+},
+"exact": false
+},
+{
+"q": "Do you have any friends or relatives working at {company}?",
+"intent": "referral.know_anyone",
+"params": {
+"company": "{company}"
+},
+"exact": false
+},
+{
+"q": "Are you related to anyone currently employed by {company}?",
+"intent": "referral.know_anyone",
+"params": {
+"company": "{company}"
+},
+"exact": false
+},
+{
+"q": "Were you referred by a current employee?",
+"intent": "referral.know_anyone",
+"params": {
+"company": "{company}"
+},
+"exact": false
+},
+{
+"q": "Highest qualification",
+"intent": "education.highest"
+},
+{
+"q": "Highest level of education completed",
+"intent": "education.highest"
+},
+{
+"q": "What is your highest degree?",
+"intent": "education.highest"
+},
+{
+"q": "Education level",
+"intent": "education.highest"
+},
+{
+"q": "Highest educational qualification",
+"intent": "education.highest"
+},
+{
+"q": "Degree",
+"intent": "education.degree"
+},
+{
+"q": "What degree do you hold?",
+"intent": "education.degree"
+},
+{
+"q": "Degree obtained",
+"intent": "education.degree"
+},
+{
+"q": "Degree and branch",
+"intent": "education.degree"
+},
+{
+"q": "Field of study",
+"intent": "education.field"
+},
+{
+"q": "Major",
+"intent": "education.field"
+},
+{
+"q": "Specialization",
+"intent": "education.field"
+},
+{
+"q": "What did you study?",
+"intent": "education.field"
+},
+{
+"q": "University",
+"intent": "education.institution"
+},
+{
+"q": "Name of college",
+"intent": "education.institution"
+},
+{
+"q": "College/University",
+"intent": "education.institution"
+},
+{
+"q": "School",
+"intent": "education.institution"
+},
+{
+"q": "Which university did you attend?",
+"intent": "education.institution"
+},
+{
+"q": "Institution name",
+"intent": "education.institution"
+},
+{
+"q": "Year of graduation",
+"intent": "education.grad_year"
+},
+{
+"q": "Graduation year",
+"intent": "education.grad_year"
+},
+{
+"q": "Year of passing",
+"intent": "education.grad_year"
+},
+{
+"q": "When did you graduate?",
+"intent": "education.grad_year"
+},
+{
+"q": "Graduation date",
+"intent": "education.grad_year"
+},
+{
+"q": "GPA",
+"intent": "education.grade"
+},
+{
+"q": "CGPA",
+"intent": "education.grade"
+},
+{
+"q": "Percentage in graduation",
+"intent": "education.grade"
+},
+{
+"q": "Final grade",
+"intent": "education.grade"
+},
+{
+"q": "Do you hold any professional certifications?",
+"intent": "certifications"
+},
+{
+"q": "List your certifications",
+"intent": "certifications"
+},
+{
+"q": "Certifications",
+"intent": "certifications"
+},
+{
+"q": "Relevant certifications",
+"intent": "certifications"
+},
+{
+"q": "Which languages do you speak?",
+"intent": "languages"
+},
+{
+"q": "Languages known",
+"intent": "languages"
+},
+{
+"q": "Language proficiency",
+"intent": "languages"
+},
+{
+"q": "What languages are you fluent in?",
+"intent": "languages"
+},
+{
+"q": "Languages",
+"intent": "languages"
+},
+{
+"q": "Gender",
+"intent": "eeo.gender"
+},
+{
+"q": "What is your gender?",
+"intent": "eeo.gender"
+},
+{
+"q": "Gender identity",
+"intent": "eeo.gender"
+},
+{
+"q": "Do you identify as transgender?",
+"intent": "eeo.gender"
+},
+{
+"q": "Sexual orientation",
+"intent": "eeo.gender"
+},
+{
+"q": "Race",
+"intent": "eeo.ethnicity"
+},
+{
+"q": "Ethnicity",
+"intent": "eeo.ethnicity"
+},
+{
+"q": "Are you Hispanic or Latino?",
+"intent": "eeo.ethnicity"
+},
+{
+"q": "Race/Ethnicity",
+"intent": "eeo.ethnicity"
+},
+{
+"q": "Please select your race",
+"intent": "eeo.ethnicity"
+},
+{
+"q": "Veteran status",
+"intent": "eeo.veteran"
+},
+{
+"q": "Are you a protected veteran?",
+"intent": "eeo.veteran"
+},
+{
+"q": "Have you served in the military?",
+"intent": "eeo.veteran"
+},
+{
+"q": "Disability status",
+"intent": "eeo.disability"
+},
+{
+"q": "Do you have a disability?",
+"intent": "eeo.disability"
+},
+{
+"q": "Voluntary self-identification of disability",
+"intent": "eeo.disability"
+},
+{
+"q": "I certify that the information I have provided is true and complete",
+"intent": "legal.attestation"
+},
+{
+"q": "I confirm the above information is accurate",
+"intent": "legal.attestation"
+},
+{
+"q": "Signature",
+"intent": "legal.attestation"
+},
+{
+"q": "Type your full name as your electronic signature",
+"intent": "legal.attestation"
+},
+{
+"q": "I consent to the processing of my personal data",
+"intent": "legal.consent"
+},
+{
+"q": "Do you consent to a background check?",
+"intent": "legal.consent"
+},
+{
+"q": "I agree to the privacy policy",
+"intent": "legal.consent"
+},
+{
+"q": "Do you authorize us to contact your previous employers?",
+"intent": "legal.consent"
+},
+{
+"q": "Have you ever been convicted of a crime?",
+"intent": "legal.criminal"
+},
+{
+"q": "Do you have any criminal convictions?",
+"intent": "legal.criminal"
+},
+{
+"q": "Have you ever been convicted of a felony?",
+"intent": "legal.criminal"
+},
+{
+"q": "Do you require any accommodations for the interview process?",
+"intent": "health"
+},
+{
+"q": "Do you have any medical conditions we should know about?",
+"intent": "health"
+},
+{
+"q": "Are you willing to take a drug test?",
+"intent": "health"
+},
+{
+"q": "Please provide two professional references",
+"intent": "references"
+},
+{
+"q": "References",
+"intent": "references"
+},
+{
+"q": "Name and contact of a referee",
+"intent": "references"
+},
+{
+"q": "Why do you want to work here?",
+"intent": "essay.motivation"
+},
+{
+"q": "Why are you interested in this role?",
+"intent": "essay.motivation"
+},
+{
+"q": "Why {company}?",
+"intent": "essay.motivation"
+},
+{
+"q": "What interests you about this position?",
+"intent": "essay.motivation"
+},
+{
+"q": "Cover letter",
+"intent": "essay.motivation"
+},
+{
+"q": "Why should we hire you?",
+"intent": "essay.motivation"
+},
+{
+"q": "What excites you about {company}?",
+"intent": "essay.motivation"
+},
+{
+"q": "Tell us about yourself",
+"intent": "essay.other"
+},
+{
+"q": "Anything else you would like us to know?",
+"intent": "essay.other"
+},
+{
+"q": "Additional information",
+"intent": "essay.other"
+},
+{
+"q": "What are your strengths?",
+"intent": "essay.other"
+},
+{
+"q": "What are your weaknesses?",
+"intent": "essay.other"
+},
+{
+"q": "Why are you looking for a change?",
+"intent": "essay.other"
+},
+{
+"q": "Reason for leaving your current job",
+"intent": "essay.other"
+},
+{
+"q": "Briefly describe yourself",
+"intent": "essay.other"
+},
+{
+"q": "Summary",
+"intent": "essay.other"
+},
+{
+"q": "Describe a challenging project you worked on",
+"intent": "essay.experience"
+},
+{
+"q": "Tell us about a time you disagreed with your manager",
+"intent": "essay.experience"
+},
+{
+"q": "What is your proudest professional achievement?",
+"intent": "essay.experience"
+},
+{
+"q": "Describe your experience leading a team",
+"intent": "essay.experience"
+},
+{
+"q": "How would you design a URL shortener?",
+"intent": "essay.hypothetical"
+},
+{
+"q": "Suppose a production database goes down. What would you do?",
+"intent": "essay.hypothetical"
+},
+{
+"q": "How would you approach your first 90 days in this role?",
+"intent": "essay.hypothetical"
+},
+{
+"q": "Are you proficient in Python?",
+"intent": "experience.has_skill",
+"params": {
+"skill": "python"
+}
+},
+{
+"q": "Do you know SQL?",
+"intent": "experience.has_skill",
+"params": {
+"skill": "sql"
+}
+},
+{
+"q": "Have you used AWS?",
+"intent": "experience.has_skill",
+"params": {
+"skill": "aws"
+}
+},
+{
+"q": "Do you have hands-on experience with AWS?",
+"intent": "experience.has_skill",
+"params": {
+"skill": "aws"
+}
+},
+{
+"q": "First name",
+"intent": "other"
+},
+{
+"q": "Last name",
+"intent": "other"
+},
+{
+"q": "Middle name",
+"intent": "other"
+},
+{
+"q": "Preferred name",
+"intent": "other"
+},
+{
+"q": "Pronouns",
+"intent": "other"
+},
+{
+"q": "Date of birth",
+"intent": "other"
+},
+{
+"q": "Age",
+"intent": "other"
+},
+{
+"q": "Are you 18 years of age or older?",
+"intent": "other"
+},
+{
+"q": "Are you willing to travel?",
+"intent": "other"
+},
+{
+"q": "What percentage of travel are you comfortable with?",
+"intent": "other"
+},
+{
+"q": "Are you willing to work night shifts?",
+"intent": "other"
+},
+{
+"q": "Are you willing to work weekends?",
+"intent": "other"
+},
+{
+"q": "Do you have a valid driver's license?",
+"intent": "other"
+},
+{
+"q": "Do you own a laptop?",
+"intent": "other"
+},
+{
+"q": "Address",
+"intent": "other"
+},
+{
+"q": "Current address",
+"intent": "other"
+},
+{
+"q": "Postal code",
+"intent": "other"
+},
+{
+"q": "Last working day",
+"intent": "other"
+},
+{
+"q": "Skype ID",
+"intent": "other"
+},
+{
+"q": "Twitter",
+"intent": "other"
+},
+{
+"q": "Do you have any questions for us?",
+"intent": "other"
+},
+{
+"q": "Upload resume",
+"intent": "other"
+},
+{
+"q": "Upload cover letter",
+"intent": "other"
+}
+]

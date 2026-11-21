@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Fanfold</title>
+<style>
+  :root { color-scheme: light dark; --ink: #0B0B0C; --paper: #F7F6F4; --orange: #F0521C; --line: #E2DED7; --muted: #6B6862; }
+  @media (prefers-color-scheme: dark) {
+    :root { --ink: #F7F6F4; --paper: #0B0B0C; --orange: #FF7A3D; --line: #2A2927; --muted: #9A968F; }
+  }
+  body { width: 300px; margin: 0; padding: 14px; background: var(--paper); color: var(--ink); font: 13px/1.45 system-ui, sans-serif; }
+  h1 { margin: 0 0 10px; font-size: 14px; font-weight: 600; letter-spacing: -0.01em; }
+  h2 { margin: 0 0 6px; font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+  #status { display: flex; align-items: center; gap: 8px; margin: 0 0 4px; font-weight: 500; }
+  #dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); flex: none; }
+  #dot[data-state="connected"] { background: #2E9E5B; }
+  #dot[data-state="connecting"], #dot[data-state="paused"] { background: var(--orange); }
+  #detail, #scope { margin: 0 0 10px; color: var(--muted); }
+  #error { margin: 0 0 10px; color: var(--orange); }
+  form { display: flex; gap: 6px; margin: 0 0 10px; }
+  label { position: absolute; left: -9999px; }
+  input { flex: 1; min-width: 0; padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; background: transparent; color: inherit; font: inherit; text-transform: uppercase; }
+  button { padding: 6px 10px; border: 1px solid var(--line); border-radius: 6px; background: transparent; color: inherit; font: inherit; cursor: pointer; }
+  button.primary { border-color: var(--orange); background: var(--orange); color: #fff; }
+  #in-use { margin: 0 0 10px; }
+  #tabs { list-style: none; margin: 0 0 8px; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+  #tabs li { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; }
+  #tabs li[data-here] { border-color: var(--orange); }
+  #tabs .what { flex: 1; min-width: 0; }
+  #tabs .host { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+  #tabs .for { display: block; color: var(--muted); font-size: 12px; }
+  #tabs button { flex: none; padding: 4px 8px; font-size: 12px; }
+  #scope { margin: 0; padding-top: 10px; border-top: 1px solid var(--line); }
+  [hidden] { display: none; }
+</style>
+</head>
+<body>
+  <h1>Fanfold</h1>
+  <p id="status"><span id="dot"></span><span id="state">Checking</span></p>
+  <p id="detail"></p>
+  <p id="error" role="alert" hidden></p>
+  <form id="pair-form" hidden>
+    <label for="code">Pairing code</label>
+    <input id="code" name="code" autocomplete="off" spellcheck="false" placeholder="ABCD-EFGH" aria-label="Pairing code">
+    <button class="primary" type="submit" id="pair">Pair</button>
+  </form>
+  <section id="in-use" hidden>
+    <h2 id="in-use-title"></h2>
+    <ul id="tabs"></ul>
+    <button type="button" id="stop-all"></button>
+  </section>
+  <p><button type="button" id="resume" hidden>Resume</button> <button type="button" id="disconnect" hidden>Disconnect</button></p>
+  <p id="scope">Fanfold can only see and use tabs in its "Fanfold" tab groups. It cannot touch any other tab.</p>
+  <script type="module" src="popup.js"></script>
+</body>
+</html>

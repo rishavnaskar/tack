@@ -1,0 +1,64 @@
+{
+  "name": "fanfold",
+  "version": "0.3.0",
+  "private": true,
+  "description": "Local-first browser agent that drives a real Chrome over CDP. Usable from any MCP host or with its own model; specialised in job applications, with per-site policy, a verified profile and a review queue.",
+  "author": "Rishav Naskar",
+  "license": "UNLICENSED",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rishavnaskar/fanfold.git",
+    "directory": "app"
+  },
+  "keywords": [
+    "browser-agent",
+    "mcp",
+    "model-context-protocol",
+    "chrome-extension",
+    "chrome-devtools-protocol",
+    "cdp",
+    "ai-agent",
+    "llm",
+    "job-search",
+    "automation",
+    "sqlite",
+    "typescript"
+  ],
+  "type": "module",
+  "engines": {
+    "node": ">=22.18"
+  },
+  "bin": {
+    "ba": "./bin/ba.ts",
+    "fanfold-mcp": "./bin/mcp.ts"
+  },
+  "scripts": {
+    "start": "node --no-warnings bin/serve.ts",
+    "mcp": "node --no-warnings bin/mcp.ts",
+    "check": "npm run lint && npm run typecheck && npm run test:coverage",
+    "typecheck": "tsc -p tsconfig.json",
+    "lint": "eslint .",
+    "test": "npm run test:unit && npm run test:browser",
+    "test:unit": "FANFOLD_LOG_LEVEL=silent BROWSER_AGENT_STATE_DIR=${TMPDIR:-/tmp}/fanfold-test-state node --no-warnings --test --test-reporter=tap test/*.test.ts < /dev/null",
+    "test:coverage": "mkdir -p coverage && FANFOLD_LOG_LEVEL=silent BROWSER_AGENT_STATE_DIR=${TMPDIR:-/tmp}/fanfold-test-state node --no-warnings --test --experimental-test-coverage --test-coverage-include='src/**' --test-coverage-lines=85 --test-coverage-branches=75 --test-coverage-functions=80 --test-reporter=spec --test-reporter-destination=stdout --test-reporter=lcov --test-reporter-destination=coverage/lcov.info test/*.test.ts < /dev/null",
+    "test:browser": "FANFOLD_LOG_LEVEL=silent BROWSER_AGENT_STATE_DIR=${TMPDIR:-/tmp}/fanfold-test-state node --no-warnings --test --test-concurrency=1 --test-timeout=180000 --test-reporter=tap test/browser/*.test.ts < /dev/null",
+    "verify": "node --no-warnings bin/verify.ts",
+    "screens": "node --no-warnings bin/screens.ts",
+    "eval": "node --no-warnings bin/eval.ts",
+    "bench": "node --no-warnings bin/bench.ts",
+    "learn:cycle": "node --no-warnings bin/learn-cycle.ts",
+    "screen:demo": "node --no-warnings bin/screen-demo.ts",
+    "diagnose": "node --no-warnings bin/diagnose.ts",
+    "browser": "node --no-warnings bin/browser.ts",
+    "ba": "node --no-warnings bin/ba.ts",
+    "daemon": "node --no-warnings bin/daemon.ts"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.5",
+    "@types/node": "^24.19.2",
+    "eslint": "^9.39.5",
+    "globals": "^16.5.0",
+    "typescript": "~5.9",
+    "typescript-eslint": "^8.72.1"
+  }
+}
