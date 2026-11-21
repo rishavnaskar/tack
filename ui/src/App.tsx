@@ -8,6 +8,11 @@ import { AppShell, TraceRail, ease, type NavItem } from './ui';
 import { Start } from './screens/Start';
 import { Market } from './screens/Market';
 import { Gap } from './screens/Gap';
+import { Plan } from './screens/Plan';
+import { Portfolio } from './screens/Portfolio';
+import { Progress } from './screens/Progress';
+import { Interview } from './screens/Interview';
+import { Tracker } from './screens/Tracker';
 import { Placeholder } from './screens/Placeholder';
 import './App.css';
 
@@ -87,11 +92,11 @@ export function App() {
         <Route path="/" element={<Screen key="start"><Start /></Screen>} />
         <Route path="/market" element={<Screen key="market"><Market /></Screen>} />
         <Route path="/gap" element={<Screen key="gap"><Gap /></Screen>} />
-        <Route path="/plan" element={<Screen key="plan"><Placeholder screen="plan" /></Screen>} />
-        <Route path="/portfolio" element={<Screen key="portfolio"><Placeholder screen="portfolio" /></Screen>} />
-        <Route path="/interview" element={<Screen key="interview"><Placeholder screen="interview" /></Screen>} />
-        <Route path="/tracker" element={<Screen key="tracker"><Placeholder screen="tracker" /></Screen>} />
-        <Route path="/progress" element={<Screen key="progress"><Placeholder screen="progress" /></Screen>} />
+        <Route path="/plan" element={<Screen key="plan"><Plan /></Screen>} />
+        <Route path="/portfolio" element={<Screen key="portfolio"><Portfolio /></Screen>} />
+        <Route path="/interview" element={<Screen key="interview"><Interview /></Screen>} />
+        <Route path="/tracker" element={<Screen key="tracker"><Tracker /></Screen>} />
+        <Route path="/progress" element={<Screen key="progress"><Progress /></Screen>} />
         <Route path="*" element={<Screen key="404"><Placeholder screen="missing" /></Screen>} />
       </Routes>
     </AppShell>

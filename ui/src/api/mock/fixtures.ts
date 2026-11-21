@@ -923,8 +923,8 @@ export function buildBrief(plan: Plan | undefined, insights: TrackerInsights | u
   const nextTask = plan?.weeks.flatMap((w) => w.tasks).find((t) => t.status === 'todo');
   const nextApp = insights?.next[0];
   const items: { kind: string; text: string; action?: string }[] = [];
-  if (nextTask) items.push({ kind: 'task', text: `${nextTask.title} (${nextTask.hours} h)`, action: '/plan' });
-  if (nextApp) items.push({ kind: 'apply', text: `Apply to ${nextApp.company}, ${nextApp.title}. ${nextApp.why}`, action: '/tracker' });
-  items.push({ kind: 'interview', text: 'Practise one technical question on model evaluation.', action: '/interview' });
+  if (nextTask) items.push({ kind: 'task', text: `${nextTask.title} (${nextTask.hours} h)`, action: 'Open plan' });
+  if (nextApp) items.push({ kind: 'apply', text: `Apply to ${nextApp.company}, ${nextApp.title}. ${nextApp.why}`, action: 'Apply' });
+  items.push({ kind: 'interview', text: 'Practise one technical question on model evaluation.', action: 'Start interview' });
   return { headline: plan ? 'Week 3: experiments with a decision rule' : 'Start by reading the market', items };
 }

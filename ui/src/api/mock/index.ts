@@ -300,7 +300,7 @@ on('POST', '/plan/replan', async (_p, body: { reason?: string }) => {
   ]);
   const late = plan.weeks.flatMap((w) => w.tasks).filter((t) => t.status === 'todo').slice(0, 2);
   plan.version += 1;
-  plan.changes.unshift({
+  plan.changes.push({
     at: new Date().toISOString(),
     reason: body?.reason ?? 'Progress check',
     summary: `Moved ${late.length} late task${late.length === 1 ? '' : 's'} into next week and trimmed reading so each week stays inside 10 hours.`,
