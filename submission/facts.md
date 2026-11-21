@@ -5,7 +5,7 @@ Plain notes, to be rewritten. Paths are from the repo root.
 ## What Tack is
 
 - A career pivot coach for someone changing roles (demo: a backend engineer moving to AI Product Manager in Bengaluru).
-- Closes the loop: reads the live job market, maps the gap between the résumé and the target role, plans the move week by week, suggests portfolio projects, runs mock interviews, tracks progress and replans, prepares applications, and learns from which kinds of roles reply.
+- Closes the loop: reads the live job market, maps the gap between the résumé and the target role, plans the move week by week, suggests portfolio projects, runs mock interviews, tracks progress and replans, prepares applications and submits them through a real browser, several in parallel, reads the replies from mail, and learns from which kinds of roles reply.
 - Every claim it shows is quoted from its source: résumé lines for skills, posting lines for demand, the candidate's own words for interview scores.
 - Runs as a local web app, a macOS desktop app (Electron) and an MCP server over stdio, all on the same state.
 
@@ -51,14 +51,21 @@ Plain notes, to be rewritten. Paths are from the repo root.
 - Application kit (`coach/src/kit.ts`, `POST /api/kit/:postingId`): headline, tailored résumé bullets each shown with the résumé line it comes from (bullets that cannot be traced back are dropped by `guardBullets`), cover note, talking points, gaps to address honestly, questions to ask.
 - MCP server (`coach/bin/mcp.ts`, `docs/MCP.md`): eight tools (state, gap, plan week, complete task, next applications, prepare application, interview question, interview answer) against the same state as the app.
 - Desktop app (`desktop/`): Electron shell that starts the coach, a key screen for the model key, crash watchdog.
-- Opt-in live sources: import applications from a Fanfold database (`TACK_FANFOLD_DB`), read recruiter replies from Gmail (`TACK_GMAIL=1`); both read-only.
+- Replies from mail (`coach/src/replies.ts`, `POST /api/applications/sync`, "Check replies" on the Tracker): searches mail for every company with an open application, four at a time; one model call (task `mail.classify`, keyword rules as the fallback) sorts each message into interview, reply, rejected, offer, automatic acknowledgement or unrelated; statuses move, the reply rates and lessons relearn, and a "What changed" card lists each move with its subject line. Acknowledgements never count as a reply. Only sender, subject and snippet are kept.
+  - Demonstrated on the bundled sample mailbox (12 messages from the demo companies; the demo person never reads real mail). In the rehearsal: 12 messages from 20 searches, 8 status changes, 3 new responses, about 7 s.
+  - Real Gmail goes through the engine's read-only search once the person connects it ("Connect Gmail", needs `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`). Not verified against a real account.
+- Automated applying with fan-out (`coach/src/apply.ts`, `POST /api/apply`, `POST /api/apply/top`, "Apply to top N" on the Tracker): Tack starts its own copy of the engine (`coach/src/engine-proc.ts`), gives every posting its own engine session in its own Chrome window, and runs up to 8 side by side; one failure stops nothing else. The engine fills the form from the Application details, the résumé file and the kit's answers, and submits it with no review step. Each run streams its steps into a live step card and the trace, and ends confirmed (with the form's reference number) or not sent (with the reason), plus a picture of the page it ended on. A confirmed run is added to the tracker as applied.
+  - Practice form (`coach/src/practice.ts`, `/practice/apply/:postingId`): a three-step form Tack serves locally, with a résumé upload, screening questions from the posting, a consent box, a review step and a reference number. The demo person and sample postings always apply here, never to a company.
+  - Verified against the local practice form only. Real company forms were not exercised; with a real person and a live posting the same run targets the real posting.
+- Opt-in: import applications from a Fanfold database (`TACK_FANFOLD_DB`), read-only.
 - Works offline from the model and the boards: bundled demo person (Avery Quinn) with 40 sample postings and a 24-application history; code fallbacks for every model task.
 - Every screen has loading, empty and error states and works from 1440 px down to 390 px.
 
 ## How the model is used, and where it is not
 
-- Model: Gemini through its OpenAI-compatible endpoint (`coach/src/llm.ts`), `gemini-3.5-flash-lite` in this session. JSON schema output, schema check and repair, disk cache keyed by the request hash, a shared rate limiter (12 a minute by default), retry with backoff on 429 and 5xx, a trace event per call.
-- Model tasks (8): `intake.resume` (on the PDF itself or on pasted text), `intake.roles`, `gap.extract`, `plan.wording`, `portfolio.briefs`, `interview.questions`, `interview.judge`, `kit.tailor`.
+- Model: Gemini through its OpenAI-compatible endpoint (`coach/src/llm.ts`), `gemini-3.5-flash-lite` in this session. JSON schema output, schema check and repair, disk cache keyed by a hash of model, system prompt, prompt, schema and PDF (`TACK_LLM_CACHE=off` turns it off for reads and writes), a shared rate limiter (12 a minute by default), retry with backoff on 429 and 5xx, a trace event per call with its duration.
+- Model tasks (9): `intake.resume` (on the PDF itself or on pasted text), `intake.roles`, `gap.extract`, `plan.wording`, `portfolio.briefs`, `interview.questions`, `interview.judge`, `kit.tailor`, `mail.classify`.
+- The engine's own agent (form filling during applying) calls the same model with the same key, outside the coach's limiter.
 - Deliberately not the model: finding and ranking postings; the numbers (demand, priority, readiness, fit, hours, dates, streak, reply rates, lift, confidence, the interview overall from the five criterion scores); plan allocation and replanning; tracker lessons and the apply-next ranking; quote verification; the daily brief. The model's numbers are only the résumé skill levels (1-5, editable on the Start screen), the 1-5 rubric scores and the role-overlap estimates.
 - Guards on model output: quotes must be found verbatim in their source (résumé, posting or answer) or they are dropped; the stronger interview answer and the kit bullets may only use facts the person stated.
 
@@ -70,7 +77,13 @@ Plain notes, to be rewritten. Paths are from the repo root.
 - Plan build 8.6 s cold (55 to 60 tasks). Replan is instant (no model).
 - Passing the week 1 checkpoint moved readiness 36 to 38 in the recorded take; marking it "not yet" and replanning added a repair block, dropped one low-priority task that no longer fit and moved 12 tasks later.
 - Mock interview answer (79 words) scored 80/100 by the rubric.
-- Tests: 112 passing (`cd coach && npm test`), UI typecheck and build clean, desktop `npm run dist` builds a dmg and zip (about 120 MB each); the packaged app starts its coach in about 0.7 s.
+- Applying to the local practice form: one application about 17 s; three in parallel about 35 s on a fresh quota, and 94 to 105 s when the free tier's per-minute limit is hit (the engine waits about a minute, then carries on). Rehearsals on 21 Nov: three in parallel in 49 s, all confirmed with reference numbers; another run of three took 96 s, with one run not sent after Gemini answered 503 ("high demand") to every retry.
+- Each practice application costs about 7 to 8 engine model calls (form steps), so three in parallel make about 22 calls in well under a minute.
+- Replies from the sample mailbox: 12 messages from 20 company searches, sorted in one model call; 8 status changes and 3 new responses, about 7 s; the response rate moved 33% to 46%.
+- Without the model cache, a whole run of the demo (résumé to parallel apply) live: résumé read 9.8 s, gap build from 40 postings 20 s (8 calls), plan 24 s (with 503 retries), interview judge 3.8 s, mail sort 4.7 s, application kit 3.8 s.
+- Gemini free tier caps per model per day: 500 requests for `gemini-3.5-flash-lite`, 20 for `gemini-3.5-flash`. A full recorded run uses about 45; a day of rehearsals can use up the 500.
+- Tests: 134 passing (`cd coach && npm test`), UI typecheck and build clean, desktop `npm run dist` builds a dmg and zip (about 120 MB each); the packaged app starts its coach in about 0.6 s.
+- Desktop app: the packaged engine starts from the app's own resources (Electron running as Node) and drives the system Chrome with its own profile; inside it, Check replies on the sample mailbox worked, and a practice application opened the form, uploaded the résumé and filled 10 fields before the day's model quota ran out, so its submit was not reached there.
 - Demo video: 2:46, 1920x1080 H.264, 24 MB, one continuous take of the real app in Chromium at 1440x900. Job boards were read live during the take; model answers came from the cache filled by the warm-up takes, so they appear without waiting. Only the 11 s harvest is sped up (1.6x, labelled).
 
 ## Architecture in five lines
@@ -93,15 +106,16 @@ Plain notes, to be rewritten. Paths are from the repo root.
   - Opens from `desktop/out/` (dmg or zip). Dev run: `cd desktop && npm run dev`.
 - MCP: add to the host config `{"command": "node", "args": ["--no-warnings", "/abs/path/tack/coach/bin/mcp.ts"]}`; details in `docs/MCP.md`.
 - Tests: `cd coach && npm test`; UI typecheck and build: `cd ui && npx tsc --noEmit && npm run build`.
-- Demo video: `PLAYWRIGHT=/abs/path/playwright/index.mjs node submission/video/record.mjs final` then `node submission/video/render.mjs final`.
+- Demo video: `PLAYWRIGHT=/abs/path/playwright/index.mjs node submission/video/record.mjs final` then `node submission/video/render.mjs final`. The recording runs with the model cache off (`TACK_LLM_CACHE=off` unless set otherwise) and exits with code 3 if the parallel apply does not end with every run confirmed.
 
 ## Honest limits
 
 - The macOS build is unsigned (ad-hoc identity), so Gatekeeper asks the first time: right-click, Open.
-- Reading recruiter replies from mail is built but not connected by default (needs a Google client and `TACK_GMAIL=1`); in the demo, replies are moved by hand or come from the sample history.
-- Applying is prepared, not performed: the kit is ready to paste, and the submit is handed to the person (or to Fanfold, where every answer is checked and the person approves).
+- Real Gmail needs the person to connect it once (Google client id and secret, Google's consent window); reply reading was demonstrated on the sample mailbox only and has not been verified against a real account.
+- Automated applying was verified against Tack's local practice form only; real company forms were not exercised. On a real form, a question the engine cannot answer (a consent box it has no saved answer for, a CAPTCHA, a sign-in) may stop a run, which then ends as not sent with what it asked.
+- Parallel applies share one model key with the coach. On Gemini's free tier, three at once can hit the per-minute limit, and the engine then waits before carrying on (see the timings above).
 - The tracker in the demo learns from sample data (the demo person's 24 applications, marked "sample" on every card and in the "What gets replies" panel).
-- The free model tier (15 requests a minute) makes a cold gap build take about a minute; the cache makes repeats fast.
+- The free model tier (15 requests a minute, 500 a day for `gemini-3.5-flash-lite`) makes a cold gap build take up to about a minute; the cache makes repeats fast.
 - Board list is fixed (60 companies); a role with few postings on those boards gets fewer than 40.
 
 ## Disclosure

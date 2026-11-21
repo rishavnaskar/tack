@@ -43,7 +43,10 @@
         "to": "tack/engine",
         "filter": [
           "package.json",
-          "src/**/*"
+          "bin/serve.ts",
+          "src/**/*",
+          "knowledge/**/*",
+          "extension/**/*"
         ]
       },
       {

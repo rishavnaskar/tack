@@ -65,7 +65,8 @@ export function childEnv(dir: string, src: NodeJS.ProcessEnv = process.env): Nod
     FANFOLD_MODEL_STEP: model, FANFOLD_MODEL_PLAN: model, FANFOLD_MODEL_VISION: model, FANFOLD_MODEL_ANSWER: model,
     BROWSER_AGENT_APPROVALS: src.TACK_APPROVALS ?? 'none',
   };
-  for (const k of ['GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET']) if (src[k]) env[k] = src[k];
+  // Inside the desktop app process.execPath is Electron, which only acts as Node with this set.
+  for (const k of ['GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET', 'ELECTRON_RUN_AS_NODE']) if (src[k]) env[k] = src[k];
   if (src.TACK_CHROME_PATH) env.BA_CHROME_PATH = src.TACK_CHROME_PATH;
   return env;
 }

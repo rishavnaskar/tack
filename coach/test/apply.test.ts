@@ -272,6 +272,8 @@ test('the engine child gets its own state, no sign-in, Tack\'s model and full au
   assert.equal(env.FANFOLD_MODEL_PLAN, 'm-fast');
   assert.equal(env.GOOGLE_CLIENT_ID, 'g');
   assert.equal(env.OPENROUTER_API_KEY, undefined);
+  assert.equal(env.ELECTRON_RUN_AS_NODE, undefined);
+  assert.equal(childEnv('/s', { ELECTRON_RUN_AS_NODE: '1' }).ELECTRON_RUN_AS_NODE, '1');
   assert.equal(childEnv('/s', { TACK_APPROVALS: 'IRREVERSIBLE' }).BROWSER_AGENT_APPROVALS, 'IRREVERSIBLE');
   assert.equal(modelBase('https://x.example/v1/chat/completions'), 'https://x.example/v1');
   assert.deepEqual(parseOwnerUrl('\nFanfold\nhttp://127.0.0.1:51234/?t=abc123DEF\n'), { port: 51234, token: 'abc123DEF' });

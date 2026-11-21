@@ -1,5 +1,6 @@
 // Cuts a take from record.mjs into the demo video: long waits sped up and
-// labelled, a caption bar under the app, a title card and a closing card.
+// labelled, a caption bar under the app (with a small note for live model
+// calls and sample data), a title card and a closing card.
 //
 //   PLAYWRIGHT=/abs/path/to/node_modules/playwright/index.mjs node submission/video/render.mjs [take]
 //
@@ -34,10 +35,9 @@ const SCENES = {
   3: 'Gap map',
   4: 'Market',
   5: 'Plan',
-  6: 'Portfolio',
-  7: 'Interview',
-  8: 'Tracker',
-  9: 'Progress',
+  6: 'Interview',
+  7: 'Tracker',
+  8: 'Progress',
 };
 
 const take = JSON.parse(readFileSync(join(DIR, 'take.json'), 'utf8'));
@@ -91,7 +91,8 @@ for (const o of out) {
   o.file = frameAt(o.src);
   o.scene = lastBefore('scene', o.src)?.id ?? 1;
   o.caption = lastBefore('cap', o.src)?.text ?? '';
-  o.sped = o.speed > 1.05 ? (o.speed < 3 ? o.speed.toFixed(1) : String(Math.round(o.speed))) : 0;
+  o.tag = lastBefore('tag', o.src)?.text ?? '';
+  o.sped =o.speed > 1.05 ? (o.speed < 3 ? o.speed.toFixed(1) : String(Math.round(o.speed))) : 0;
 }
 
 // ------------------------------------------------------------ caption bars and cards
@@ -108,17 +109,19 @@ const fonts = `
 `;
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
 
-const captionHtml = (scene, text, sped) => `<!doctype html><meta charset="utf-8"><style>${fonts}
+const captionHtml = (scene, text, sped, tag) => `<!doctype html><meta charset="utf-8"><style>${fonts}
   body { width: ${W}px; height: ${H - APP_H}px; position: relative; overflow: hidden; }
   .bar { position: absolute; left: ${APP_X}px; right: ${APP_X}px; top: 0; bottom: 0; border-top: 1px solid rgba(247,246,244,.12);
          display: flex; flex-direction: column; justify-content: center; gap: 9px; }
   .top { display: flex; align-items: center; gap: 14px; font-size: 13px; color: rgba(247,246,244,.5); }
+  .tag { margin-left: 10px; display: inline-flex; align-items: center; gap: 8px; color: rgba(247,246,244,.82); }
+  .tag::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: #f0521c; box-shadow: 0 0 0 3px rgba(240,82,28,.22); }
   .text { font-family: 'Host Grotesk', sans-serif; font-size: 27px; line-height: 1.2; letter-spacing: -0.012em; font-weight: 430;
           white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: ${sped ? 190 : 0}px; }
   .sped { position: absolute; right: 0; bottom: 26px; font-size: 13px; color: #ff7a3d; border: 1px solid rgba(240,82,28,.6);
           border-radius: 999px; padding: 6px 12px; }
 </style><div class="bar">
-  <div class="top mono"><span class="accent">${String(scene).padStart(2, '0')}</span><span>/</span><span>${esc(SCENES[scene] ?? '')}</span></div>
+  <div class="top mono"><span class="accent">${String(scene).padStart(2, '0')}</span><span>/</span><span>${esc(SCENES[scene] ?? '')}</span>${tag ? `<span class="tag">${esc(tag)}</span>` : ''}</div>
   <div class="text">${esc(text)}</div>
   ${sped ? `<div class="sped mono">Sped up ${sped}x</div>` : ''}
 </div>`;
@@ -135,26 +138,29 @@ const cardStyle = `
   .rule { flex: 1; height: 1px; background: rgba(247,246,244,.14); }
 `;
 
+const recordedOn = new Date(take.started * 1000).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 const titleHtml = `<!doctype html><meta charset="utf-8"><style>${fonts}${cardStyle}
   .promise { font-size: 54px; line-height: 1.12; letter-spacing: -0.025em; font-weight: 420; max-width: 1220px; margin-top: 64px; }
 </style><div class="grid"></div><div class="glow"></div><div class="wrap">
-  <div class="label mono" style="margin-bottom:72px"><span class="accent">00</span><span>/</span><span>Demo</span><span class="rule"></span><span>Recorded live, 21 Nov 2026</span></div>
+  <div class="label mono" style="margin-bottom:72px"><span class="accent">00</span><span>/</span><span>Demo</span><span class="rule"></span><span>Recorded live, ${recordedOn}</span></div>
   ${wordmark(250)}
   <p class="promise">The career pivot coach that reads the market, plans the move, and learns from who replies.</p>
 </div>`;
 
 const closingHtml = `<!doctype html><meta charset="utf-8"><style>${fonts}${cardStyle}
-  ol { list-style: none; padding: 0; margin-top: 70px; display: grid; gap: 0; max-width: 1280px; }
-  li { display: grid; grid-template-columns: 90px 1fr; align-items: baseline; padding: 26px 0; border-top: 1px solid rgba(247,246,244,.12); font-size: 44px; letter-spacing: -0.02em; font-weight: 430; }
+  ol { list-style: none; padding: 0; margin-top: 56px; display: grid; gap: 0; max-width: 1280px; }
+  li { display: grid; grid-template-columns: 90px 1fr; align-items: baseline; padding: 19px 0; border-top: 1px solid rgba(247,246,244,.12); font-size: 38px; letter-spacing: -0.02em; font-weight: 430; }
   li:last-child { border-bottom: 1px solid rgba(247,246,244,.12); }
-  li .mono { font-size: 17px; }
+  li .mono { font-size: 16px; }
 </style><div class="grid"></div><div class="glow"></div><div class="wrap">
-  ${wordmark(150)}
+  ${wordmark(130)}
   <ol>
-    <li><span class="mono accent">01</span><span>Live postings from real company boards</span></li>
+    <li><span class="mono accent">01</span><span>Live postings from 60 real company boards</span></li>
     <li><span class="mono accent">02</span><span>Every claim quoted from its source</span></li>
     <li><span class="mono accent">03</span><span>Numbers computed in code</span></li>
-    <li><span class="mono accent">04</span><span>Runs as a desktop app and as an MCP server</span></li>
+    <li><span class="mono accent">04</span><span>Applies in parallel through a real browser</span></li>
+    <li><span class="mono accent">05</span><span>Reads replies and relearns</span></li>
+    <li><span class="mono accent">06</span><span>Desktop app and MCP server</span></li>
   </ol>
 </div>`;
 
@@ -173,14 +179,14 @@ async function png(html, file, height = H) {
 
 const runs = [];
 for (const o of out) {
-  const key = `${o.scene}|${o.caption}|${o.sped}`;
+  const key = `${o.scene}|${o.caption}|${o.sped}|${o.tag}`;
   const last = runs.at(-1);
   if (last && last.key === key) last.n++;
-  else runs.push({ key, scene: o.scene, caption: o.caption, sped: o.sped, n: 1 });
+  else runs.push({ key, scene: o.scene, caption: o.caption, sped: o.sped, tag: o.tag, n: 1 });
 }
 const capFiles = new Map();
 for (const r of runs) {
-  if (!capFiles.has(r.key)) capFiles.set(r.key, await png(captionHtml(r.scene, r.caption, r.sped), `cap-${capFiles.size}`, H - APP_H));
+  if (!capFiles.has(r.key)) capFiles.set(r.key, await png(captionHtml(r.scene, r.caption, r.sped, r.tag), `cap-${capFiles.size}`, H - APP_H));
   r.file = capFiles.get(r.key);
 }
 const titlePng = await png(titleHtml, 'title');

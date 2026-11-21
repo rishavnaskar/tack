@@ -1,11 +1,12 @@
-// Records the Tack demo against the real app: live job boards, the real model,
-// a fresh state. Frames come from a CDP screencast; render.mjs cuts them into
-// the final video.
+// Records the Tack demo against the real app: live job boards, live model calls
+// (the model cache is off unless TACK_LLM_CACHE says otherwise), a fresh state,
+// and Tack's own engine applying to the local practice form. Frames come from a
+// CDP screencast; render.mjs cuts them into the final video.
 //
 //   PLAYWRIGHT=/abs/path/to/node_modules/playwright/index.mjs node submission/video/record.mjs [take]
 //
-// The coach runs on its own port with state in state/video, so the model and
-// board caches survive between takes: record once to warm them, then again.
+// The coach runs on its own port with state in state/video. Exits with code 3
+// when the parallel apply did not end with every run confirmed.
 
 import { spawn } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
@@ -98,7 +99,7 @@ async function makeResume(browser) {
 // ------------------------------------------------------------ coach
 
 async function startCoach() {
-  const env = { ...process.env, TACK_STATE_DIR: STATE, TACK_PORT: String(PORT) };
+  const env = { ...process.env, TACK_STATE_DIR: STATE, TACK_PORT: String(PORT), TACK_LLM_CACHE: process.env.TACK_LLM_CACHE || 'off' };
   const child = spawn(process.execPath, ['--no-warnings', join(ROOT, 'coach/bin/serve.ts')], { cwd: ROOT, env, stdio: ['ignore', 'pipe', 'pipe'] });
   const log = [];
   child.stdout.on('data', (d) => log.push(String(d)));
@@ -162,6 +163,8 @@ function recorder(page) {
     await page.screenshot({ path: join(STILLS, `${name}.png`), scale: 'css', style: '#__cursor, #__ring { display: none !important; }' }).catch((e) => console.log(`still ${name}: ${e.message}`));
   };
   const caption = (text) => mark('cap', { text });
+  // A small note in the caption bar's top line, until the next tag ('' clears it).
+  const tag = (text) => mark('tag', { text });
 
   async function moveTo(x, y, ms) {
     const dist = Math.hypot(x - mx, y - my);
@@ -225,13 +228,13 @@ function recorder(page) {
     }
   }
 
-  return { marks, mark, caption, still, moveTo, scrollTo, scrollBy, point, click, wait, pos: () => ({ x: mx, y: my }) };
+  return { marks, mark, caption, tag, still, moveTo, scrollTo, scrollBy, point, click, wait, pos: () => ({ x: mx, y: my }) };
 }
 
 // ------------------------------------------------------------ the storyboard
 
 async function storyboard(page, r) {
-  const { mark, caption, still, click, point, scrollTo, scrollBy, wait, moveTo } = r;
+  const { mark, caption, tag, still, click, point, scrollTo, scrollBy, wait, moveTo } = r;
   const nav = (label) => click(page.locator('nav.rail a', { hasText: label }).first(), { scroll: false });
   const top = async (ms = 900) => {
     await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'smooth' }));
@@ -251,21 +254,27 @@ async function storyboard(page, r) {
       await sleep(450);
     }
   };
+  // Leaves the rail up long enough to read the call that just finished and how long it took.
+  const showCall = async (ms = 1600) => {
+    if (await page.locator('.trace.is-open').count()) await sleep(ms);
+  };
 
   // 1 Start
   await page.goto(BASE, { waitUntil: 'networkidle' });
   await page.mouse.move(980, 620);
   mark('scene', { id: 1 });
   caption('Tack: a career pivot coach. Start with a résumé.');
-  await sleep(2500);
+  await sleep(2400);
   await scrollTo('.intake', 'center', 1100);
-  caption('Upload the résumé PDF. Every skill Tack finds keeps the line that proves it.');
+  caption('Upload the résumé PDF. The model reads it now; every skill keeps the line that proves it.');
   const chooser = page.waitForEvent('filechooser');
   await click(page.locator('.intake .dropzone__hit').first());
+  tag('Model calls are live, not cached');
   await (await chooser).setFiles(RESUME_PDF);
-  await wait('resume', 2.5, () => page.getByRole('heading', { name: 'Profile' }).first().waitFor({ timeout: 180_000 }));
+  await wait('resume', 3, () => page.getByRole('heading', { name: 'Profile' }).first().waitFor({ timeout: 180_000 }));
+  await showCall(1800);
   await closeTrace();
-  await sleep(500);
+  await sleep(300);
   await scrollTo(page.getByRole('heading', { name: 'Profile' }).first(), 'start', 1200);
   await moveTo(560, 640);
   await sleep(900);
@@ -278,6 +287,7 @@ async function storyboard(page, r) {
   await click(role);
   await role.fill('');
   await role.pressSequentially('AI Product Manager', { delay: 30 });
+  tag('');
   const loc = page.getByLabel('Location');
   await click(loc);
   await loc.fill('');
@@ -297,10 +307,10 @@ async function storyboard(page, r) {
   await click(page.getByRole('button', { name: /^Read the market/ }).first());
   await sleep(1200);
   caption('The trace shows the agent at work: boards listed, 40 live postings read.');
-  await wait('harvest', 7, () => page.getByText('Extracting skills').first().waitFor({ timeout: 300_000 }));
-  caption('Then the model pulls out each skill with the exact line it came from.');
-  await wait('extract', 3, () => page.waitForURL('**/gap', { timeout: 600_000 }));
-  await sleep(900);
+  await wait('harvest', 6, () => page.getByText('Extracting skills').first().waitFor({ timeout: 300_000 }));
+  caption('Then the model reads them in 8 batches of 5, each skill kept with the exact line it came from.');
+  await wait('extract', 7, () => page.waitForURL('**/gap', { timeout: 600_000 }));
+  await showCall(1200);
 
   // 3 Gap map
   mark('scene', { id: 3 });
@@ -312,7 +322,7 @@ async function storyboard(page, r) {
   caption('Size is demand; fill is how much of it the résumé shows. Numbers are computed in code.');
   await moveTo(800, 520);
   await still('01-gap-map');
-  await sleep(2000);
+  await sleep(1900);
   await scrollTo(page.getByText('Top five to close').first(), 'start', 1100);
   caption('Open the top gap: the résumé against what real postings say, company by company.');
   await click(page.locator('.top5 .close-card').first());
@@ -320,38 +330,39 @@ async function storyboard(page, r) {
   await moveTo(1180, 640);
   await scrollBy(340, 1700, '.drawer__body');
   await still('02-evidence-drawer');
-  await sleep(700);
+  await sleep(900);
   await page.keyboard.press('Escape');
   await sleep(700);
 
   // 4 Market
   await closeTrace();
   mark('scene', { id: 4 });
-  caption('The market: every posting Tack read, from real companies, with fit against the résumé.');
+  caption('The market: the 40 postings Tack read, from real companies, with fit against the résumé.');
   await nav('Market');
-  await sleep(1700);
+  await sleep(1500);
   await scrollTo('.wall', 'start', 1200);
   await still('03-live-market');
   await sleep(400);
   await click(page.locator('button.win').first());
-  await sleep(1300);
+  await sleep(1200);
   caption('Each skill is highlighted on the exact line of the posting it came from.');
   const chip = page.locator('.pd__chips button').first();
   if (await chip.isVisible().catch(() => false)) await click(chip, { scroll: false });
-  await sleep(2200);
+  await sleep(2000);
   await page.keyboard.press('Escape');
-  await sleep(700);
+  await sleep(600);
 
   // 5 Plan
   await closeTrace();
   mark('scene', { id: 5 });
-  caption('The plan: 12 weeks inside 10 hours a week, biggest gaps first, a checkpoint every week.');
+  caption('The plan: 12 weeks inside 10 hours a week, biggest gaps first. The model only words the tasks.');
   await nav('Plan');
   await sleep(700);
   const build = page.getByRole('button', { name: 'Build my plan' }).first();
   if (await build.isVisible().catch(() => false)) {
     await click(build);
-    await wait('plan', 2, () => page.locator('.week__tasks').first().waitFor({ timeout: 180_000 }));
+    await wait('plan', 2.5, () => page.locator('.week__tasks').first().waitFor({ timeout: 180_000 }));
+    await showCall(1400);
     await closeTrace();
   }
   await sleep(300);
@@ -361,7 +372,7 @@ async function storyboard(page, r) {
   await click(page.locator('.task__tick').first());
   await sleep(600);
   await click(page.getByRole('button', { name: 'Passed' }).first());
-  await sleep(2100);
+  await sleep(2300);
   caption('Mark it not yet instead, then replan: a repair block goes in and the card says what moved and why.');
   await click(page.getByRole('button', { name: 'Not yet' }).first(), { scroll: false });
   await sleep(1200);
@@ -375,43 +386,26 @@ async function storyboard(page, r) {
   await moveTo(900, 470);
   await sleep(2700);
 
-  // 6 Portfolio
+  // 6 Interview
   await closeTrace();
   mark('scene', { id: 6 });
-  caption('Portfolio projects matched to the open gaps, placed on the plan weeks.');
-  await nav('Portfolio');
-  await sleep(500);
-  const suggest = page.getByRole('button', { name: 'Suggest projects' });
-  if (await suggest.isVisible().catch(() => false)) {
-    await click(suggest);
-    await wait('portfolio', 2, () => page.getByText('Why it counts').first().waitFor({ timeout: 180_000 }));
-    await closeTrace();
-  }
-  await sleep(400);
-  await scrollTo(page.locator('.project__head').first(), 'start', 1200);
-  await sleep(1600);
-  caption('Each project is tied to lines from real postings that ask for those skills.');
-  await scrollTo(page.getByText('Why it counts').first(), 'center', 1200);
-  await sleep(2200);
-
-  // 7 Interview
-  await closeTrace();
-  mark('scene', { id: 7 });
   caption('Mock interviews: questions drawn from the target postings and the open gaps.');
   await nav('Interview');
   await sleep(700);
   await click(page.getByRole('button', { name: /Start the session/ }));
   const box = page.locator('textarea').first();
-  await wait('question', 2, () => box.waitFor({ timeout: 120_000 }));
+  await wait('question', 2.5, () => box.waitFor({ timeout: 120_000 }));
+  await showCall(1200);
   await closeTrace();
-  await sleep(2000);
+  await sleep(1600);
   const question = (await page.locator('.stage__q').first().textContent().catch(() => '')) || '';
   await click(box);
   await wait('typing', 3.5, () => box.pressSequentially(answerFor(question), { delay: 6 }));
   await sleep(400);
   await click(page.getByRole('button', { name: 'Score this answer' }));
-  caption('Scored on a five-part rubric. Every score quotes the candidate\'s own words.');
-  await wait('judge', 2.5, () => page.locator('.crits__list').first().waitFor({ timeout: 180_000 }));
+  caption('Judged live on a five-part rubric. Every score quotes the candidate\'s own words.');
+  await wait('judge', 3, () => page.locator('.crits__list').first().waitFor({ timeout: 180_000 }));
+  await showCall(1500);
   await closeTrace();
   await scrollTo('.fb', 'start', 1000);
   await sleep(1300);
@@ -422,62 +416,134 @@ async function storyboard(page, r) {
   caption('Then a stronger answer built only from what was said, and the follow-up to expect.');
   await scrollTo(page.getByText(/stronger version/i).first(), 'start', 1200);
   await moveTo(900, 700);
-  await sleep(3300);
+  await sleep(2600);
+  const probe = page.getByText('The interviewer follows up').first();
+  if (await probe.count()) {
+    await scrollTo(probe, 'center', 1100);
+    await sleep(2200);
+  }
 
-  // 8 Tracker
+  // 7 Tracker
   await closeTrace();
-  mark('scene', { id: 8 });
+  mark('scene', { id: 7 });
   caption('The tracker learns which kinds of roles reply. A new profile has no history yet.');
   await nav('Tracker');
   await sleep(1300);
   await click(page.getByRole('button', { name: 'Load the demo person' }));
   await sleep(800);
   caption('So load the demo person: 24 sample applications, marked sample on screen.');
+  tag('Demo person · sample data');
   await click(page.getByRole('button', { name: 'Load Avery Quinn' }), { scroll: false });
   await wait('demo', 1.5, () => page.getByText('What gets replies').first().waitFor({ timeout: 60_000 }));
-  await sleep(700);
+  await sleep(600);
   await scrollTo(page.getByText('What gets replies').first(), 'start', 1100);
   caption('What gets replies: lessons written by code from reply rates per kind of role.');
   await moveTo(960, 520);
   await still('05-tracker-lessons');
-  await sleep(3200);
+  await sleep(2600);
+
+  await top(900);
+  tag('Sample mailbox · no real mail is read');
+  caption('Check replies: Tack searches the sample mailbox for every company with an open application.');
+  const rateBefore = ((await page.locator('.replies__rate').first().textContent().catch(() => '')) || '').trim();
+  await click(page.locator('.mail__acts').getByRole('button', { name: 'Check replies' }));
+  await wait('mail', 3, () => page.locator('.changed').first().waitFor({ timeout: 120_000 }));
+  await showCall(1600);
+  await closeTrace();
+  await sleep(500);
+  const rateAfter = ((await page.locator('.replies__rate').first().textContent().catch(() => '')) || '').trim();
+  const moved = rateBefore && rateAfter && rateBefore !== rateAfter ? `: the response rate moves from ${rateBefore} to ${rateAfter}` : '';
+  caption(`One live model call sorts the messages and statuses move${moved}.`);
+  await scrollTo('.changed', 'start', 1100);
+  await moveTo(820, 500);
+  await still('08-check-replies');
+  await sleep(2600);
+  await scrollTo('.replies', 'center', 1100);
+  caption('Automatic acknowledgements never count as a reply; the lessons relearn from the new statuses.');
+  await sleep(2600);
+
+  tag('Demo person · sample data');
   await scrollTo(page.getByRole('heading', { name: 'Apply next' }).first(), 'start', 1200);
   caption('Apply next ranks postings by fit and by how often that kind of role replies.');
-  await sleep(1700);
+  await sleep(1500);
   await click(page.getByRole('button', { name: 'Prepare application' }).first());
-  caption('Prepare application: tailored bullets, each shown with the résumé line it comes from.');
+  caption('Prepare application: the model tailors the bullets; each is shown with the résumé line it comes from.');
   // the sheet sits over the trace rail, so the rail is left alone here
-  await wait('kit', 2, () => page.locator('.kit__bullets').first().waitFor({ timeout: 180_000 }));
+  await wait('kit', 2.5, () => page.locator('.kit__bullets').first().waitFor({ timeout: 180_000 }));
   await sleep(800);
   await scrollTo('.kit__bullets', 'start', 1200);
   await moveTo(1100, 560);
   await still('06-application-kit');
-  await sleep(2800);
+  await sleep(2600);
   await page.keyboard.press('Escape');
-  await sleep(500);
+  await sleep(600);
   await closeTrace();
 
-  // 9 Progress
-  mark('scene', { id: 9 });
+  tag('Practice applications · local sandbox form');
+  await scrollTo('.topn', 'center', 1100);
+  caption('Apply to top 3: three engine sessions in parallel, each filling and submitting in its own Chrome.');
+  await click(page.getByRole('button', { name: /^Apply to top 3/ }));
+  await page.locator('.batch').first().waitFor({ timeout: 30_000 });
+  await sleep(600);
+  await scrollTo('.batch', 'start', 1000);
+  await closeTrace();
+  caption('These are practice applications to Tack\'s local sandbox form, never sent to a company.');
+  const runsDone = () => page.evaluate(() => {
+    const runs = [...document.querySelectorAll('.batch .run')];
+    return runs.length > 0 && runs.every((el) => el.classList.contains('is-applied') || el.classList.contains('is-failed'));
+  });
+  const allFilling = () => page.evaluate(() => {
+    const runs = [...document.querySelectorAll('.batch .run')];
+    return runs.length > 0 && runs.every((el) => /Filled|Pressed Submit|Confirmed/.test(el.textContent || '') || el.classList.contains('is-failed'));
+  });
+  await wait('apply-start', 4, async () => { while (!(await allFilling()) && !(await runsDone())) await sleep(250); });
+  caption('With a real person and a live posting, the same run fills and submits the real posting instead.');
+  await wait('apply-finish', 6, async () => {
+    const t0 = Date.now();
+    while (!(await runsDone())) {
+      if (Date.now() - t0 > 360_000) throw new Error('the apply batch did not finish within 6 minutes');
+      await sleep(250);
+    }
+  });
+  await sleep(900);
+  const result = await page.evaluate(() => ({
+    applied: document.querySelectorAll('.batch .run.is-applied').length,
+    failed: document.querySelectorAll('.batch .run.is-failed').length,
+    line: document.querySelector('.batch__line')?.textContent?.replace(/\s+/g, ' ').trim() ?? '',
+  }));
+  r.mark('apply', result);
+  caption(result.failed
+    ? `${result.applied} of 3 confirmed; a run that is not sent says why.`
+    : 'All three confirmed: the form\'s reference number and the page each run ended on.');
+  await scrollTo('.batch__runs', 'center', 1100);
+  await moveTo(900, 560);
+  await still('07-parallel-apply');
+  await sleep(3600);
+  tag('');
+
+  // 8 Progress
+  mark('scene', { id: 8 });
   caption('Progress and the daily brief: the three things worth doing today.');
   await nav('Progress');
-  await sleep(3200);
+  await sleep(3000);
   await scrollTo('.nums', 'start', 1200);
   caption('Readiness over time, hours against the plan, streak and interview scores.');
-  await sleep(2800);
+  await sleep(2700);
   mark('end');
+  return result;
 }
 
 // ------------------------------------------------------------ main
 
 const { child, log } = await startCoach();
 let browser;
+let result;
 try {
   browser = await chromium.launch();
   await makeResume(browser);
   await api('/reset', 'POST');
   const state = await api('/state');
-  console.log(`coach on ${BASE}: engine ${state.engine.available ? 'on' : 'off'} (${state.engine.note}), model ${state.model.name}`);
+  console.log(`coach on ${BASE}: engine ${state.engine.available ? 'on' : 'off'} (${state.engine.note}), model ${state.model.name}, model cache ${process.env.TACK_LLM_CACHE || 'off'}`);
   if (!state.engine.available || !state.model.configured) throw new Error('the video needs the engine on and a model key');
 
   rmSync(OUT, { recursive: true, force: true });
@@ -499,7 +565,7 @@ try {
   const r = recorder(page);
   const started = now();
   try {
-    await storyboard(page, r);
+    result = await storyboard(page, r);
   } finally {
     await sleep(600);
     await cdp.send('Page.stopScreencast').catch(() => {});
@@ -507,9 +573,16 @@ try {
     await page.screenshot({ path: join(OUT, 'last.png') }).catch(() => {});
     writeFileSync(join(OUT, 'take.json'), JSON.stringify({ started, scale: SCALE, frames, marks: r.marks }, null, 1));
     console.log(`${frames.length} frames over ${(now() - started).toFixed(1)} s in ${OUT}`);
+    for (const m of r.marks.filter((x) => x.type === 'wait')) console.log(`  wait ${m.label}: ${(m.t1 - m.t0).toFixed(1)} s`);
   }
 } finally {
   await browser?.close();
-  child.kill();
+  // The coach stops its engine, and the engine its Chrome, before it exits.
+  const gone = new Promise((ok) => child.once('exit', ok));
+  child.kill('SIGTERM');
+  await Promise.race([gone, sleep(20_000)]);
+  if (child.exitCode === null && child.signalCode === null) child.kill('SIGKILL');
   if (process.env.TACK_VIDEO_LOG) console.log(log.join(''));
 }
+if (result) console.log(`apply: ${result.applied} confirmed, ${result.failed} not sent (${result.line})`);
+if (!result || result.failed || result.applied < 3) process.exitCode = 3;
