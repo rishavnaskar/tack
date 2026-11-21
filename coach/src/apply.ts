@@ -1,6 +1,6 @@
 // Automated applying through the engine. Each posting gets its own engine session (its own Chrome
-// window, laid out side by side) and its own agent; a batch runs them in parallel, started a few
-// seconds apart so the shared model budget is not hit at once, and one failure stops nothing else.
+// window) and its own agent; a batch runs them in parallel, started a few seconds apart so the
+// shared model budget is not hit at once, and one failure stops nothing else.
 // A Submit goes only on the person's standing consent, through the engine's own standing approval.
 
 import { createHash, randomUUID } from 'node:crypto';

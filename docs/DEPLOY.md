@@ -59,7 +59,8 @@ TACK_HOSTED=1 PORT=8080 node --no-warnings coach/bin/serve.ts
 - Request sizes: Up to 1 MB for JSON bodies and 5 MB for a résumé file. Anything larger receives a 413 error with a message.
 - Request rates: 240 requests a minute per address, 120 a minute per session, 4 running at once per session, 4 trace streams per session, 16 trace streams per address, and 60 new sessions per address each hour. Exceeding a limit returns a 429 status with `Retry-After` and `{error, code}`.
 - Model budget: 30 calls an hour and 80 a day per session, with 600 an hour and 3000 a day for the whole preview. Only calls that miss the cache count toward these limits. If you go over budget, Tack returns 429 with `code: "budget"` and a message the UI displays directly. Screens with built-in fallback data (plan wording, portfolio briefs, interview questions and scoring, role suggestions, and the kit) keep working without the model.
-- Disabled features: Requests to `/api/apply*`, `/api/practice*`, `/practice/*`, `/api/mail/*`, `/api/applications/sync`, `/api/autopilot*`, and `/api/engine*` return 409 with a message pointing to the desktop app. `/api/state` reports `capabilities: {apply: false, mail: false, autopilot: false, reason}`.
+- Disabled features: Requests to `/api/apply*`, `/api/queue*`, `/api/answers*`, `/api/consent`, `/api/practice*`, `/practice/*`, `/api/mail/*`, `/api/applications/sync`, `/api/autopilot*`, and `/api/engine*` return 409 with a message pointing to the desktop app, and start no session. `/api/state` reports `capabilities: {apply: false, mail: false, autopilot: false, reason}`, and the UI shows those parts as running in the desktop app. The autopilot's scheduler never starts in hosted mode.
+- Job boards: postings are read live from the public boards. When the boards cannot be reached, the preview falls back to the bundled sample market, labelled as sample.
 
 ## Security
 
