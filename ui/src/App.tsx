@@ -13,6 +13,7 @@ import { Portfolio } from './screens/Portfolio';
 import { Progress } from './screens/Progress';
 import { Interview } from './screens/Interview';
 import { Tracker } from './screens/Tracker';
+import { Autopilot } from './screens/Autopilot';
 import { Placeholder } from './screens/Placeholder';
 import './App.css';
 
@@ -29,12 +30,15 @@ function useNav(): NavItem[] {
     { index: '05', label: 'Interview', short: 'Interview', path: '/interview', meta: show(c?.interviews) },
     { index: '06', label: 'Tracker', path: '/tracker', meta: show(c?.applications) },
     { index: '07', label: 'Progress', path: '/progress' },
+    { index: '08', label: 'Autopilot', short: 'Auto', path: '/autopilot' },
   ];
 }
 
 function RailStatus() {
   const { data } = useAppState();
-  const live = !MOCK && data?.mode === 'live';
+  // A real person is never shown sample data, so the rail never calls their app a demo.
+  const real = !!data?.profile && data.profile.source !== 'demo';
+  const live = !MOCK && (data?.mode === 'live' || real);
   const n = data?.counts.postings ?? 0;
   const source = !data
     ? 'Connecting'
@@ -44,7 +48,7 @@ function RailStatus() {
         ? `${n} ${live ? 'live' : 'sample'} postings`
         : data.engine.available
           ? 'Job boards reachable'
-          : 'Engine off, sample data';
+          : real ? 'Job boards unreachable' : 'Engine off, sample data';
   return (
     <div className="rail-status" title={data?.engine.note}>
       <span className={['rail-status__dot', live && 'is-live'].filter(Boolean).join(' ')} aria-hidden="true" />
@@ -106,6 +110,7 @@ export function App() {
         <Route path="/interview" element={<Screen key="interview"><Interview /></Screen>} />
         <Route path="/tracker" element={<Screen key="tracker"><Tracker /></Screen>} />
         <Route path="/progress" element={<Screen key="progress"><Progress /></Screen>} />
+        <Route path="/autopilot" element={<Screen key="autopilot"><Autopilot /></Screen>} />
         <Route path="*" element={<Screen key="404"><Placeholder screen="missing" /></Screen>} />
       </Routes>
     </AppShell>

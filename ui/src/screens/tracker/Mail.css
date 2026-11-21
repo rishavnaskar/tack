@@ -45,6 +45,18 @@
   color: var(--mute);
 }
 
+.mail__note a {
+  color: var(--paper);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.mail__error {
+  display: block;
+  margin-top: 4px;
+  color: var(--accent-hi);
+}
+
 .mail__acts {
   display: flex;
   flex-wrap: wrap;

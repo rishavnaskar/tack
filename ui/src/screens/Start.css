@@ -698,6 +698,17 @@
   color: var(--olive-hi);
 }
 
+.details__consent {
+  margin-top: var(--s-4);
+  padding: var(--s-4);
+  border-radius: var(--r-3);
+  box-shadow: inset 0 0 0 1px var(--accent-line);
+}
+
+.details__consent.is-on {
+  box-shadow: inset 0 0 0 1px var(--olive-hi);
+}
+
 .details__ready.is-missing {
   color: var(--paper);
 }

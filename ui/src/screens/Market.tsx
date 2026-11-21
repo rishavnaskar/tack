@@ -143,7 +143,9 @@ export function Market() {
                 return all.filter((p) => (p.fit ?? -1) >= lo && (p.fit ?? -1) < hi).length;
               }}
             />
-            <FilterGroup label="Source" value={source} onChange={(v) => setSource(v as Source)} options={[['all', 'All'], ['live', 'Live'], ['sample', 'Sample']]} counts={(v) => all.filter((p) => (v === 'live' ? p.live : !p.live)).length} />
+            {all.some((p) => !p.live) && (
+              <FilterGroup label="Source" value={source} onChange={(v) => setSource(v as Source)} options={[['all', 'All'], ['live', 'Live'], ['sample', 'Sample']]} counts={(v) => all.filter((p) => (v === 'live' ? p.live : !p.live)).length} />
+            )}
           </div>
 
           <div className="wall-head">

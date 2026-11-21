@@ -6,7 +6,7 @@ import { applying, isActive, useBatches, useRunFor } from '../api/applying';
 import { useQuery } from '../api/query';
 import type { Posting, Segment, SyncResult, TrackerInsights } from '../api/types';
 import { hostOf, pad2 } from '../lib/format';
-import { Button, Card, Chip, EmptyState, ErrorState, Icon, Modal, PageHeader, Skeleton, ease, useToast } from '../ui';
+import { Button, Card, Chip, EmptyState, ErrorState, Icon, PageHeader, Skeleton, ease, useToast } from '../ui';
 import { AddApplication, AppDrawer, Pipeline, SectionHead } from './tracker/Pipeline';
 import { chance, groupSegments, isWinner, pctOf, segKey, segmentValue } from './tracker/model';
 import { KitSheet, type KitTarget } from './kit/KitSheet';
@@ -22,22 +22,6 @@ export function Tracker() {
   const [adding, setAdding] = useState(false);
   const [openId, setOpenId] = useState<string>();
   const [changed, setChanged] = useState<SyncResult>();
-  const [demoAsk, setDemoAsk] = useState(false);
-  const [demoBusy, setDemoBusy] = useState(false);
-  const toast = useToast();
-
-  const loadDemo = async () => {
-    setDemoBusy(true);
-    try {
-      await actions.loadDemo();
-      setDemoAsk(false);
-      toast({ title: 'Avery Quinn is loaded', body: '24 sample applications with their replies. Every card is marked sample.', tone: 'success' });
-    } catch (e) {
-      toast({ title: 'Could not load the demo person', body: (e as Error).message, tone: 'error' });
-    } finally {
-      setDemoBusy(false);
-    }
-  };
 
   const all = apps.data ?? [];
   const open = all.find((a) => a.id === openId);
@@ -69,17 +53,17 @@ export function Tracker() {
             title="Nothing to learn from yet"
             body={
               state?.profile
-                ? 'Log the applications you have sent, or apply to one of the postings ranked below. After about a dozen, the tracker starts to show which kinds of roles reply. To see it learn now, load the demo person and their 24 sample applications.'
+                ? 'Switch the autopilot on and Tack applies to the best-ranked postings by itself, or apply to one below. After about a dozen, the tracker starts to show which kinds of roles reply.'
                 : 'Add a résumé and read the market first, or load the demo person to see the tracker with 24 applications.'
             }
             action={
               state?.profile ? (
                 <div className="tr__empty-actions">
-                  <Button variant="primary" iconLeft="plus" onClick={() => setAdding(true)}>
-                    Add application
+                  <Button variant="primary" icon="arrow-right" to="/autopilot">
+                    Open Autopilot
                   </Button>
-                  <Button variant="ghost" onClick={() => setDemoAsk(true)}>
-                    Load the demo person
+                  <Button variant="ghost" iconLeft="plus" onClick={() => setAdding(true)}>
+                    Add application
                   </Button>
                 </div>
               ) : (
@@ -115,27 +99,6 @@ export function Tracker() {
           <Pipeline apps={all} onOpen={setOpenId} />
         </>
       )}
-
-      <Modal
-        open={demoAsk}
-        onClose={() => setDemoAsk(false)}
-        eyebrow="Sample history"
-        title="Load the demo person?"
-        footer={
-          <>
-            <Button variant="quiet" onClick={() => setDemoAsk(false)}>
-              Keep mine
-            </Button>
-            <Button variant="primary" onClick={loadDemo} loading={demoBusy}>
-              Load Avery Quinn
-            </Button>
-          </>
-        }
-      >
-        <p className="t-mute">
-          Avery Quinn comes with 24 sample applications and their replies, so the tracker has something to learn from. Loading her replaces your profile, postings, plan and interviews.
-        </p>
-      </Modal>
 
       <AppDrawer app={open} onClose={() => setOpenId(undefined)} />
       <AddApplication open={adding} onClose={() => setAdding(false)} postings={postings.data ?? []} />
@@ -328,7 +291,13 @@ function ApplyNext({ insights, postings, engineOn }: { insights: TrackerInsights
     setBusy(label);
     try {
       const res = await work();
-      toast({ title: res.note, body: practice ? 'Each one opens in its own Chrome window. Practice applications go to Tack\'s form, never to the company.' : 'Each one opens in its own Chrome window and is submitted without a review step.' });
+      toast({
+        title: res.note,
+        body: practice ? 'Each one opens in its own Chrome window. Practice applications go to Tack\'s form, never to the company.'
+          : ready.data?.dryRun ? 'Each one opens in its own Chrome window and is filled, never submitted.'
+            : ready.data?.consent ? 'Each one opens in its own Chrome window and is submitted on your standing consent.'
+              : 'Each one opens in its own Chrome window and stops before Submit: you have not given standing consent.',
+      });
     } catch (e) {
       toast({ title: 'Could not start applying', body: (e as Error).message, tone: 'error' });
     } finally {
@@ -391,7 +360,9 @@ function ApplyNext({ insights, postings, engineOn }: { insights: TrackerInsights
                 <Icon name="warning" size={14} /> {blocked}
               </>
             ) : (
-              `${n === 1 ? 'One Chrome window' : `${n} Chrome windows working at the same time`}, each filled and submitted by the engine. ${practice ? 'The demo person applies to Tack\'s practice form, never to a company.' : 'Live postings are submitted for real, with no review step.'}`
+              `${n === 1 ? 'One Chrome window' : `${n} Chrome windows working at the same time`}, each filled by the engine. ${practice ? 'The demo person applies to Tack\'s practice form, never to a company.'
+                : ready.data?.dryRun ? 'Dry run: forms are filled for real and never submitted.'
+                  : ready.data?.consent ? 'Each is submitted on your standing consent, with no review step.' : 'Each stops before Submit until you give standing consent under Application details on Start.'}`
             )}
           </p>
         </div>
