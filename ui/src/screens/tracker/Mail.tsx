@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 import { api } from '../../api/client';
 import { actions } from '../../api/hooks';
@@ -14,12 +14,48 @@ const KIND_LABEL: Record<MailKind, [string, string]> = {
   'auto-ack': ['automatic acknowledgement', 'automatic acknowledgements'], unrelated: ['unrelated', 'unrelated'],
 };
 
+const POLL_MS = 3000;
+const POLL_FOR_MS = 5 * 60_000;
+
 export function MailStrip({ onResult }: { onResult: (r: SyncResult) => void }) {
   const status = useQuery('mail-status', api.mailStatus);
   const [checking, setChecking] = useState(false);
-  const [connecting, setConnecting] = useState<'idle' | 'starting' | 'waiting' | 'checking'>('idle');
+  const [connecting, setConnecting] = useState<'idle' | 'starting' | 'waiting'>('idle');
+  const [link, setLink] = useState<string>();
+  const [error, setError] = useState<string>();
+  const [leaving, setLeaving] = useState(false);
   const toast = useToast();
   const s = status.data;
+
+  // While Google's window is open, look every few seconds whether the connection has landed.
+  useEffect(() => {
+    if (connecting !== 'waiting') return;
+    const until = Date.now() + POLL_FOR_MS;
+    let stop = false;
+    const look = async () => {
+      if (stop) return;
+      try {
+        const next = await api.mailCheck();
+        if (next.connected) {
+          setConnecting('idle');
+          setLink(undefined);
+          await status.refetch().catch(() => undefined);
+          toast({ title: 'Gmail is connected', body: 'Replies are read on their own every few hours, read-only.', tone: 'success' });
+          return;
+        }
+      } catch (e) {
+        setError((e as Error).message);
+      }
+      if (Date.now() > until) {
+        setConnecting('idle');
+        setError('Google did not finish within five minutes. Connect again when you are ready.');
+        return;
+      }
+      window.setTimeout(look, POLL_MS);
+    };
+    const t = window.setTimeout(look, POLL_MS);
+    return () => { stop = true; window.clearTimeout(t); };
+  }, [connecting]);
 
   const check = async () => {
     setChecking(true);
@@ -34,46 +70,71 @@ export function MailStrip({ onResult }: { onResult: (r: SyncResult) => void }) {
 
   const connect = async () => {
     setConnecting('starting');
+    setError(undefined);
     try {
-      const { url } = await api.mailConnect();
-      window.open(url, '_blank', 'noopener');
+      const { url, opened } = await api.mailConnect(true);
+      // The coach opens the default browser; when it cannot, the link opens here instead.
+      if (!opened) window.open(url, '_blank', 'noopener');
+      setLink(url);
       setConnecting('waiting');
     } catch (e) {
       setConnecting('idle');
-      toast({ title: 'Could not start connecting Gmail', body: (e as Error).message, tone: 'error' });
+      setError((e as Error).message);
     }
   };
 
-  const finish = async () => {
-    setConnecting('checking');
+  const disconnect = async () => {
+    setLeaving(true);
+    setError(undefined);
     try {
-      const next = await api.mailCheck();
-      await status.refetch();
-      toast(next.connected ? { title: 'Gmail is connected', body: 'Check replies reads it, read-only.', tone: 'success' } : { title: 'Not connected yet', body: next.note });
+      const next = await api.mailDisconnect();
+      await status.refetch().catch(() => undefined);
+      toast({ title: 'Gmail is disconnected', body: next.note });
+    } catch (e) {
+      setError((e as Error).message);
     } finally {
-      setConnecting('idle');
+      setLeaving(false);
     }
   };
 
   const tone = !s ? 'is-loading' : s.source === 'sample' ? 'is-sample' : s.connected ? 'is-on' : 'is-off';
+  const note = connecting === 'waiting' ? 'Finish in the Google window that opened. This page notices by itself when it is done.' : s?.note ?? status.error?.message ?? '';
 
   return (
     <div className={['mail', tone].join(' ')} role="region" aria-label="Mail">
       <span className="t-label mail__label">Mail</span>
       <span className="mail__state">
-        <span className="mail__dot" aria-hidden="true" />
-        {s ? s.label : status.error ? 'Mail status unavailable' : 'Checking mail'}
+        {connecting === 'waiting' ? <span className="pulse-dot" aria-hidden="true" /> : <span className="mail__dot" aria-hidden="true" />}
+        {connecting === 'waiting' ? 'Waiting for Google' : s ? s.label : status.error ? 'Mail status unavailable' : 'Checking mail'}
       </span>
-      <span className="mail__note">{s?.note ?? status.error?.message ?? ''}</span>
+      <span className="mail__note">
+        {note}
+        {connecting === 'waiting' && link && (
+          <>
+            {' '}
+            <a href={link} target="_blank" rel="noreferrer">Open Google's page again</a>
+          </>
+        )}
+        {error && (
+          <span className="mail__error" role="alert">
+            {error}
+          </span>
+        )}
+      </span>
       <span className="mail__acts">
-        {s?.canConnect && connecting !== 'waiting' && connecting !== 'checking' && (
+        {s?.canConnect && connecting !== 'waiting' && (
           <Button variant="ghost" size="sm" iconLeft="plus" onClick={connect} loading={connecting === 'starting'}>
             Connect Gmail
           </Button>
         )}
-        {(connecting === 'waiting' || connecting === 'checking') && (
-          <Button variant="ghost" size="sm" iconLeft="check" onClick={finish} loading={connecting === 'checking'}>
-            I have finished in Google
+        {connecting === 'waiting' && (
+          <Button variant="quiet" size="sm" onClick={() => setConnecting('idle')}>
+            Cancel
+          </Button>
+        )}
+        {s?.canDisconnect && (
+          <Button variant="quiet" size="sm" onClick={disconnect} loading={leaving}>
+            Disconnect
           </Button>
         )}
         <Button variant="primary" size="sm" iconLeft="refresh" onClick={check} loading={checking} disabled={!s?.connected}>

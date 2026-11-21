@@ -4,8 +4,8 @@ import { AnimatePresence, motion } from 'motion/react';
 import { api, ApiError, fileToBase64 } from '../api/client';
 import { tracked, useTrace } from '../api/events';
 import { actions, useAppState, useGap } from '../api/hooks';
-import { useQuery } from '../api/query';
-import type { AppState, ApplicationDetails, Goal, Profile, ProfileSkill } from '../api/types';
+import { invalidate, useQuery } from '../api/query';
+import type { AppState, ApplicationDetails, Consent, Goal, Profile, ProfileSkill } from '../api/types';
 import {
   BlueprintLoader,
   Button,
@@ -556,9 +556,13 @@ function TargetSection({ state }: { state: AppState }) {
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const first = useRef(true);
   const timer = useRef<number>(undefined);
+  // What the server last holds, so a save that comes back as new state does not save again.
+  const saved = useRef(JSON.stringify(state.goal ?? null));
 
   useEffect(() => {
-    if (state.goal) setGoal(state.goal);
+    if (!state.goal) return;
+    saved.current = JSON.stringify(state.goal);
+    setGoal(state.goal);
   }, [state.goal]);
 
   const set = (patch: Partial<Goal>) => {
@@ -566,21 +570,33 @@ function TargetSection({ state }: { state: AppState }) {
     setGoal((g) => ({ ...g, ...patch }));
   };
 
+  const save = async (g: Goal) => {
+    const json = JSON.stringify(g);
+    if (json === saved.current || !g.targetRole.trim()) return;
+    saved.current = json;
+    setSaveState('saving');
+    try {
+      await actions.saveGoal(g);
+      setSaveState('saved');
+    } catch {
+      saved.current = '';
+      setSaveState('error');
+    }
+  };
+
+  // Saved a moment after typing stops, or at once when a field loses focus; unchanged values are never sent.
   useEffect(() => {
     if (first.current || !profile) return;
     window.clearTimeout(timer.current);
-    if (!goal.targetRole.trim()) return;
-    timer.current = window.setTimeout(async () => {
-      setSaveState('saving');
-      try {
-        await actions.saveGoal(goal);
-        setSaveState('saved');
-      } catch {
-        setSaveState('error');
-      }
-    }, 700);
+    timer.current = window.setTimeout(() => void save(goal), 1500);
     return () => window.clearTimeout(timer.current);
   }, [goal, profile]);
+
+  const flush = () => {
+    if (first.current || !profile) return;
+    window.clearTimeout(timer.current);
+    void save(goal);
+  };
 
   const roles = useQuery(`roles:${profile?.name ?? ''}:${profile?.skills.length ?? 0}`, api.suggestRoles, { enabled: !!profile });
   const disabled = !profile;
@@ -607,6 +623,7 @@ function TargetSection({ state }: { state: AppState }) {
             value={goal.targetRole}
             disabled={disabled}
             onChange={(e) => set({ targetRole: e.target.value })}
+            onBlur={flush}
           />
           <div className="target__suggest">
             <span className="t-label">Roles next door</span>
@@ -650,7 +667,7 @@ function TargetSection({ state }: { state: AppState }) {
         </div>
 
         <div className="target__grid">
-          <TextField label="Location" placeholder="Bengaluru" value={goal.location} disabled={disabled} onChange={(e) => set({ location: e.target.value })} />
+          <TextField label="Location" placeholder="Bengaluru" value={goal.location} disabled={disabled} onChange={(e) => set({ location: e.target.value })} onBlur={flush} />
           <div className="target__toggle">
             <Toggle checked={goal.remote} onChange={(v) => set({ remote: v })} label="Include remote roles" hint="Remote postings in your country" disabled={disabled} />
           </div>
@@ -777,10 +794,43 @@ function DetailsSection({ state }: { state: AppState }) {
                 </p>
               )}
             </div>
+            {view.data?.consent && <ConsentRow consent={view.data.consent} onChange={() => view.refetch().catch(() => undefined)} />}
           </>
         )}
       </Card>
     </section>
+  );
+}
+
+function ConsentRow({ consent, onChange }: { consent: Consent; onChange: () => void }) {
+  const toast = useToast();
+  const [busy, setBusy] = useState(false);
+  const flip = async (on: boolean) => {
+    setBusy(true);
+    try {
+      await api.setConsent(on);
+      onChange();
+      invalidate('apply-readiness', 'autopilot');
+      toast(on ? { title: 'Consent given', body: 'Tack ticks consent boxes and submits applications for you from now on.', tone: 'success' } : { title: 'Consent withdrawn', body: 'Tack fills forms and stops before every Submit.' });
+    } catch (e) {
+      toast({ title: 'Could not change it', body: (e as Error).message, tone: 'error' });
+    } finally {
+      setBusy(false);
+    }
+  };
+  const date = (at?: string) => (at ? new Date(at).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : '');
+  return (
+    <div className={['details__consent', consent.on && 'is-on'].filter(Boolean).join(' ')}>
+      <Toggle
+        checked={consent.on}
+        onChange={flip}
+        disabled={busy}
+        label={consent.label}
+        hint={consent.on
+          ? `Given on ${date(consent.givenAt)}. Turn it off and every application stops before Submit.`
+          : `Off${consent.withdrawnAt ? ` since ${date(consent.withdrawnAt)}` : ''}: Tack fills each form and stops at the consent box or the final Submit, and tells you why.`}
+      />
+    </div>
   );
 }
 
@@ -878,7 +928,9 @@ function MarketSection({ state }: { state: AppState }) {
                   ))}
                 </ol>
                 <p className="runcard__mode t-micro">
-                  {state.engine.available ? 'Live: open roles are read straight from public company job boards.' : 'Demo: the engine is off, so Tack reads the bundled sample of 40 postings.'}
+                  {state.engine.available ? 'Live: open roles are read straight from public company job boards.'
+                    : state.profile && state.profile.source !== 'demo' ? 'The public job boards are not reachable right now. Check the connection, then read the market.'
+                      : 'Demo: the engine is off, so Tack reads the bundled sample of 40 postings.'}
                 </p>
               </div>
               <div className="runcard__actions">

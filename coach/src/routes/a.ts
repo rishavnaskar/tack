@@ -8,7 +8,7 @@ import { InputError, parseResume, suggestRoles } from '../intake.ts';
 import { buildGap, postingFit, recompute } from '../gap.ts';
 import { canonical, skillId } from '../skills.ts';
 import { loadDemo, snapshotPostings } from '../demo/load.ts';
-import { saveResume } from '../apply.ts';
+import { isDemo, saveResume } from '../apply.ts';
 
 export async function state(): Promise<AppState> {
   const eng = await engine.status();
@@ -183,6 +183,13 @@ export function mount(r: Router): void {
       if (!live) t.step('engine', 'engine returned nothing; falling back to the bundled snapshot');
     } else {
       t.step('engine', 'browser engine not attached; reading the bundled snapshot');
+    }
+    // Sample postings are only ever the demo person's; a real person gets live ones or a plain reason.
+    if (!live && !isDemo()) {
+      t.fail('no live postings could be read');
+      throw new HttpError(503, (await engine.status()).available
+        ? `No open roles fit "${role}" on the job boards right now. Try a broader target role.`
+        : 'The public job boards are not reachable right now. Check the connection and try again.');
     }
     if (!live) postings = snapshotPostings().slice(0, count);
     else {

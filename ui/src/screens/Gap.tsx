@@ -171,7 +171,7 @@ export function Gap() {
           )}
 
           <p className="gap__foot t-micro">
-            Built {shortDate(data.generatedAt)} from {data.postingCount} {state?.mode === 'live' ? 'live' : 'sample'} postings. {data.market.salaryNote}
+            Built {shortDate(data.generatedAt)} from {data.postingCount} {state?.mode === 'live' || (state?.profile && state.profile.source !== 'demo') ? 'live' : 'sample'} postings. {data.market.salaryNote}
           </p>
         </>
       )}

@@ -27,6 +27,7 @@ if (existsSync(fileURLToPath(routesB))) {
 }
 
 mountC(app.router);
+(await import('../src/routes/d.ts')).mount(app.router);
 
 if (!hosted) {
   const port = Number(process.env.TACK_PORT) || 4400;

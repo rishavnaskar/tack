@@ -554,22 +554,65 @@ export function resumeText(bytes: Uint8Array, mime?: string): { ok: true; text: 
 
 // ------------------------------------------------------------ link checks
 
-/** True only when the address answers 2xx: HEAD first, GET when HEAD is refused. */
-export async function verifyUrl(url: string, fetchImpl: typeof fetch = fetch, timeoutMs = 5000): Promise<boolean> {
-  try {
-    const u = new URL(url);
-    if (u.protocol !== 'https:' && u.protocol !== 'http:') return false;
-  } catch {
-    return false;
+/** An IP address on this machine, a private network or a link-local range: never fetched for a model's suggestion. */
+export function privateAddress(ip: string): boolean {
+  const v = ip.toLowerCase().replace(/^\[|\]$/g, '');
+  const mapped = v.match(/^::ffff:(\d+\.\d+\.\d+\.\d+)$/);
+  if (mapped) return privateAddress(mapped[1]);
+  const m = v.match(/^(\d+)\.(\d+)\.(\d+)\.(\d+)$/);
+  if (m) {
+    const [a, b] = [Number(m[1]), Number(m[2])];
+    return a === 0 || a === 10 || a === 127 || a >= 224 || (a === 100 && b >= 64 && b <= 127) || (a === 169 && b === 254)
+      || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168) || (a === 192 && b === 0) || (a === 198 && (b === 18 || b === 19));
   }
-  const attempt = async (method: 'HEAD' | 'GET'): Promise<number> => {
+  if (!v.includes(':')) return false;
+  return v === '::' || v === '::1' || /^f[cd]/.test(v) || /^fe[89ab]/.test(v) || /^ff/.test(v) || v.startsWith('64:ff9b:') || v.startsWith('2001:db8');
+}
+
+/** An https address on a public host name and the default port, or null. */
+export function publicHttps(url: string): URL | null {
+  let u: URL;
+  try { u = new URL(url); } catch { return null; }
+  if (u.protocol !== 'https:' || u.username || u.password || (u.port && u.port !== '443')) return null;
+  const host = u.hostname.toLowerCase().replace(/\.$/, '');
+  if (!host.includes('.') || host === 'localhost' || /\.(localhost|local|internal|lan|home|arpa)$/.test(host)) return null;
+  if (/^[\d.]+$/.test(host) || host.includes(':') || host.startsWith('[')) return null;
+  return u;
+}
+
+type Lookup = (host: string) => Promise<{ address: string }[]>;
+const dnsLookup: Lookup = async (host) => (await import('node:dns/promises')).lookup(host, { all: true, verbatim: true });
+
+/**
+ * True only when a public https address answers 2xx: HEAD first, GET when HEAD is refused. The host
+ * must resolve to public addresses only, and each redirect is checked the same way.
+ */
+export async function verifyUrl(url: string, fetchImpl: typeof fetch = fetch, timeoutMs = 4000, lookup: Lookup = dnsLookup): Promise<boolean> {
+  const safe = async (u: string): Promise<boolean> => {
+    const parsed = publicHttps(u);
+    if (!parsed) return false;
     try {
-      const res = await fetchImpl(url, { method, redirect: 'follow', signal: AbortSignal.timeout(timeoutMs), headers: { 'user-agent': 'Mozilla/5.0 (Macintosh) Tack/0.1' } });
-      await res.body?.cancel().catch(() => {});
-      return res.status;
+      const addrs = await lookup(parsed.hostname);
+      return addrs.length > 0 && !addrs.some((a) => privateAddress(a.address));
     } catch {
-      return 0;
+      return false;
     }
+  };
+  const attempt = async (method: 'HEAD' | 'GET'): Promise<number> => {
+    let at = url;
+    for (let hop = 0; hop < 4; hop++) {
+      if (!(await safe(at))) return 0;
+      try {
+        const res = await fetchImpl(at, { method, redirect: 'manual', signal: AbortSignal.timeout(timeoutMs), headers: { 'user-agent': 'Mozilla/5.0 (Macintosh) Tack/0.1' } });
+        await res.body?.cancel().catch(() => {});
+        const next = res.status >= 300 && res.status < 400 ? res.headers.get('location') : null;
+        if (!next) return res.status;
+        at = new URL(next, at).toString();
+      } catch {
+        return 0;
+      }
+    }
+    return 0;
   };
   const head = await attempt('HEAD');
   if (head >= 200 && head < 300) return true;

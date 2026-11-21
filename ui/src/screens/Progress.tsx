@@ -9,6 +9,7 @@ import { pad2, shortDate } from '../lib/format';
 import { Button, Card, EmptyState, ErrorState, Icon, PageHeader, Skeleton, Stat, ease } from '../ui';
 import { changesNewestFirst, currentWeek, weekLoad, weekOfToday } from './plan/weeks';
 import { HoursChart, ReadinessChart, ScoreChart, StreakTicks } from './progress/Charts';
+import { AutopilotBlock } from './Autopilot';
 import './Progress.css';
 
 // The API has no readiness goal, so the line marks the point where most must-haves are covered.
@@ -71,6 +72,8 @@ export function Progress() {
       />
 
       <BriefHero q={brief} />
+
+      {state?.profile && <AutopilotBlock />}
 
       {progress.error && !p ? (
         <ErrorState title="Could not load progress" message={progress.error.message} onRetry={() => progress.refetch().catch(() => undefined)} />

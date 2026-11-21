@@ -1,7 +1,12 @@
+import { execFile } from 'node:child_process';
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
+import { DatabaseSync } from 'node:sqlite';
 import type { Application, MailMessage, MailStatus, Posting, SyncResult } from './types.ts';
 import { emit } from './trace.ts';
 import * as llm from './llm.ts';
-import { ensureEngine, info as engineInfo, type EngineHandle } from './engine-proc.ts';
+import * as store from './store.ts';
+import { engineStateDir, ensureEngine, info as engineInfo, stopEngine, type EngineHandle } from './engine-proc.ts';
 import { McpClient, ownerCall, unfence } from './engine-client.ts';
 import { checkReplies, gmailQuery, parseGmailResults, sampleMailbox, searchSample } from './replies.ts';
 import { getDetails, isDemo, syncEngineProfile } from './apply.ts';
@@ -126,8 +131,10 @@ export async function mailStatus(): Promise<MailStatus> {
     }
     const connected = /Gmail search: connected/.test(text);
     const canConnect = h.mode === 'own' && !!process.env.GOOGLE_CLIENT_ID;
+    // The scheduler reads mail on its own only once a connection has been seen.
+    store.put('single', 'mail-connected', connected);
     return {
-      source: connected ? 'gmail' : 'none', connected, engine: h.mode, canConnect: !connected && canConnect,
+      source: connected ? 'gmail' : 'none', connected, engine: h.mode, canConnect: !connected && canConnect, canDisconnect: connected && h.mode === 'own',
       label: connected ? 'Gmail connected' : 'Gmail not connected',
       note: connected ? `Read-only search through ${h.mode === 'own' ? 'Tack\'s engine' : 'your running Fanfold'}; only sender, subject and snippet are kept.`
         : h.mode === 'attach' ? 'Connect Gmail in Fanfold itself; Tack uses that connection.'
@@ -138,16 +145,51 @@ export async function mailStatus(): Promise<MailStatus> {
   }
 }
 
-/** Starts Google's consent in the engine and returns the address the person opens. */
-export async function mailConnect(): Promise<{ url: string }> {
+/** Opens an address in the person's default browser, whatever window Tack itself runs in. */
+export function openInBrowser(url: string): Promise<boolean> {
+  if (!/^https:\/\//.test(url)) return Promise.resolve(false);
+  const [cmd, args] = process.platform === 'darwin' ? ['open', [url]] : process.platform === 'win32' ? ['cmd', ['/c', 'start', '', url]] : ['xdg-open', [url]];
+  return new Promise((ok) => execFile(cmd, args as string[], { timeout: 10_000 }, (err) => ok(!err)));
+}
+
+/** Starts Google's consent in the engine and returns the address the person opens; with `open`, opens it for them. */
+export async function mailConnect(o: { open?: boolean } = {}): Promise<{ url: string; opened: boolean }> {
   if (sampleMail()) throw new Error('The demo person reads the sample mailbox; there is nothing to connect.');
+  if (!process.env.GOOGLE_CLIENT_ID) throw new Error('Connecting Gmail needs GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in Tack\'s settings.');
   const h = await ensureEngine();
   if (h.mode === 'attach') throw new Error('Tack is using your running Fanfold; connect Gmail there.');
   const blocked = await unlock(h);
   if (blocked) throw new Error(blocked);
   const r = await ownerCall<{ consentUrl?: string; error?: string }>(h, 'POST', '/api/connectors/google/start', {});
   if (!r.consentUrl) throw new Error(r.error ?? 'Google did not give a sign-in address.');
-  return { url: r.consentUrl };
+  const opened = o.open ? await openInBrowser(r.consentUrl) : false;
+  return { url: r.consentUrl, opened };
+}
+
+/**
+ * Forgets the Google sign-in Tack's engine holds. The engine is stopped first so it is not using
+ * the tokens; it starts again on next use, not connected.
+ */
+export async function mailDisconnect(): Promise<MailStatus> {
+  if (sampleMail()) throw new Error('The demo person reads the sample mailbox; there is nothing to disconnect.');
+  const info = engineInfo();
+  if (info.mode === 'attach') throw new Error('Tack is using your running Fanfold; disconnect Gmail there.');
+  await stopEngine();
+  const db = join(engineStateDir(), 'agent.db');
+  if (existsSync(db)) {
+    const d = new DatabaseSync(db);
+    try {
+      const has = d.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'secrets'").get();
+      if (has) d.prepare("DELETE FROM secrets WHERE name LIKE 'google:%'").run();
+    } finally {
+      d.close();
+    }
+  }
+  store.put('single', 'mail-connected', false);
+  return {
+    source: 'none', connected: false, label: 'Gmail disconnected', engine: 'own', canConnect: !!process.env.GOOGLE_CLIENT_ID, canDisconnect: false,
+    note: 'Tack no longer holds a Google sign-in. To remove its access on Google\'s side too, open myaccount.google.com/permissions.',
+  };
 }
 
 /** Checks the connection once the person has finished in Google's window. */

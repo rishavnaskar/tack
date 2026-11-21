@@ -273,13 +273,27 @@ test('verifyUrl is true only on a 2xx, trying GET when HEAD is refused', async (
     if (a === 'throw') throw new Error('reset');
     return new Response(null, { status: a });
   }) as unknown as typeof fetch;
-  assert.equal(await verifyUrl('https://ok.example/', web({ HEAD: 200, GET: 500 })), true);
-  assert.equal(await verifyUrl('https://ok.example/', web({ HEAD: 405, GET: 204 })), true);
-  assert.equal(await verifyUrl('https://ok.example/', web({ HEAD: 'throw', GET: 200 })), true);
-  assert.equal(await verifyUrl('https://gone.example/', web({ HEAD: 404, GET: 404 })), false);
-  assert.equal(await verifyUrl('https://gone.example/', web({ HEAD: 'throw', GET: 'throw' })), false);
-  assert.equal(await verifyUrl('ftp://x.example/', web({ HEAD: 200, GET: 200 })), false);
-  assert.equal(await verifyUrl('not a url', web({ HEAD: 200, GET: 200 })), false);
+  const dns = async (host: string) => [{ address: host.startsWith('inside') ? '10.0.0.7' : '93.184.216.34' }];
+  assert.equal(await verifyUrl('https://ok.example/', web({ HEAD: 200, GET: 500 }), 4000, dns), true);
+  assert.equal(await verifyUrl('https://ok.example/', web({ HEAD: 405, GET: 204 }), 4000, dns), true);
+  assert.equal(await verifyUrl('https://ok.example/', web({ HEAD: 'throw', GET: 200 }), 4000, dns), true);
+  assert.equal(await verifyUrl('https://gone.example/', web({ HEAD: 404, GET: 404 }), 4000, dns), false);
+  assert.equal(await verifyUrl('https://gone.example/', web({ HEAD: 'throw', GET: 'throw' }), 4000, dns), false);
+  assert.equal(await verifyUrl('ftp://x.example/', web({ HEAD: 200, GET: 200 }), 4000, dns), false);
+  assert.equal(await verifyUrl('not a url', web({ HEAD: 200, GET: 200 }), 4000, dns), false);
+});
+
+test('verifyUrl never reaches this machine, a private network or a non-default port', async () => {
+  let fetched = 0;
+  const any = (async (u: unknown) => { fetched++; return new Response(null, String(u).includes('hop') ? { status: 302, headers: { location: 'https://inside.example/admin' } } : { status: 200 }); }) as unknown as typeof fetch;
+  const dns = async (host: string) => [{ address: host.startsWith('inside') ? '10.0.0.7' : host.startsWith('v6') ? 'fd00::1' : '93.184.216.34' }];
+  for (const u of ['http://ok.example/', 'https://localhost/', 'https://127.0.0.1/', 'https://[::1]/', 'https://ok.example:8443/', 'https://user:pw@ok.example/',
+    'https://intranet/', 'https://printer.local/', 'https://inside.example/', 'https://v6.example/', 'https://169.254.169.254/latest/meta-data']) {
+    assert.equal(await verifyUrl(u, any, 4000, dns), false, u);
+  }
+  assert.equal(fetched, 0, 'none of them was fetched');
+  assert.equal(await verifyUrl('https://hop.example/', any, 4000, dns), false, 'a redirect into a private network stops there');
+  assert.equal(fetched, 2, 'HEAD and GET each stopped at the redirect');
 });
 
 test('résumé text comes from the engine readers', () => {

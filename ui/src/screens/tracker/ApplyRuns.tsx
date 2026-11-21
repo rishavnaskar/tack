@@ -17,7 +17,11 @@ function useNow(on: boolean) {
   return now;
 }
 
-const STATUS: Record<ApplyRun['status'], string> = { queued: 'Waiting', running: 'Applying', applied: 'Confirmed', failed: 'Not sent' };
+const STATUS: Record<ApplyRun['status'], string> = { queued: 'Waiting', running: 'Applying', applied: 'Confirmed', failed: 'Not sent', 'dry-run': 'Dry run, not sent' };
+const REASON: Record<string, string> = {
+  'form-not-found': 'Form not found', 'login-required': 'Sign-in required', captcha: 'CAPTCHA', 'answer-missing': 'Answer needed',
+  'consent-needed': 'Consent needed', timeout: 'Timed out', 'site-error': 'Site error',
+};
 
 function StepRow({ step, current }: { step: ApplyStep; current: boolean }) {
   const bad = step.kind === 'error';
@@ -51,7 +55,11 @@ export function RunCard({ run, compact }: { run: ApplyRun; compact?: boolean }) 
           <span className="run__company">{run.company}</span>
           <span className="run__title">{run.title}</span>
         </div>
-        <span className={`run__target t-micro is-${run.target}`}>{run.target === 'practice' ? 'practice application' : 'live posting'}</span>
+        {run.dryRun ? (
+          <span className="run__target t-micro is-dry">DRY RUN</span>
+        ) : (
+          <span className={`run__target t-micro is-${run.target}`}>{run.target === 'practice' ? 'practice application' : 'live posting'}</span>
+        )}
       </header>
       <div className="run__status t-mono">
         <span className={`run__state is-${run.status}`}>{STATUS[run.status]}</span>
@@ -72,7 +80,13 @@ export function RunCard({ run, compact }: { run: ApplyRun; compact?: boolean }) 
         </a>
       )}
       {run.status === 'applied' && run.confirmation && <p className="run__foot is-ok">{run.confirmation}</p>}
-      {run.status === 'failed' && run.reason && <p className="run__foot is-bad">{run.reason}</p>}
+      {run.status === 'dry-run' && run.confirmation && <p className="run__foot is-dry">{run.confirmation}</p>}
+      {run.status === 'failed' && run.reason && (
+        <p className="run__foot is-bad">
+          {run.reasonCode && <b>{REASON[run.reasonCode]}. </b>}
+          {run.reason}
+        </p>
+      )}
     </motion.article>
   );
 }
@@ -82,18 +96,21 @@ export function BatchPanel({ batch }: { batch: ApplyBatch }) {
   const now = useNow(active);
   const ok = batch.runs.filter((r) => r.status === 'applied').length;
   const failed = batch.runs.filter((r) => r.status === 'failed').length;
+  const dry = batch.runs.filter((r) => r.status === 'dry-run').length;
   const ms = batch.ms ?? now - Date.parse(batch.startedAt);
   const practice = batch.runs.every((r) => r.target === 'practice');
   return (
     <section className="batch" aria-label="Applications in progress">
       <div className="batch__head">
         <p className="batch__line">
+          {batch.dryRun && <span className="run__target t-micro is-dry">DRY RUN</span>}
           <span className="t-label">{batch.runs.length === 1 ? 'One application' : `${batch.runs.length} applications in parallel`}</span>
           <span className="t-mono t-faint">
-            {active ? `${ok + failed} of ${batch.runs.length} done · ${secs(ms)}` : `${ok} of ${batch.runs.length} submitted in ${secs(ms)}`}
+            {active ? `${ok + failed + dry} of ${batch.runs.length} done · ${secs(ms)}` : batch.dryRun ? `${dry} of ${batch.runs.length} filled, none submitted, in ${secs(ms)}` : `${ok} of ${batch.runs.length} submitted in ${secs(ms)}`}
           </span>
         </p>
-        {practice && <p className="batch__note t-faint">Practice applications: each one opens in its own Chrome window and is sent to Tack's practice form, never to the company.</p>}
+        {batch.dryRun && <p className="batch__note t-faint">Dry run: every form is filled for real and left unsent. Nothing here is an application.</p>}
+        {practice && !batch.dryRun && <p className="batch__note t-faint">Practice applications: each one opens in its own Chrome window and is sent to Tack's practice form, never to the company.</p>}
         {!active && (
           <Button variant="quiet" size="sm" iconLeft="close" onClick={() => applying.dismiss(batch.id)}>
             Dismiss

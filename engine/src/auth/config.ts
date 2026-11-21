@@ -11,7 +11,7 @@
 export const FIREBASE = Object.freeze({
   projectId: 'fanfold-app',
   appId: '1:85784968938:web:0d02b41c7a533e13342193',
-  apiKey: 'AIzaSyCQrUtLWkO_BMvKIQtFCtP8XQQqX3twt4Y',
+  apiKey: '',
   authDomain: 'fanfold-app.firebaseapp.com',
   messagingSenderId: '85784968938',
 });

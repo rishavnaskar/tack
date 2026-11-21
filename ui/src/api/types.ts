@@ -110,25 +110,76 @@ export interface SyncResult {
 }
 export interface MailStatus {
   source: 'sample' | 'gmail' | 'none'; connected: boolean; label: string; note: string;
-  canConnect: boolean; engine: 'own' | 'attach' | 'off';
+  canConnect: boolean; engine: 'own' | 'attach' | 'off'; canDisconnect?: boolean;
 }
 export interface ApplicationDetails {
   fullName: string; email: string; phone: string; city: string; linkedin: string;
   workAuthorisation: string; noticePeriod: string; updatedAt?: string;
 }
 export interface ApplyStep { at: string; kind: 'open' | 'form' | 'fill' | 'upload' | 'next' | 'submit' | 'confirm' | 'note' | 'error'; label: string }
+export type FailureCode = 'form-not-found' | 'login-required' | 'captcha' | 'answer-missing' | 'consent-needed' | 'timeout' | 'site-error';
+export interface FormInspection { found: number; filled: number; unfilled: string[]; resume: boolean }
 export interface ApplyRun {
   id: string; batchId: string; postingId: string; company: string; title: string;
   target: 'practice' | 'live'; url: string; session: string;
-  status: 'queued' | 'running' | 'applied' | 'failed';
+  status: 'queued' | 'running' | 'applied' | 'failed' | 'dry-run';
   steps: ApplyStep[]; fields: number; confirmation?: string; reference?: string; reason?: string;
+  reasonCode?: FailureCode; question?: string;
   applicationId?: string; startedAt: string; endedAt?: string; ms?: number;
   /** A picture of the engine's page when the run ended. */
   shot?: boolean;
+  jobId?: string;
+  dryRun?: boolean;
+  inspection?: FormInspection;
 }
-export interface ApplyBatch { id: string; startedAt: string; endedAt?: string; ms?: number; runs: ApplyRun[]; note?: string }
-export interface ApplyReadiness { ready: boolean; missing: string[]; reason: string; target: 'practice' | 'live' }
+export interface ApplyBatch { id: string; startedAt: string; endedAt?: string; ms?: number; runs: ApplyRun[]; note?: string; dryRun?: boolean }
+export interface ApplyReadiness { ready: boolean; missing: string[]; reason: string; target: 'practice' | 'live'; consent: boolean; dryRun: boolean }
+export interface Consent { on: boolean; givenAt?: string; withdrawnAt?: string; label: string }
 export interface DetailsView {
   details: ApplicationDetails; resume: { filename: string; mime: string; savedAt: string } | null; readiness: ApplyReadiness;
   problems?: Record<string, string>;
+  consent?: Consent;
+}
+
+export type JobState = 'queued' | 'running' | 'submitted' | 'failed' | 'needs-you' | 'awaiting-approval' | 'dry-run' | 'skipped';
+export interface ApplyJob {
+  id: string; postingId: string; company: string; title: string; url: string;
+  state: JobState; source: 'autopilot' | 'manual'; attempts: number; maxAttempts: number; nextAt: string;
+  createdAt: string; updatedAt: string; reason?: FailureCode; detail?: string; question?: string; answer?: string;
+  dryRun?: boolean; fit?: number; why?: string;
+}
+export interface RememberedAnswer { id: string; question: string; answer: string; at: string; company?: string }
+
+export interface AutopilotSettings {
+  on: boolean; onAt?: string; intervalHours: number; dailyCap: number; minFit: number;
+  excludeRoles: string[]; excludeCompanies: string[]; quietHours: { from: string; to: string } | null;
+  needsApproval: boolean; mailEveryHours: number;
+}
+export type StepName = 'harvest' | 'gap' | 'rank' | 'kits' | 'apply' | 'mail' | 'replan' | 'report';
+export interface RunStepView { name: StepName; label: string; status: 'pending' | 'running' | 'done' | 'failed' | 'skipped'; ms?: number; note?: string }
+export interface AutopilotRunBrief {
+  id: string; trigger: 'schedule' | 'manual'; startedAt: string; endedAt?: string; ms?: number;
+  status: 'running' | 'done' | 'partial' | 'failed' | 'interrupted'; resumes: number; dryRun?: boolean; summary?: string; steps: RunStepView[];
+}
+export interface AutopilotReport {
+  summary: string;
+  read: { postings: number; live: boolean; note: string; fresh: { company: string; title: string }[]; closed: { company: string; title: string }[] };
+  readiness: { before?: number; after?: number };
+  applied: { company: string; title: string; fit: number; why: string; state: string; detail?: string }[];
+  replies: { source: string; searched: number; messages: number; note: string; changes: { company: string; from: string; to: string; subject: string }[] } | null;
+  plan: { changed: boolean; summary: string } | null;
+  needsYou: number;
+  problems: string[];
+}
+export interface AutopilotRunFull extends Omit<AutopilotRunBrief, 'summary' | 'steps'> {
+  steps: (RunStepView & { startedAt?: string; endedAt?: string })[]; report?: AutopilotReport; trace: TraceEvent[];
+}
+export interface AutopilotStatus {
+  settings: AutopilotSettings;
+  readiness: { ready: boolean; missing: { key: string; label: string; where: string }[]; warnings: string[] };
+  demo: boolean; dryRun: boolean; consent: Consent;
+  running: AutopilotRunBrief | null; nextRunAt: string | null; lastRun: AutopilotRunBrief | null; runs: AutopilotRunBrief[];
+  queue: Record<JobState, number> & { today: number };
+  needsYou: ApplyJob[]; remembered: RememberedAnswer[]; applying: boolean;
+  mail: { last?: { at: string; note: string }; next?: string };
 }
