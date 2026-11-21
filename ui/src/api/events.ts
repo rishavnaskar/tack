@@ -78,14 +78,26 @@ function connect() {
   if (typeof EventSource === 'undefined') return;
   // The stream opens once the server has answered the state request ('state' is the hooks' key),
   // so on the web preview it carries the session cookie that answer set.
+  let wait = 2000;
   const open = () => {
-    const source = new EventSource(api.eventsUrl());
+    const last = snap.events[snap.events.length - 1]?.id;
+    const source = new EventSource(api.eventsUrl(last));
     const onMessage = (ev: MessageEvent<string>) => {
       const e = parse(ev.data);
       if (e) push(e);
     };
-    source.onopen = () => set({ connected: true });
-    source.onerror = () => set({ connected: false });
+    source.onopen = () => {
+      wait = 2000;
+      set({ connected: true });
+    };
+    // The browser reconnects a stream that was cut by itself, but gives up on one the server
+    // refused (a 429 or a 5xx); those are reopened after a growing pause.
+    source.onerror = () => {
+      set({ connected: false });
+      if (source.readyState !== EventSource.CLOSED) return;
+      window.setTimeout(open, wait);
+      wait = Math.min(wait * 2, 60_000);
+    };
     source.onmessage = onMessage;
     source.addEventListener('trace', onMessage as EventListener);
   };

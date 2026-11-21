@@ -204,7 +204,7 @@ export const api = {
   progress: () => call<Progress>('GET', '/progress'),
   brief: () => call<Brief>('GET', '/brief'),
 
-  eventsUrl: () => `${API_BASE}/events`,
+  eventsUrl: (since?: string) => `${API_BASE}/events${since ? `?since=${encodeURIComponent(since)}` : ''}`,
 
   kit: (postingId: string) => call<Kit>('GET', `/kit/${encodeURIComponent(postingId)}`),
   buildKit: (postingId: string, fresh = false) => call<Kit>('POST', `/kit/${encodeURIComponent(postingId)}${fresh ? '?fresh=1' : ''}`),
