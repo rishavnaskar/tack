@@ -179,7 +179,8 @@ after(async () => {
 // ---------------------------------------------------------------- isolation
 
 test('two visitors at once: neither sees the other\'s profile, postings, gap, plan, interviews, applications or trace', async () => {
-  const srv = await startServer({});
+  // A scheduler that started here would tick every 50 ms outside any visitor's session.
+  const srv = await startServer({ TACK_TICK_MS: '50' });
   const a = new Visitor(srv.base);
   const b = new Visitor(srv.base);
 
@@ -227,6 +228,11 @@ test('two visitors at once: neither sees the other\'s profile, postings, gap, pl
   assert.equal(stB.counts.postings, 40);
   assert.equal(stB.counts.applications, 24);
   assert.equal(stB.counts.interviews, 2);
+  // A's market is the bundled sample: the boards are off here and the preview applies to nothing.
+  assert.equal(stA.mode, 'demo');
+  // The demo person comes with standing consent and applications; nothing automated opens up for her.
+  assert.deepEqual(stB.capabilities, sa.capabilities);
+  for (const p of ['/api/autopilot', '/api/queue', '/api/apply/runs', '/api/mail/status']) assert.equal((await b.call('GET', p)).status, 409, p);
 
   const [gapA, gapB] = [await a.ok('GET', '/api/gap'), await b.ok('GET', '/api/gap')];
   assert.equal(gapA.postingCount, 10);
@@ -299,6 +305,7 @@ test('two visitors at once: neither sees the other\'s profile, postings, gap, pl
   const lines = srv.logs.join('').split('\n').filter(Boolean);
   for (const l of lines) assert.doesNotThrow(() => JSON.parse(l), l);
   assert.ok(!lines.some((l) => /Priya|Avery|Tomas|Pune/.test(l)));
+  assert.deepEqual(lines.filter((l) => JSON.parse(l).level !== 'info'), []);
   assert.ok(!lines.some((l) => ids.some((id) => l.includes(id))));
 });
 
@@ -309,13 +316,30 @@ test('hosted limits: 409 for browser features, budget 429, body and type checks,
   const v = new Visitor(srv.base);
   await v.ok('GET', '/api/state');
 
-  for (const [m, p] of [['POST', '/api/apply'], ['POST', '/api/apply/top'], ['GET', '/api/apply/readiness'], ['GET', '/api/mail/status'],
-    ['POST', '/api/mail/connect'], ['POST', '/api/applications/sync'], ['POST', '/api/autopilot/start'], ['GET', '/practice/apply/x']] as const) {
-    const r = await v.call(m, p, m === 'POST' ? {} : undefined);
+  const off: [string, string, string][] = [
+    ['POST', '/api/apply', 'apply'], ['POST', '/api/apply/top', 'apply'], ['GET', '/api/apply/readiness', 'apply'], ['GET', '/api/apply/runs', 'apply'],
+    ['GET', '/api/apply/dry-runs', 'apply'], ['GET', '/practice/apply/x', 'apply'], ['GET', '/api/practice/submissions', 'apply'],
+    // the apply queue, its "needs you" list, remembered answers and standing consent
+    ['GET', '/api/queue', 'apply'], ['POST', '/api/queue/j1/answer', 'apply'], ['POST', '/api/queue/j1/retry', 'apply'],
+    ['POST', '/api/queue/j1/approve', 'apply'], ['POST', '/api/queue/j1/skip', 'apply'], ['DELETE', '/api/answers/a1', 'apply'], ['PUT', '/api/consent', 'apply'],
+    // mail
+    ['GET', '/api/mail/status', 'mail'], ['POST', '/api/mail/connect', 'mail'], ['POST', '/api/mail/check', 'mail'], ['POST', '/api/mail/disconnect', 'mail'],
+    ['POST', '/api/applications/sync', 'mail'],
+    // the autopilot, its settings and its runs
+    ['GET', '/api/autopilot', 'autopilot'], ['PUT', '/api/autopilot/settings', 'autopilot'], ['POST', '/api/autopilot/run', 'autopilot'],
+    ['GET', '/api/autopilot/runs', 'autopilot'], ['GET', '/api/autopilot/runs/ap-1', 'autopilot'], ['POST', '/api/autopilot/start', 'autopilot'],
+  ];
+  for (const [m, p, capability] of off) {
+    const fresh = new Visitor(srv.base);
+    const r = await fresh.call(m, p, m === 'POST' || m === 'PUT' ? { on: true } : undefined);
     assert.equal(r.status, 409, `${m} ${p}`);
     assert.match(r.data.error, /desktop app/, `${m} ${p}`);
+    assert.equal(r.data.capability, capability, `${m} ${p}`);
     assert.equal(r.data.download, 'https://download.example/tack');
+    assert.equal(fresh.cookie, '', `${m} ${p} started a session`);
   }
+  // Every write the preview does serve has an input check of its own.
+  assert.doesNotMatch(srv.logs.join(''), /uncheckedWrites/);
 
   // Budget: one model call an hour for this visitor; the second résumé read is refused kindly.
   const first = await v.call('POST', '/api/profile/resume', { text: resume('Lena Ortiz', 'Madrid') });
@@ -427,6 +451,7 @@ test('with the flag off the coach is the local app: loopback only, no session co
   assert.equal(s.hosted, undefined);
   assert.equal((await fetch(`${srv.base}/api/apply/readiness`)).status, 200);
   assert.equal((await fetch(`${srv.base}/api/mail/status`)).status, 200);
+  for (const p of ['/api/autopilot', '/api/queue', '/api/apply/dry-runs']) assert.equal((await fetch(`${srv.base}${p}`)).status, 200, p);
   assert.equal((await fetch(`${srv.base}/api/state`, { method: 'GET', headers: { origin: 'https://elsewhere.example' } })).status, 200);
   assert.match(srv.logs.join(''), new RegExp(`listening on http://127\\.0\\.0\\.1:${port}`));
   const exited = new Promise<number | null>((ok) => srv.proc.once('exit', (code) => ok(code)));

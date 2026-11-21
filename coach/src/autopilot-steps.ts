@@ -2,6 +2,7 @@
 // queue and reads replies every few hours while Tack is running.
 
 import * as store from './store.ts';
+import { isHosted } from './hosted.ts';
 import * as engine from './engine.ts';
 import * as queue from './apply-queue.ts';
 import * as llm from './llm.ts';
@@ -236,12 +237,12 @@ export async function tick(now = new Date()): Promise<string[]> {
 
 let ticker: ReturnType<typeof setInterval> | null = null;
 
-/** In hosted mode the store belongs to a request's session, so nothing runs on a timer. */
-export const hosted = () => process.env.TACK_HOSTED === '1';
-
-/** Starts the clock once per process: picks up a run a crash left, then looks every 30 seconds. */
+/**
+ * Starts the clock once per process: picks up a run a crash left, then looks every 30 seconds.
+ * Never in hosted mode, where the store belongs to a request's session and nothing may run on a timer.
+ */
 export function startScheduler(everyMs = Number(process.env.TACK_TICK_MS) || 30_000): void {
-  if (ticker || process.env.TACK_SCHEDULER === 'off' || hosted()) return;
+  if (ticker || process.env.TACK_SCHEDULER === 'off' || isHosted()) return;
   queue.recoverInterrupted();
   closeOrphanRuns();
   autopilot().recover()?.done.catch(() => {});

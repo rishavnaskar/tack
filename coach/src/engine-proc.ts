@@ -7,6 +7,7 @@ import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { stateDir } from './store.ts';
 import { startModelProxy, type ModelProxy } from './limiter.ts';
+import { isHosted } from './hosted.ts';
 
 const ENGINE_DIR = fileURLToPath(new URL('../../engine/', import.meta.url));
 const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta/openai';
@@ -70,8 +71,8 @@ export function childEnv(dir: string, src: NodeJS.ProcessEnv = process.env, prox
     FANFOLD_MODEL_STEP: model, FANFOLD_MODEL_PLAN: model, FANFOLD_MODEL_VISION: model, FANFOLD_MODEL_ANSWER: model,
   };
   // Unset is the engine's default gate: anything that reaches a person waits, unless the standing yes covers it.
-  // Inside the desktop app process.execPath is Electron, which only acts as Node with ELECTRON_RUN_AS_NODE.
   if (src.TACK_APPROVALS?.trim()) env.BROWSER_AGENT_APPROVALS = src.TACK_APPROVALS.trim();
+  // Inside the desktop app process.execPath is Electron, which only acts as Node with ELECTRON_RUN_AS_NODE.
   for (const k of ['GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET', 'ELECTRON_RUN_AS_NODE']) if (src[k]) env[k] = src[k];
   if (src.TACK_CHROME_PATH) env.BA_CHROME_PATH = src.TACK_CHROME_PATH;
   return env;
@@ -82,7 +83,7 @@ let proxy: Promise<ModelProxy | null> | null = null;
 /** The engine's way to the model, through Tack's budget. Off with TACK_MODEL_PROXY=off or without a key. */
 export function modelProxy(): Promise<ModelProxy | null> {
   const key = process.env.TACK_MODEL_KEY || process.env.GEMINI_API_KEY || '';
-  if (!key || process.env.TACK_MODEL_PROXY === 'off') return Promise.resolve(null);
+  if (!key || process.env.TACK_MODEL_PROXY === 'off' || isHosted()) return Promise.resolve(null);
   proxy ??= startModelProxy({ upstream: modelBase(process.env.TACK_MODEL_URL), key }).catch(() => { proxy = null; return null; });
   return proxy;
 }
@@ -169,6 +170,8 @@ async function launch(): Promise<EngineHandle> {
 /** The engine, started or attached on first call. Concurrent callers share one start. */
 export function ensureEngine(): Promise<EngineHandle> {
   if (process.env.TACK_ENGINE === 'off') return Promise.reject(new Error('the engine is turned off by TACK_ENGINE=off'));
+  // Attaching spawns nothing, so the process lock alone would let every visitor share one Fanfold.
+  if (isHosted()) return Promise.reject(new Error('the engine is turned off in hosted mode'));
   if (current) return current;
   const dir = attachDir();
   current = (dir ? attach(dir) : launch()).then((h) => {

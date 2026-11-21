@@ -431,23 +431,27 @@ export function capabilities(): { apply: boolean; mail: boolean; autopilot: bool
   return { apply: false, mail: false, autopilot: false, reason: `This is the web preview. Automated applying, mail reading and autopilot ${DESKTOP}.` };
 }
 
-const BLOCKED: { prefix: string; what: string; capability: 'apply' | 'mail' | 'autopilot' }[] = [
+// `part` marks a piece of automated applying rather than a feature of its own.
+const BLOCKED: { prefix: string; what: string; capability: 'apply' | 'mail' | 'autopilot'; part?: boolean }[] = [
   { prefix: '/api/apply', what: 'Automated applying', capability: 'apply' },
-  { prefix: '/api/practice', what: 'The practice application form', capability: 'apply' },
-  { prefix: '/practice', what: 'The practice application form', capability: 'apply' },
+  { prefix: '/api/queue', what: 'The apply queue', capability: 'apply' },
+  { prefix: '/api/answers', what: 'Remembering answers for forms', capability: 'apply', part: true },
+  { prefix: '/api/consent', what: 'Standing consent to submit', capability: 'apply', part: true },
+  { prefix: '/api/practice', what: 'The practice application form', capability: 'apply', part: true },
+  { prefix: '/practice', what: 'The practice application form', capability: 'apply', part: true },
   { prefix: '/api/mail', what: 'Reading replies from your mail', capability: 'mail' },
   { prefix: '/api/applications/sync', what: 'Reading replies from your mail', capability: 'mail' },
   { prefix: '/api/autopilot', what: 'Autopilot', capability: 'autopilot' },
   { prefix: '/api/engine', what: 'The browser engine', capability: 'autopilot' },
 ];
 
-/** Browser-driven features are off in hosted mode; returns the 409 body for those paths. */
+/** Browser-driven and scheduled features are off in hosted mode; returns the 409 body for those paths. */
 export function blocked(pathname: string): { error: string; capability: string; download: string | null } | null {
   if (!isHosted()) return null;
   const hit = BLOCKED.find((b) => pathname === b.prefix || pathname.startsWith(`${b.prefix}/`));
   if (!hit) return null;
   return {
-    error: `${hit.what} ${hit.what.endsWith('form') ? 'is part of automated applying, which runs' : 'runs'} in the Tack desktop app. This web preview covers the market, gap map, plan, portfolio, interviews and the tracker.`,
+    error: `${hit.what} ${hit.part ? 'is part of automated applying, which runs' : 'runs'} in the Tack desktop app. This web preview covers the market, gap map, plan, portfolio, interviews and the tracker.`,
     capability: hit.capability,
     download: downloadUrl(),
   };

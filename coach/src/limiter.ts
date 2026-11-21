@@ -6,6 +6,7 @@ import { createServer, type IncomingMessage, type Server } from 'node:http';
 import { randomBytes } from 'node:crypto';
 import type { AddressInfo } from 'node:net';
 import { emit } from './trace.ts';
+import { isHosted } from './hosted.ts';
 
 const WINDOW_MS = 60_000;
 export const MAX_PAUSE_MS = 65_000;
@@ -180,6 +181,9 @@ export function sharedBudget(): Budget {
   shared ??= new Budget({
     rpm: modelRpm,
     onWait: (lane, ms, queued) => {
+      // A turn is handed out from whichever request happened to run the queue, so in hosted mode
+      // this line could land in another visitor's trace. llm.ts traces each caller's own wait.
+      if (isHosted()) return;
       try {
         emit({ run: 'model', step: 'pace', detail: `${lane}: waited ${Math.round(ms / 1000)} s for a turn (${modelRpm()} a minute shared${queued ? `, ${queued} still queued` : ''})`, status: 'start' });
       } catch { /* tracing is best effort */ }

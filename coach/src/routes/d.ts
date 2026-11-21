@@ -7,7 +7,8 @@ import { activeBatches, CONSENT_LABEL, getConsent, isDemo, isDryRun, readiness, 
 import {
   BusyError, getRun, getSettings, listRuns, nextRunAt, saveSettings, SettingsError, STEPS, validateSettings, type AutopilotRun,
 } from '../autopilot.ts';
-import { autopilot, currentReadiness, hosted, mailClock, startScheduler } from '../autopilot-steps.ts';
+import { autopilot, currentReadiness, mailClock, startScheduler } from '../autopilot-steps.ts';
+import { isHosted } from '../hosted.ts';
 import { recent } from '../trace.ts';
 import { sharedBudget } from '../limiter.ts';
 
@@ -27,7 +28,7 @@ function status() {
     readiness: currentReadiness(),
     demo: isDemo(),
     dryRun: isDryRun(),
-    hosted: hosted(),
+    hosted: isHosted(),
     consent: { ...getConsent(), label: CONSENT_LABEL },
     running: runningId ? brief(getRun(runningId) ?? runs[0]) : null,
     nextRunAt: runningId ? null : nextRunAt(settings, runs[0], now)?.toISOString() ?? null,
@@ -53,7 +54,7 @@ export function mount(r: Router): void {
   r.get('/autopilot', () => status());
 
   r.put('/autopilot/settings', ({ body }) => {
-    if (hosted() && body?.on === true) throw new HttpError(409, 'The autopilot runs only in the desktop app, where it can keep running between visits.');
+    if (isHosted() && body?.on === true) throw new HttpError(409, 'The autopilot runs only in the desktop app, where it can keep running between visits.');
     let next;
     try {
       next = validateSettings(body, getSettings());
@@ -70,7 +71,7 @@ export function mount(r: Router): void {
   });
 
   r.post('/autopilot/run', () => {
-    if (hosted()) throw new HttpError(409, 'The autopilot runs only in the desktop app, where it can keep running between visits.');
+    if (isHosted()) throw new HttpError(409, 'The autopilot runs only in the desktop app, where it can keep running between visits.');
     const ready = currentReadiness();
     if (!ready.ready) throw new HttpError(409, `Before the autopilot can run: ${ready.missing.map((m) => `${m.label} (${m.where})`).join('; ')}.`);
     if (activeBatches().length) throw new HttpError(409, 'Applications are being sent right now; run again when they finish.');
@@ -105,7 +106,7 @@ export function mount(r: Router): void {
   r.post('/queue/:id/retry', ({ params }) => {
     try {
       const job = queue.retryJob(params.id);
-      if (!hosted() && !activeBatches().length) runDue().done.catch(() => null);
+      if (!isHosted() && !activeBatches().length) runDue().done.catch(() => null);
       return job;
     } catch (e) { return queueError(e); }
   });
@@ -116,7 +117,7 @@ export function mount(r: Router): void {
     if (job.state !== 'awaiting-approval') throw new HttpError(409, `this job is ${job.state}`);
     try {
       const next = queue.retryJob(params.id);
-      if (!hosted() && !activeBatches().length) runDue().done.catch(() => null);
+      if (!isHosted() && !activeBatches().length) runDue().done.catch(() => null);
       return next;
     } catch (e) { return queueError(e); }
   });
