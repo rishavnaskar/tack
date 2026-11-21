@@ -13,6 +13,8 @@ export interface Goal {
 export interface Posting {
   id: string; title: string; company: string; location: string; url: string; source: string;
   postedAt?: string; salary?: string; text: string; harvestedAt: string; live: boolean;
+  /** Set when a later harvest found the posting gone from its board. */
+  closedAt?: string;
   roleFamily?: string; seniority?: string; companySize?: 'startup' | 'scaleup' | 'enterprise';
   skills?: { skillId: string; name: string; importance: 'must' | 'nice'; quote: string }[];
   fit?: number; // 0-100 against the profile
@@ -105,21 +107,33 @@ export interface SyncResult {
 }
 export interface MailStatus {
   source: 'sample' | 'gmail' | 'none'; connected: boolean; label: string; note: string;
-  canConnect: boolean; engine: 'own' | 'attach' | 'off';
+  canConnect: boolean; engine: 'own' | 'attach' | 'off'; canDisconnect?: boolean;
 }
 export interface ApplicationDetails {
   fullName: string; email: string; phone: string; city: string; linkedin: string;
   workAuthorisation: string; noticePeriod: string; updatedAt?: string;
 }
 export interface ApplyStep { at: string; kind: 'open' | 'form' | 'fill' | 'upload' | 'next' | 'submit' | 'confirm' | 'note' | 'error'; label: string }
+export interface FormInspection {
+  found: number; filled: number; unfilled: string[]; resume: boolean;
+  fields: { label: string; kind: string; filled: boolean }[];
+}
+export type FailureCode = 'form-not-found' | 'login-required' | 'captcha' | 'answer-missing' | 'consent-needed' | 'timeout' | 'site-error';
 export interface ApplyRun {
   id: string; batchId: string; postingId: string; company: string; title: string;
   target: 'practice' | 'live'; url: string; session: string;
-  status: 'queued' | 'running' | 'applied' | 'failed';
+  status: 'queued' | 'running' | 'applied' | 'failed' | 'dry-run';
   steps: ApplyStep[]; fields: number; confirmation?: string; reference?: string; reason?: string;
+  reasonCode?: FailureCode; question?: string;
   applicationId?: string; startedAt: string; endedAt?: string; ms?: number;
   /** A picture of the engine's page when the run ended. */
   shot?: boolean;
+  /** The queue job this run works on. */
+  jobId?: string;
+  /** Filled for real and never submitted. */
+  dryRun?: boolean;
+  /** What the form held when the run ended, read from the engine's snapshot. */
+  inspection?: FormInspection;
 }
-export interface ApplyBatch { id: string; startedAt: string; endedAt?: string; ms?: number; runs: ApplyRun[]; note?: string }
-export interface ApplyReadiness { ready: boolean; missing: string[]; reason: string; target: 'practice' | 'live' }
+export interface ApplyBatch { id: string; startedAt: string; endedAt?: string; ms?: number; runs: ApplyRun[]; note?: string; dryRun?: boolean }
+export interface ApplyReadiness { ready: boolean; missing: string[]; reason: string; target: 'practice' | 'live'; consent: boolean; dryRun: boolean }

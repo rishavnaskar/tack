@@ -4,7 +4,7 @@ import * as store from '../store.ts';
 import * as engine from '../engine.ts';
 import type { Application, Posting, Profile } from '../types.ts';
 import {
-  detailProblems, getBatch, getDetails, getResume, MAX_PARALLEL, readiness, recentRuns, saveDetails, shotPath, startBatch, BLANK_DETAILS,
+  applyNow, CONSENT_LABEL, detailProblems, getBatch, getConsent, getDetails, getResume, isDemo, MAX_PARALLEL, readiness, recentRuns, saveDetails, shotPath, BLANK_DETAILS,
 } from '../apply.ts';
 import { acceptSubmission, renderConfirmation, renderForm, renderMissing, SubmissionError, submissions, summary, SUBMISSION_KIND, type PracticeSubmission } from '../practice.ts';
 import { insights, mulberry32, isResponse } from '../tracker.ts';
@@ -16,7 +16,13 @@ function detailsView() {
     details: getDetails() ?? BLANK_DETAILS,
     resume: resume ? { filename: resume.filename, mime: resume.mime, savedAt: resume.savedAt } : null,
     readiness: readiness(),
+    consent: { ...getConsent(), label: CONSENT_LABEL },
   };
+}
+
+// The practice form exists only for the demo person; for anyone else it is not there at all.
+function demoOnly(): void {
+  if (!isDemo()) throw new HttpError(404, 'Not found');
 }
 
 // The same ranking the Tracker shows, so "top N" means the postings the person is looking at.
@@ -38,12 +44,15 @@ function launch(postings: Posting[]) {
   const running = recentRuns(MAX_PARALLEL * 2).filter((r) => r.status === 'queued' || r.status === 'running');
   const busy = postings.filter((p) => running.some((r) => r.postingId === p.id));
   if (busy.length) throw new HttpError(409, `Already applying to ${busy.map((p) => p.company).join(', ')}.`);
-  const { batch, done } = startBatch(postings);
+  const sample = postings.filter((p) => !p.live && !isDemo());
+  if (sample.length) throw new HttpError(409, `${sample.map((p) => p.company).join(', ')} ${sample.length === 1 ? 'is' : 'are'} not a real opening. Read the market for live postings.`);
+  const { batch, done, skipped } = applyNow(postings, { source: 'manual' });
   done.catch((e) => console.error('apply batch:', e));
+  if (!batch) throw new HttpError(409, `Not applying twice: ${skipped.map((s) => s.why).join('; ')}.`);
   const practice = batch.runs.filter((r) => r.target === 'practice').length;
   return {
-    started: true, batch,
-    note: `${batch.runs.length} application${batch.runs.length === 1 ? '' : 's'} started in parallel${practice ? `, ${practice === batch.runs.length ? 'all' : practice} on Tack's practice form` : ''}.`,
+    started: true, batch, skipped,
+    note: `${batch.runs.length} application${batch.runs.length === 1 ? '' : 's'} started in parallel${batch.dryRun ? ' as a dry run, nothing is submitted' : ''}${practice ? `, ${practice === batch.runs.length ? 'all' : practice} on Tack's practice form` : ''}${skipped.length ? `; left out ${skipped.map((s) => s.company).join(', ')}, already applied` : ''}.`,
   };
 }
 
@@ -101,9 +110,9 @@ export function mount(r: Router): void {
   // ---- mail ----
   r.get('/mail/status', () => engine.mailStatus());
 
-  r.post('/mail/connect', async () => {
+  r.post('/mail/connect', async ({ body, query }) => {
     try {
-      return await engine.mailConnect();
+      return await engine.mailConnect({ open: body?.open === true || query.get('open') === '1' });
     } catch (e) {
       throw new HttpError(409, (e as Error).message);
     }
@@ -113,20 +122,26 @@ export function mount(r: Router): void {
 
   // ---- the practice application form ----
   r.page?.('/practice/apply/:postingId', ({ params, res }) => {
-    const p = store.get<Posting>('posting', params.postingId);
+    const p = isDemo() ? store.get<Posting>('posting', params.postingId) : undefined;
     if (p) return renderForm(p);
     res.writeHead(404, { 'content-type': 'text/html; charset=utf-8' });
     res.end(renderMissing(`There is no posting ${params.postingId} in Tack.`));
     return undefined;
   });
 
-  r.page?.('/practice/apply/:postingId/submitted/:ref', ({ params }) => {
+  r.page?.('/practice/apply/:postingId/submitted/:ref', ({ params, res }) => {
+    if (!isDemo()) {
+      res.writeHead(404, { 'content-type': 'text/html; charset=utf-8' });
+      res.end(renderMissing('Not found.'));
+      return undefined;
+    }
     const s = store.get<PracticeSubmission>(SUBMISSION_KIND, params.ref);
     if (!s || s.postingId !== params.postingId) return renderMissing('That application reference is not known.');
     return renderConfirmation(s);
   });
 
   r.post('/practice/apply/:postingId', ({ params, body }) => {
+    demoOnly();
     const p = store.get<Posting>('posting', params.postingId);
     if (!p) throw new HttpError(404, `no posting ${params.postingId}`);
     try {
@@ -138,9 +153,13 @@ export function mount(r: Router): void {
     }
   });
 
-  r.get('/practice/submissions', ({ query }) => submissions(query.get('postingId') ?? undefined).map(summary));
+  r.get('/practice/submissions', ({ query }) => {
+    demoOnly();
+    return submissions(query.get('postingId') ?? undefined).map(summary);
+  });
 
   r.get('/practice/submissions/:ref/resume', ({ params, res }) => {
+    demoOnly();
     const s = store.get<PracticeSubmission>(SUBMISSION_KIND, params.ref);
     if (!s) throw new HttpError(404, `no submission ${params.ref}`);
     const bytes = Buffer.from(s.resume.base64, 'base64');

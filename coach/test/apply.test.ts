@@ -8,6 +8,8 @@ import type { Application, ApplyRun, Posting } from '../src/types.ts';
 
 process.env.TACK_STATE_DIR = mkdtempSync(join(tmpdir(), 'tack-apply-'));
 process.env.TACK_UI_DIR = mkdtempSync(join(tmpdir(), 'tack-ui-missing-'));
+process.env.TACK_APPLY_STAGGER_MS = '0';
+process.env.TACK_TILE = '0';
 const { createApp } = await import('../src/server.ts');
 const { mount } = await import('../src/routes/c.ts');
 const practice = await import('../src/practice.ts');
@@ -128,7 +130,7 @@ test('progress lines become the steps a person reads', () => {
   for (const m of ['step 1: goto, open the form', 'step 2: upload, attach the résumé', 'step 3: fill, Fanfold fills this', 'step 4: select, notice',
     'step 5: click, Continue to the next step', 'step 6: type, answer', 'step 7: click, Submit the application', 'step 8: done']) apply.onProgress(run, m, 't');
   assert.deepEqual(run.steps.map((s) => s.label), [
-    'Opened the application page', 'Found the application form', 'Uploaded the résumé', 'Filled 2 fields', 'Moved to the next step', 'Filled 3 fields', 'Pressed Submit',
+    'Opened the application page', 'Found the application form', 'Uploaded the résumé', 'Filled 2 fields', 'Moved to the next step', 'Filled 3 fields', 'Reached the final Submit',
   ]);
   assert.deepEqual(apply.parseRunResult('status: done\nsteps: 9, cost in USD: 0.0100\nSubmitted. Ref 12.'), { status: 'done', message: 'Submitted. Ref 12.' });
   assert.equal(apply.firstPerson('Experimentation: Built the flag service'), 'I built the flag service.');
@@ -139,6 +141,7 @@ test('progress lines become the steps a person reads', () => {
 
 const noop = {
   prepare: async () => [], open: async () => {}, run: async () => ({ status: 'done', message: '' }),
+  submit: async () => ({ pressed: false, held: 'not in this test', text: '' }), inspect: async () => undefined, release: async () => 0,
   shot: async () => undefined, close: async () => {}, end: async () => {},
 };
 const handle = { mode: 'own' as const, base: 'http://127.0.0.1:1', port: 1, ownerToken: 't', agentToken: 'a', stateDir: '/tmp/x', pid: 1, startedAt: '' };
@@ -233,10 +236,11 @@ test('a live posting hands the real address to the engine; nothing is sent in th
   store.put('single', 'mode', 'demo');
 });
 
-test('when the engine stops to ask for a yes the person already gave, Tack answers it once and the form goes', async () => {
+test('at the Submit the engine holds, Tack presses it once on the standing consent and the form goes', async () => {
   const p = store.get<Posting>('posting', 'p21-quillhealth')!;
   const goals: string[] = [];
   const closed: string[] = [];
+  let presses = 0;
   const { done } = apply.startBatch([p], {
     engine: async () => handle, sync: async () => {}, kit: async () => undefined,
     runner: async () => ({
@@ -244,29 +248,82 @@ test('when the engine stops to ask for a yes the person already gave, Tack answe
       close: async (s) => { closed.push(s); },
       run: async (_s, g) => {
         goals.push(g);
-        if (goals.length === 1) return { status: 'awaiting_approval', message: 'The form is ready to submit. Shall I press Submit?' };
+        return { status: 'awaiting_approval', message: '"Submit application" submits a job application. Needs your approval.' };
+      },
+      submit: async () => {
+        presses++;
         practice.acceptSubmission(p, { ...filled(), answers: practice.screeningQuestions(p).map((q) => ({ question: q.text, answer: 'x' })) });
-        return { status: 'done', message: 'Application submitted.' };
+        return { pressed: true, text: 'The user set Fanfold to submit applications without asking, so it was sent at once.' };
       },
     }),
   });
   const end = await done;
   assert.equal(end.runs[0].status, 'applied');
-  assert.equal(goals.length, 2);
-  assert.equal(goals[1], apply.FOLLOW_UP);
-  assert.equal(closed.length, 1, 'the session is closed once, after the follow-up');
-  assert.ok(end.runs[0].steps.some((s) => s.kind === 'note'));
+  assert.equal(goals.length, 1);
+  assert.equal(presses, 1);
+  assert.equal(closed.length, 1, 'the session is closed once');
+  assert.ok(end.runs[0].steps.some((s) => s.kind === 'submit'));
   assert.equal(apply.waitsOnYes('failed', 'Shall I?'), false);
   assert.equal(apply.waitsOnYes('done', 'Application submitted. Reference TQ-1.'), false);
 });
 
+test('without standing consent a run stops at the Submit and says why; nothing is pressed', async () => {
+  const p = store.get<Posting>('posting', 'p22-banyancloud')!;
+  apply.setConsent(false);
+  let presses = 0;
+  let released = 0;
+  const { done } = apply.startBatch([p], {
+    engine: async () => handle, sync: async () => {}, kit: async () => undefined,
+    runner: async () => ({
+      ...noop,
+      run: async () => ({ status: 'awaiting_approval', message: '"Submit application" submits a job application. Needs your approval.' }),
+      submit: async () => { presses++; return { pressed: true, text: '' }; },
+      release: async () => { released++; return 1; },
+    }),
+  });
+  const end = await done;
+  apply.setConsent(true);
+  assert.equal(end.runs[0].status, 'failed');
+  assert.equal(end.runs[0].reasonCode, 'consent-needed');
+  assert.match(end.runs[0].reason!, /consent/);
+  assert.equal(presses, 0);
+  assert.equal(released, 1, 'the held Submit is released so it can never go later');
+});
+
+test('a dry run fills the form, never presses Submit, and is recorded apart from applications', async () => {
+  const p = store.get<Posting>('posting', 'p23-ledgerly')!;
+  const before = store.list<Application>('application').length;
+  let presses = 0;
+  let goal = '';
+  const { done } = apply.startBatch([p], {
+    engine: async () => handle, sync: async () => {}, kit: async () => undefined,
+    runner: async () => ({
+      ...noop,
+      run: async (_s, g) => { goal = g; return { status: 'awaiting_approval', message: '"Submit application" submits a job application. Needs your approval.' }; },
+      submit: async () => { presses++; return { pressed: true, text: '' }; },
+      inspect: async () => ({ found: 9, filled: 8, unfilled: ['Cover letter'], resume: true, fields: [] }),
+    }),
+  }, { dryRun: true });
+  const end = await done;
+  assert.equal(presses, 0);
+  assert.equal(end.dryRun, true);
+  assert.equal(end.runs[0].status, 'dry-run');
+  assert.match(end.runs[0].confirmation!, /^DRY RUN, not submitted\. 8 of 9 fields filled/);
+  assert.match(goal, /do NOT press the final Submit/);
+  assert.equal(store.list<Application>('application').length, before, 'no application is recorded');
+  assert.match(end.note!, /^DRY RUN/);
+});
+
 // ---------------------------------------------------------------- the engine process
 
-test('the engine child gets its own state, no sign-in, Tack\'s model and full automation by default', () => {
+test('the engine child gets its own state, no sign-in, Tack\'s model and the engine\'s own approval gate', () => {
   const env = childEnv('/s/engine', { PATH: '/bin', GEMINI_API_KEY: 'k', TACK_MODEL_FAST: 'm-fast', OPENROUTER_API_KEY: 'nope', GOOGLE_CLIENT_ID: 'g' });
   assert.equal(env.BROWSER_AGENT_STATE_DIR, '/s/engine');
   assert.equal(env.FANFOLD_AUTH, 'off');
-  assert.equal(env.BROWSER_AGENT_APPROVALS, 'none');
+  assert.equal(env.BROWSER_AGENT_APPROVALS, undefined, 'unset is the default gate: a Submit waits for the standing yes');
+  const proxied = childEnv('/s/engine', { GEMINI_API_KEY: 'secret' }, { url: 'http://127.0.0.1:5000/v1', token: 'tok' });
+  assert.equal(proxied.FANFOLD_MODEL_URL, 'http://127.0.0.1:5000/v1');
+  assert.equal(proxied.FANFOLD_MODEL_KEY, 'tok', 'the engine never sees the provider key behind the pass-through');
   assert.equal(env.FANFOLD_MODEL_URL, 'https://generativelanguage.googleapis.com/v1beta/openai');
   assert.equal(env.FANFOLD_MODEL_KEY, 'k');
   assert.equal(env.FANFOLD_MODEL_PLAN, 'm-fast');

@@ -1,5 +1,7 @@
-// Automated applying through the engine. Each posting gets its own engine session (its own tiled
-// Chrome window) and its own agent; a batch runs them side by side and one failure stops nothing else.
+// Automated applying through the engine. Each posting gets its own engine session (its own Chrome
+// window, laid out side by side) and its own agent; a batch runs them in parallel, started a few
+// seconds apart so the shared model budget is not hit at once, and one failure stops nothing else.
+// A Submit goes only on the person's standing consent, through the engine's own standing approval.
 
 import { createHash, randomUUID } from 'node:crypto';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -7,15 +9,20 @@ import { join } from 'node:path';
 import * as store from './store.ts';
 import { emit } from './trace.ts';
 import { ensureEngine, type EngineHandle } from './engine-proc.ts';
-import { EngineError, McpClient, ownerCall } from './engine-client.ts';
+import { EngineError, McpClient, ownerCall, unfence } from './engine-client.ts';
 import { consentText, practiceUrl, screeningQuestions, submissions, type PracticeQuestion } from './practice.ts';
 import { buildKit, cachedKit } from './kit.ts';
 import { postingFit } from './gap.ts';
-import type { Application, ApplicationDetails, ApplyBatch, ApplyReadiness, ApplyRun, ApplyStep, Kit, Posting, Profile } from './types.ts';
+import * as queue from './apply-queue.ts';
+import { tileWindows } from './tile.ts';
+import type {
+  Application, ApplicationDetails, ApplyBatch, ApplyReadiness, ApplyRun, ApplyStep, FormInspection, Kit, Posting, Profile,
+} from './types.ts';
 
 export const MAX_PARALLEL = 8;
 const DETAILS = 'details';
 const RESUME = 'resume-file';
+const CONSENT = 'apply-consent';
 
 export interface ResumeFile { filename: string; mime: string; base64?: string; text?: string; savedAt: string }
 
@@ -71,7 +78,29 @@ export function isDemo(): boolean {
   return store.get<string>('single', 'mode') === 'demo' || store.get<Profile>('single', 'profile')?.source === 'demo';
 }
 
-/** The demo person and sample postings apply to Tack's practice form; a real person to the real posting. */
+// ---------------------------------------------------------------- standing consent
+
+export interface Consent { on: boolean; givenAt?: string; withdrawnAt?: string }
+
+export const CONSENT_LABEL = 'Tack may tick consent boxes and submit applications on my behalf';
+
+export function getConsent(): Consent {
+  return store.get<Consent>('single', CONSENT) ?? { on: false };
+}
+
+export function setConsent(on: boolean, now = new Date()): Consent {
+  const prev = getConsent();
+  const c: Consent = on
+    ? { on: true, givenAt: prev.on && prev.givenAt ? prev.givenAt : now.toISOString() }
+    : { on: false, ...(prev.givenAt ? { withdrawnAt: now.toISOString() } : {}) };
+  store.put('single', CONSENT, c);
+  return c;
+}
+
+/** Everything for real up to, but not including, the final Submit. */
+export const isDryRun = () => process.env.TACK_APPLY_DRY_RUN === '1';
+
+/** The demo person applies to Tack's practice form; a real person always to the real posting. */
 export function targetFor(p: Posting): 'practice' | 'live' {
   return isDemo() || !p.live ? 'practice' : 'live';
 }
@@ -83,10 +112,15 @@ export function readiness(p?: Posting): ApplyReadiness {
   if (!d?.email) missing.push('email');
   if (!getResume()) missing.push('résumé');
   const target = p ? targetFor(p) : isDemo() ? 'practice' : 'live';
+  const consent = getConsent();
+  const dry = isDryRun();
   const reason = missing.length
     ? `Add your ${missing.join(', ').replace(/, ([^,]*)$/, ' and $1')} under Application details on Start before applying.`
-    : target === 'practice' ? 'Ready. Sample postings go to Tack\'s practice application form, never to a company.' : 'Ready. Applications are filled and submitted in Chrome without a review step.';
-  return { ready: !missing.length, missing, reason, target };
+    : dry ? 'Dry run: every form is filled for real and then left unsent. Nothing is submitted.'
+      : target === 'practice' ? 'Ready. The demo person applies to Tack\'s practice form, never to a company.'
+        : consent.on ? 'Ready. Applications are filled and submitted for you in Chrome.'
+          : 'Ready to fill forms. Tack stops before every Submit until you give consent under Application details.';
+  return { ready: !missing.length, missing, reason, target, consent: consent.on, dryRun: dry };
 }
 
 // ---------------------------------------------------------------- engine profile
@@ -102,15 +136,20 @@ export function engineFields(d: ApplicationDetails, profile?: Profile): Record<s
   return Object.fromEntries(Object.entries(f).filter(([, v]) => v));
 }
 
-/** Pushes the details and the résumé into the engine's profile once per change. An attached Fanfold keeps its own. */
+/** The engine's own standing yes to applications, set from the person's consent. A dry run never has it. */
+export function standingYes(): boolean {
+  return getConsent().on && !isDryRun();
+}
+
+/** Pushes the details, the résumé and the standing yes into the engine once per change. An attached Fanfold keeps its own. */
 export async function syncEngineProfile(h: EngineHandle, step: (s: string, d: string) => void, opts: { identityOnly?: boolean } = {}): Promise<void> {
-  if (h.mode === 'attach') { step('profile', 'using the attached Fanfold\'s own profile and résumé'); return; }
+  if (h.mode === 'attach') { step('profile', 'using the attached Fanfold\'s own profile, résumé and settings'); return; }
   const d = getDetails();
   const resume = getResume();
   if (!d || (!resume && !opts.identityOnly)) throw new Error('Add your details and résumé before applying.');
   const profile = store.get<Profile>('single', 'profile');
   const fields = engineFields(d, profile);
-  const want = { fields: hashOf(fields), resume: resume ? hashOf([resume.filename, resume.base64 ?? resume.text]) : '' };
+  const want = { fields: hashOf(fields), resume: resume ? hashOf([resume.filename, resume.base64 ?? resume.text]) : '', standing: standingYes() };
   const key = `engine-sync:${h.stateDir}`;
   const had = store.get<typeof want>('single', key);
   if (had?.fields !== want.fields) {
@@ -135,7 +174,11 @@ export async function syncEngineProfile(h: EngineHandle, step: (s: string, d: st
     await ownerCall(h, 'POST', '/api/documents', doc, 120_000);
     step('profile', `résumé ${resume.filename} uploaded as the engine's résumé document`);
   }
-  store.put('single', key, { fields: want.fields, resume: opts.identityOnly ? had?.resume ?? '' : want.resume });
+  if (!opts.identityOnly && had?.standing !== want.standing) {
+    await ownerCall(h, 'PUT', '/api/settings', { submitWithoutAsking: want.standing });
+    step('consent', want.standing ? 'the engine may submit applications without asking (your standing consent)' : 'the engine holds every Submit: no standing consent');
+  }
+  store.put('single', key, { fields: want.fields, resume: opts.identityOnly ? had?.resume ?? '' : want.resume, standing: opts.identityOnly ? had?.standing ?? false : want.standing });
 }
 
 // ---------------------------------------------------------------- what the agent is told
@@ -176,25 +219,49 @@ export function answersFor(qs: PracticeQuestion[], kit: Kit | undefined, p: Post
 
 export const GOAL_MAX = 3900;
 
+export interface GoalInput {
+  posting: Posting; url: string; target: 'practice' | 'live'; details: ApplicationDetails;
+  answers: { question: string; answer: string }[]; saved?: boolean; consentSaved?: boolean; kit?: Kit;
+  session?: string; dryRun?: boolean; remembered?: { question: string; answer: string }[];
+}
+
 /** What the engine's agent is told. Answers saved in advance are not repeated; the whole stays under the tool's limit. */
-export function goalFor(o: { posting: Posting; url: string; target: 'practice' | 'live'; details: ApplicationDetails; answers: { question: string; answer: string }[]; saved?: boolean; kit?: Kit }): string {
+export function goalFor(o: GoalInput): string {
   const { posting: p, details: d } = o;
   const facts = [
     `name ${d.fullName}`, `email ${d.email}`, d.phone && `phone ${d.phone}`, d.city && `city ${d.city}`, d.linkedin && `LinkedIn ${d.linkedin}`,
     d.workAuthorisation && `work authorisation ${d.workAuthorisation}`, d.noticePeriod && `notice period ${d.noticePeriod}`,
   ].filter(Boolean).join(', ');
-  const head = [
-    `Apply to the ${p.title} role at ${p.company} and submit the application. Start here: ${o.url}`,
-    'The person asked for this application to be filled and sent without a review step, so do not stop to ask before submitting. Fill every field the form asks for, go through each step, and press the final Submit.',
-    `Use their saved profile: ${facts}.`,
-    'Upload their résumé document wherever the form asks for a résumé or CV. Choose the closest option in each dropdown.',
-  ];
-  if (o.saved) head.push('Their own answers to this form\'s written questions and its consent box (Yes) are already saved in Fanfold for this job: use them as they are, and tick the consent box.');
-  const tail = 'When the page confirms the application was received, finish and quote the confirmation text and any reference number exactly. If the form asks something you cannot answer from this, stop and say exactly what it asked.';
+  const head = o.dryRun
+    ? [
+      `Fill in the application for the ${p.title} role at ${p.company} as a dry run. Start here: ${o.url}`,
+      'This only tests the form: fill every field it asks for, attach the résumé, choose an option in every dropdown and go through each step, '
+        + 'but do NOT press the final Submit, Send or Apply button, and do not tick a consent box. When the form is filled as far as it goes, finish with done and list the fields you filled and any you could not.',
+    ]
+    : [
+      `Apply to the ${p.title} role at ${p.company} and submit the application. Start here: ${o.url}`,
+      'The person set Tack to send their applications. Fill every field the form asks for, go through each step, and press the final Submit yourself: '
+        + 'Fanfold checks that press and holds it for the person when it has to. Do not stop with ask_user to confirm the Submit.',
+    ];
+  head.push(`Use their saved profile: ${facts}.`);
+  head.push('Upload their résumé document wherever the form asks for a résumé or CV. Choose the closest option in each dropdown.');
+  head.push('If the site wants a sign-in or a new account, or shows a CAPTCHA or bot check, stop and say so. Never create an account.');
+  if (o.saved) {
+    head.push(`Their own answers to this form's written questions${o.consentSaved ? ' and its consent box (Yes)' : ''} are already saved in Fanfold for this job: use them as they are${o.consentSaved ? ', and tick the consent box' : ''}.`);
+  }
+  const tail = [
+    o.dryRun ? '' : 'When the page confirms the application was received, finish and quote the confirmation text and any reference number exactly.',
+    'If the form asks something you cannot answer from this, stop and say exactly what it asked.',
+    o.session ? `Reference for this task: ${o.session}.` : '',
+  ].filter(Boolean).join(' ');
   const extra: string[] = [];
   if (!o.saved && o.answers.length) {
     extra.push('For written questions use these answers:');
     for (const a of o.answers) extra.push(`- "${a.question}": ${cut(a.answer, 900)}`);
+  }
+  if (o.remembered?.length) {
+    extra.push('Answers the person gave earlier, for questions worded like these:');
+    for (const a of o.remembered.slice(0, 8)) extra.push(`- "${cut(a.question, 160)}": ${cut(a.answer, 300)}`);
   }
   if (o.kit) extra.push(`For any other written question, draw only on this material: ${cut(o.kit.coverNote, 600)} ${o.kit.talkingPoints.slice(0, 2).join(' ')}`);
   const room = GOAL_MAX - [...head, tail].join('\n').length - 2;
@@ -227,19 +294,74 @@ export function onProgress(run: ApplyRun, message: string, now = new Date().toIS
   }
   if (kind === 'upload') { formFound(); return push({ kind: 'upload', label: 'Uploaded the résumé' }); }
   if (kind === 'click' || kind === 'press') {
-    if (SUBMIT.test(reason)) return push({ kind: 'submit', label: 'Pressed Submit' });
+    if (SUBMIT.test(reason)) return push({ kind: 'submit', label: run.dryRun ? 'Reached the final Submit (not pressed: dry run)' : 'Reached the final Submit' });
     if (NEXT.test(reason)) { formFound(); return push({ kind: 'next', label: 'Moved to the next step' }); }
     return null;
   }
-  if (kind === 'ask_user') return push({ kind: 'error', label: `Stopped to ask: ${cut(reason, 140)}` });
+  if (kind === 'ask_user') return push({ kind: 'note', label: `Stopped: ${cut(reason, 140)}` });
   return null;
 }
 
 /** Status line and message out of agent_run's answer. */
 export function parseRunResult(text: string): { status: string; message: string } {
   const status = text.match(/^status:\s*(\S+)/m)?.[1] ?? 'unknown';
-  const message = text.split('\n').filter((l) => !/^status:|^steps:/.test(l)).join(' ').replace(/\s+/g, ' ').trim();
+  const message = text.split('\n').filter((l) => !/^status:|^steps:|^It stopped for the user\./.test(l)).join(' ').replace(/\s+/g, ' ').trim();
   return { status, message };
+}
+
+export type Hold = 'submit' | 'consent' | 'captcha' | 'login' | 'question' | 'other';
+
+/** Why a run stopped short of done: at the Submit the gate holds, at a box only the person may tick, or elsewhere. */
+export function holdOf(status: string, message: string): Hold | null {
+  if (status === 'done') return null;
+  const m = message.toLowerCase();
+  if (/captcha|bot check|robot|human verification|verify (?:that )?you(?:'| a)re|puzzle/.test(m)) return 'captcha';
+  if (/sign[ -]?in\b|log[ -]?in\b|create an account|account (?:is )?required|password/.test(m)) return 'login';
+  if (status !== 'awaiting_approval') return 'other';
+  if (/only you can do|which only you/.test(m)) return 'question';
+  if (/submits? (?:a job |an )?application|may send an application|sends something to someone|ready (?:to|for) (?:submit|send|review)|shall i (?:press|submit|send|proceed)|press (?:the )?(?:final )?submit|confirm (?:the )?submi|needs your approval/.test(m)) return 'submit';
+  if (/consent|privacy|data processing|gdpr|terms|agree/.test(m)) return 'consent';
+  return 'question';
+}
+
+/** The question a stopped run asks, quoted when it quotes the form. */
+export function questionIn(message: string): string {
+  const q = message.match(/["“]([^"”]{8,300})["”]/);
+  return q ? q[1].trim() : cut(message.replace(/\s+/g, ' ').trim(), 300);
+}
+
+/** The ref of the form's final Submit in a page snapshot. */
+export function submitRef(snapshot: string): string | null {
+  const found: { name: string; ref: string }[] = [];
+  for (const line of snapshot.split('\n')) {
+    const ref = line.match(/\[ref=(e\d+)\]/)?.[1];
+    if (!ref || !/\bbutton\b/i.test(line)) continue;
+    const name = line.match(/["“]([^"”]*)["”]/)?.[1] ?? '';
+    found.push({ name, ref });
+  }
+  const score = (n: string) => (/submit (?:my |your )?application/i.test(n) ? 3 : /^\s*submit\b/i.test(n) ? 2 : /\b(submit|send application)\b/i.test(n) ? 1 : 0);
+  const best = found.filter((f) => score(f.name) > 0).sort((a, b) => score(b.name) - score(a.name))[0];
+  return best?.ref ?? null;
+}
+
+const CONTROL = /\b(textbox|combobox|listbox|checkbox|radio|spinbutton|searchbox|textarea|file)\b/i;
+
+/** What a form held, read from the engine's snapshot of it: each control, whether it has a value, and the résumé. */
+export function inspectSnapshot(snapshot: string): FormInspection {
+  const fields: FormInspection['fields'] = [];
+  let resume = false;
+  for (const line of unfence(snapshot).split('\n')) {
+    if (!/\[ref=e\d+\]/.test(line) || !CONTROL.test(line)) continue;
+    const kind = (line.match(CONTROL)?.[1] ?? 'field').toLowerCase();
+    const label = (line.match(/["“]([^"”]*)["”]/)?.[1] ?? '').trim() || kind;
+    const valued = /\bvalue[=:]\s*["“]?[^"”\s]/i.test(line) || /\b(?:checked|selected)\b(?![=:]\s*false)/i.test(line) || /:\s*["“][^"”]+["”]\s*(?:\[|$)/.test(line);
+    const file = kind === 'file' || /résumé|resume|\bcv\b|attach/i.test(label);
+    const attached = file && /\.(pdf|docx?|txt|rtf)\b/i.test(line);
+    if (attached) resume = true;
+    fields.push({ label: cut(label, 80), kind, filled: valued || attached });
+  }
+  if (/\.(pdf|docx?)\b[^\n]*(?:attached|uploaded|remove)/i.test(snapshot) || /(?:attached|uploaded)[^\n]*\.(pdf|docx?)\b/i.test(snapshot)) resume = true;
+  return { found: fields.length, filled: fields.filter((f) => f.filled).length, unfilled: fields.filter((f) => !f.filled).map((f) => f.label).slice(0, 20), resume, fields: fields.slice(0, 60) };
 }
 
 // ---------------------------------------------------------------- batches
@@ -260,17 +382,21 @@ function save(run: ApplyRun): void {
 export function getBatch(id: string): ApplyBatch | undefined {
   const live = batches.get(id);
   if (live) return live;
-  const b = store.get<{ id: string; startedAt: string; endedAt?: string; ms?: number; runIds: string[]; note?: string }>('apply-batch', id);
+  const b = store.get<{ id: string; startedAt: string; endedAt?: string; ms?: number; runIds: string[]; note?: string; dryRun?: boolean }>('apply-batch', id);
   if (!b) return undefined;
-  return { id: b.id, startedAt: b.startedAt, endedAt: b.endedAt, ms: b.ms, note: b.note, runs: b.runIds.map((r) => store.get<ApplyRun>('apply-run', r)).filter((r): r is ApplyRun => !!r) };
+  return { id: b.id, startedAt: b.startedAt, endedAt: b.endedAt, ms: b.ms, note: b.note, dryRun: b.dryRun, runs: b.runIds.map((r) => store.get<ApplyRun>('apply-run', r)).filter((r): r is ApplyRun => !!r) };
 }
 
 export function recentRuns(limit = 24): ApplyRun[] {
   return store.list<ApplyRun>('apply-run').sort((a, b) => b.startedAt.localeCompare(a.startedAt)).slice(0, limit);
 }
 
+export function activeBatches(): ApplyBatch[] {
+  return [...batches.values()].filter((b) => !b.endedAt);
+}
+
 function persistBatch(b: ApplyBatch): void {
-  store.put('apply-batch', b.id, { id: b.id, startedAt: b.startedAt, endedAt: b.endedAt, ms: b.ms, note: b.note, runIds: b.runs.map((r) => r.id) });
+  store.put('apply-batch', b.id, { id: b.id, startedAt: b.startedAt, endedAt: b.endedAt, ms: b.ms, note: b.note, dryRun: b.dryRun, runIds: b.runs.map((r) => r.id) });
 }
 
 function record(run: ApplyRun, p: Posting): Application {
@@ -289,6 +415,8 @@ function record(run: ApplyRun, p: Posting): Application {
   return app;
 }
 
+export interface SubmitResult { pressed: boolean; opened?: boolean; held?: string; text: string }
+
 export interface Runner {
   /** Files the job in the engine and saves the person's answers for it, so the form fills them as theirs. */
   prepare(job: { url: string; company: string; title: string }, answers: { question: string; answer: string }[]): Promise<string[]>;
@@ -296,11 +424,19 @@ export interface Runner {
   open(session: string): Promise<void>;
   /** One agent run in the session. Replaced in tests. */
   run(session: string, goal: string, onProgress: (m: string) => void): Promise<{ status: string; message: string }>;
+  /** Presses the form's final Submit as the host, so the engine judges it on the person's standing yes. */
+  submit(session: string): Promise<SubmitResult>;
+  /** What the form on the session's page holds. */
+  inspect(session: string): Promise<FormInspection | undefined>;
+  /** Ends approvals the engine holds for this page (a host, or an address prefix), so nothing is left to send. */
+  release(since: string, where: string): Promise<number>;
   /** A picture of the session's page as it is now. */
   shot(session: string): Promise<Buffer | undefined>;
   close(session: string): Promise<void>;
   end(): Promise<void>;
 }
+
+const hostOf = (url: string) => { try { return new URL(url).host.toLowerCase(); } catch { return ''; } };
 
 async function engineRunner(h: EngineHandle): Promise<Runner> {
   const mcp = await new McpClient(h).connect();
@@ -327,6 +463,33 @@ async function engineRunner(h: EngineHandle): Promise<Runner> {
       const res = await mcp.call('agent_run', { goal, session, max_steps: maxSteps }, { onProgress: progress });
       return parseRunResult(res.text);
     },
+    async submit(session) {
+      const snap = await mcp.call('browser_snapshot', { session });
+      const ref = submitRef(snap.text);
+      if (!ref) return { pressed: false, held: 'no Submit button was found on the page', text: unfence(snap.text).slice(0, 2000) };
+      const r = await mcp.call('browser_act', { session, action: 'click', ref });
+      const text = unfence(r.text);
+      const opened = /opened the application form; nothing has been sent/i.test(text);
+      const pressed = !opened && /so it was (?:sent|pressed) at once/i.test(text);
+      const held = pressed || opened ? undefined
+        : text.match(/not submitted automatically because ([^\n]+?)\.(?:\s|$)/i)?.[1] ?? (r.isError ? cut(text, 240) : cut(text.split('\n')[0] ?? '', 240));
+      return { pressed, opened, held, text: text.slice(0, 4000) };
+    },
+    async inspect(session) {
+      const r = await mcp.call('browser_snapshot', { session }).catch(() => null);
+      return r && !r.isError ? inspectSnapshot(r.text) : undefined;
+    },
+    async release(since, where) {
+      if (!h.ownerToken) return 0;
+      const state = await ownerCall<{ approvals?: { id: string; url: string; requestedAt: string }[] }>(h, 'GET', '/api/state').catch(() => null);
+      let n = 0;
+      for (const a of state?.approvals ?? []) {
+        const mine = !where || hostOf(a.url) === where || a.url.startsWith(where);
+        if (a.requestedAt < since || !mine) continue;
+        await ownerCall(h, 'POST', `/api/approvals/${encodeURIComponent(a.id)}/reject`, { note: 'Tack ended this run before anything was sent' }).then(() => n++).catch(() => {});
+      }
+      return n;
+    },
     async shot(session) {
       const r = await mcp.call('browser_screenshot', { session }).catch(() => null);
       return r?.image ? Buffer.from(r.image.data, 'base64') : undefined;
@@ -338,35 +501,56 @@ async function engineRunner(h: EngineHandle): Promise<Runner> {
   };
 }
 
-/** The engine stopped to ask for a yes it already has: to confirm the Submit, or to tick the consent the person saved. */
+/** Kept for older callers: whether a run stopped to ask for a yes the person already gave. */
 export function waitsOnYes(status: string, message: string): boolean {
-  return status !== 'failed' && /\b(confirm|shall i|should i|would you like|do you want|proceed|consent|tick|ready to submit|ready for (?:your )?review|press (?:the )?(?:final )?submit|approv)/i.test(message);
+  return status !== 'failed' && holdOf(status, message) === 'submit';
 }
 
-export const FOLLOW_UP = 'The person has answered: yes. They asked for this application to be sent without a review step, and their saved answer to the consent box is Yes. '
-  + 'On the page that is open, tick the consent box if it is not ticked, go to the last step, and press the final Submit. '
-  + 'When the page confirms it, finish and quote the confirmation and any reference number exactly. Do not ask again.';
+export const FOLLOW_UP = 'The final Submit was pressed. If the page now confirms the application was received, finish with done and quote the confirmation and any reference number exactly. '
+  + 'If the page shows errors instead, fix every field it names and press the final Submit again. Do not ask the person; nothing else is needed from them.';
 
-const MAX_FOLLOW_UPS = 2;
+export const CONSENT_FOLLOW_UP = 'The person has answered: their saved answer to this form\'s consent box is Yes, given as their standing consent. '
+  + 'On the page that is open, tick the consent box, then go on and press the final Submit. When the page confirms it, quote the confirmation exactly.';
+
+const MAX_TURNS = 4;
 
 export interface BatchDeps {
   engine?: () => Promise<EngineHandle>;
   runner?: (h: EngineHandle) => Promise<Runner>;
   kit?: (p: Posting) => Promise<Kit | undefined>;
   sync?: (h: EngineHandle, step: (s: string, d: string) => void) => Promise<void>;
+  tile?: (pages: { key: string; hosts: string[] }[]) => Promise<{ moved: number; note: string }>;
+}
+
+export interface BatchOpts {
+  /** Queue job for each posting, settled when its run ends. */
+  jobs?: Map<string, string>;
+  dryRun?: boolean;
+  /** Between session starts, so parallel runs do not hit the model at the same second. */
+  staggerMs?: number;
+  /** What started it, for the trace. */
+  label?: string;
 }
 
 async function kitFor(p: Posting): Promise<Kit | undefined> {
   try { return cachedKit(p.id) ?? (await buildKit(p.id)); } catch { return cachedKit(p.id); }
 }
 
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+async function until(ok: () => boolean, ms: number): Promise<boolean> {
+  for (const end = Date.now() + ms; Date.now() < end; await sleep(250)) if (ok()) return true;
+  return ok();
+}
+const CONFIRMED = /\b(thank you for (?:applying|your application)|application (?:has been |was )?(?:submitted|received)|we(?:'ve| have) received your application|successfully (?:submitted|applied)|reference (?:number|no\.?)\b)/i;
+
 /**
  * Starts applying to these postings, all at once, and returns the batch straight away.
  * `done` settles when every run has ended.
  */
-export function startBatch(postings: Posting[], deps: BatchDeps = {}): { batch: ApplyBatch; done: Promise<ApplyBatch> } {
+export function startBatch(postings: Posting[], deps: BatchDeps = {}, opts: BatchOpts = {}): { batch: ApplyBatch; done: Promise<ApplyBatch> } {
   const t0 = Date.now();
-  const batch: ApplyBatch = { id: newId('batch'), startedAt: new Date().toISOString(), runs: [] };
+  const dry = opts.dryRun ?? isDryRun();
+  const batch: ApplyBatch = { id: newId('batch'), startedAt: new Date().toISOString(), runs: [], ...(dry ? { dryRun: true } : {}) };
   for (const p of postings.slice(0, MAX_PARALLEL)) {
     const target = targetFor(p);
     batch.runs.push({
@@ -374,26 +558,41 @@ export function startBatch(postings: Posting[], deps: BatchDeps = {}): { batch: 
       url: target === 'practice' ? practiceUrl(p.id) : p.url,
       session: `tack-${p.id.replace(/[^a-z0-9_-]/gi, '').toLowerCase().slice(0, 18)}-${randomUUID().slice(0, 4)}`,
       status: 'queued', steps: [], fields: 0, startedAt: batch.startedAt,
+      ...(opts.jobs?.get(p.id) ? { jobId: opts.jobs.get(p.id) } : {}), ...(dry ? { dryRun: true } : {}),
     });
   }
   batches.set(batch.id, batch);
   persistBatch(batch);
-  for (const r of batch.runs) save(r);
+  for (const r of batch.runs) {
+    save(r);
+    if (r.jobId) queue.markRunning(r.jobId, r.id);
+  }
+  const stagger = opts.staggerMs ?? (Number(process.env.TACK_APPLY_STAGGER_MS ?? 5000) || 0);
 
   const done = (async () => {
     const line = (run: string, step: string, detail: string, status: 'start' | 'ok' | 'fail' = 'start') => {
       try { emit({ run, step, detail, status, ms: Date.now() - t0 }); } catch { /* best effort */ }
     };
-    const fail = (run: ApplyRun, reason: string) => {
+    const settleJob = (run: ApplyRun) => {
+      if (!run.jobId) return;
+      const out: queue.Outcome = run.status === 'applied' ? { kind: 'submitted', applicationId: run.applicationId, detail: run.confirmation }
+        : run.status === 'dry-run' ? { kind: 'dry-run', detail: run.confirmation ?? 'filled, not sent' }
+          : { kind: 'failed', reason: run.reasonCode ?? 'site-error', detail: run.reason ?? 'not sent', ...(run.question ? { question: run.question } : {}) };
+      queue.settle(run.jobId, out);
+    };
+    const fail = (run: ApplyRun, reason: string, code?: queue.FailureReason, question?: string) => {
       run.status = 'failed';
       run.reason = reason;
+      run.reasonCode = code ?? queue.classifyFailure(reason);
+      if (question) run.question = question;
       run.endedAt = new Date().toISOString();
       run.ms = Date.parse(run.endedAt) - Date.parse(run.startedAt);
-      run.steps.push({ at: run.endedAt, kind: 'error', label: cut(reason, 200) });
+      run.steps.push({ at: run.endedAt, kind: 'error', label: `${queue.REASONS[run.reasonCode].label}: ${cut(reason, 180)}` });
       save(run);
-      line('apply', run.company, `failed: ${cut(reason, 160)}`, 'fail');
+      settleJob(run);
+      line('apply', run.company, `${queue.REASONS[run.reasonCode].label.toLowerCase()}: ${cut(reason, 160)}`, 'fail');
     };
-    line('apply', 'start', `${batch.runs.length} application${batch.runs.length === 1 ? '' : 's'} in parallel: ${batch.runs.map((r) => r.company).join(', ')}`);
+    line('apply', 'start', `${batch.runs.length} application${batch.runs.length === 1 ? '' : 's'} in parallel${dry ? ' as a DRY RUN (nothing is submitted)' : ''}: ${batch.runs.map((r) => r.company).join(', ')}`);
     let h: EngineHandle;
     let runner: Runner | null = null;
     try {
@@ -402,66 +601,146 @@ export function startBatch(postings: Posting[], deps: BatchDeps = {}): { batch: 
       await (deps.sync ?? syncEngineProfile)(h, (s, d) => line('apply', s, d));
       runner = await (deps.runner ?? engineRunner)(h);
     } catch (e) {
-      for (const r of batch.runs) fail(r, `The engine could not start: ${(e as Error).message}`);
+      for (const r of batch.runs) fail(r, `The engine could not start: ${(e as Error).message}`, 'site-error');
       return finish();
     }
     const details = getDetails() ?? BLANK_DETAILS;
-    await Promise.all(batch.runs.map(async (run) => {
+    const consent = getConsent();
+    const opened = new Set<ApplyRun>();
+    let tiling: Promise<unknown> = Promise.resolve();
+    const retile = () => {
+      const tile = deps.tile ?? ((pages) => tileWindows(pages, { chromePath: process.env.TACK_CHROME_PATH }));
+      const live = batch.runs.filter((r) => opened.has(r) && r.status === 'running');
+      if (live.length < 2) return;
+      tiling = tiling.then(() => tile(live.map((r) => ({ key: r.id, hosts: [r.url.split('?')[0].toLowerCase(), hostOf(r.url)] }))))
+        .then((t) => { if (t && typeof t === 'object' && 'note' in t) line('apply', 'windows', String((t as { note: string }).note)); })
+        .catch(() => {});
+    };
+
+    await Promise.all(batch.runs.map(async (run, i) => {
+      if (i && stagger) await sleep(i * stagger);
       const p = store.get<Posting>('posting', run.postingId);
-      if (!p) return fail(run, 'The posting is no longer in Tack.');
+      if (!p) return fail(run, 'The posting is no longer in Tack.', 'form-not-found');
+      if (run.target === 'live' && !p.live) return fail(run, 'This posting is sample data, not a real opening.', 'form-not-found');
       run.status = 'running';
       run.startedAt = new Date().toISOString();
       save(run);
       const tag = `apply ${run.company}`;
+      const job = run.jobId ? queue.getJob(run.jobId) : undefined;
       try {
         const kit = await (deps.kit ?? kitFor)(p);
-        const answers = run.target === 'practice' ? answersFor(screeningQuestions(p), kit, p) : [];
-        // The practice form's questions are known in advance: the person's answers go in as theirs, consent included.
-        const saved = run.target === 'practice' ? [...answers, { question: consentText(p), answer: 'Yes' }] : [];
-        for (const n of await runner!.prepare({ url: run.url, company: p.company, title: p.title }, saved)) line(tag, 'prepare', n);
-        const goal = goalFor({ posting: p, url: run.url, target: run.target, details, answers, saved: saved.length > 0, kit });
-        line(tag, 'session', `${run.session}: ${run.target === 'practice' ? 'practice application' : 'live posting'} ${run.url}`);
+        const practiceAnswers = run.target === 'practice' ? answersFor(screeningQuestions(p), kit, p) : [];
+        // The practice form's questions are known in advance: the person's answers go in as theirs, consent too when given.
+        const consentSaved = run.target === 'practice' && consent.on && !dry;
+        const saved = [
+          ...practiceAnswers,
+          ...(consentSaved ? [{ question: consentText(p), answer: 'Yes' }] : []),
+          ...(job?.question && job.answer ? [{ question: job.question, answer: job.answer }] : []),
+        ];
+        const jobRef = { url: run.url, company: p.company, title: p.title };
+        for (const n of await runner!.prepare(jobRef, saved)) line(tag, 'prepare', n);
+        const remembered = queue.rememberedAnswers().map((a) => ({ question: a.question, answer: a.answer }));
+        const goal = goalFor({
+          posting: p, url: run.url, target: run.target, details, answers: practiceAnswers, saved: practiceAnswers.length > 0, consentSaved,
+          kit, session: run.session, dryRun: dry, remembered,
+        });
+        line(tag, 'session', `${run.session}: ${dry ? 'DRY RUN on ' : ''}${run.target === 'practice' ? 'practice application' : 'live posting'} ${run.url}`);
         const progress = (msg: string) => {
           const step = onProgress(run, msg);
-          if (step) { save(run); line(tag, step.kind, step.label); }
+          if (step) {
+            save(run);
+            line(tag, step.kind, step.label);
+            if (step.kind === 'open' && !opened.has(run)) { opened.add(run); retile(); }
+          }
         };
-        // The practice form keeps its own record, which is the proof; a live site has only the agent's word.
+        // The practice form keeps its own record, which is the proof; a live site has only its confirmation page.
         const submitted = () => (run.target === 'practice' ? submissions(p.id).filter((s) => s.at >= run.startedAt).at(-1) : undefined);
-        const sent = (r: { status: string; message: string }) => (run.target === 'practice' ? !!submitted() : r.status === 'done');
         await runner!.open(run.session);
         let res: { status: string; message: string };
         let shot: Buffer | undefined;
+        let pressed = false;
+        let outcome: { kind: 'sent'; text: string } | { kind: 'dry'; text: string } | { kind: 'fail'; why: string; code: queue.FailureReason; question?: string } | null = null;
         try {
           res = await runner!.run(run.session, goal, progress);
-          // Fully automated means the person's yes is already given; with approvals on, the question stays theirs.
-          const auto = (process.env.TACK_APPROVALS ?? 'none').trim().toLowerCase() === 'none';
-          for (let i = 0; auto && i < MAX_FOLLOW_UPS && !sent(res) && waitsOnYes(res.status, res.message); i++) {
-            run.steps.push({ at: new Date().toISOString(), kind: 'note', label: 'Engine asked for a yes; answered with the standing instruction' });
+          for (let turn = 0; turn < MAX_TURNS && !outcome; turn++) {
+            if (submitted()) { outcome = { kind: 'sent', text: res.message }; break; }
+            const hold = holdOf(res.status, res.message);
+            if (!hold) {
+              if (dry) outcome = { kind: 'dry', text: res.message };
+              else if (run.target === 'live' && pressed) outcome = { kind: 'sent', text: res.message };
+              else if (run.target === 'live' && CONFIRMED.test(res.message)) outcome = { kind: 'sent', text: res.message };
+              else outcome = { kind: 'fail', why: res.message || 'The engine finished without sending the form.', code: run.target === 'practice' ? 'site-error' : queue.classifyFailure(res.message, res.status) };
+              break;
+            }
+            if (hold === 'captcha') { outcome = { kind: 'fail', why: res.message, code: 'captcha' }; break; }
+            if (hold === 'login') { outcome = { kind: 'fail', why: res.message, code: 'login-required' }; break; }
+            if (hold === 'other') { outcome = { kind: 'fail', why: res.message || `The engine ended with status ${res.status}.`, code: queue.classifyFailure(res.message, res.status) }; break; }
+            if (hold === 'question') { outcome = { kind: 'fail', why: res.message, code: 'answer-missing', question: questionIn(res.message) }; break; }
+            if (hold === 'consent') {
+              if (dry) { outcome = { kind: 'dry', text: `Stopped at the consent box, left unticked: ${res.message}` }; break; }
+              if (!consent.on) { outcome = { kind: 'fail', why: `The form has a consent box and you have not given standing consent: ${res.message}`, code: 'consent-needed', question: questionIn(res.message) }; break; }
+              const q = questionIn(res.message);
+              for (const n of await runner!.prepare(jobRef, [{ question: q, answer: 'Yes' }])) line(tag, 'prepare', n);
+              run.steps.push({ at: new Date().toISOString(), kind: 'note', label: 'Ticked the consent box on your standing consent' });
+              save(run);
+              line(tag, 'consent', `saved your standing consent for "${cut(q, 100)}"`);
+              res = await runner!.run(run.session, CONSENT_FOLLOW_UP, progress);
+              continue;
+            }
+            // At the final Submit, which the engine's gate holds for the person.
+            if (dry) { outcome = { kind: 'dry', text: 'Filled and stopped at the final Submit, which was not pressed.' }; break; }
+            if (!consent.on) { outcome = { kind: 'fail', why: 'Filled and stopped before the final Submit: you have not given standing consent to submit for you.', code: 'consent-needed' }; break; }
+            run.steps.push({ at: new Date().toISOString(), kind: 'submit', label: 'Pressing Submit on your standing consent' });
             save(run);
-            line(tag, 'note', `engine asked: ${cut(res.message, 140)}; answering yes`);
-            res = await runner!.run(run.session, FOLLOW_UP, progress);
+            const s = await runner!.submit(run.session);
+            if (s.pressed || s.opened) {
+              pressed = s.pressed;
+              line(tag, 'submit', s.pressed ? 'the engine sent it on your standing consent' : 'that opened the application form; filling it in');
+              if (s.pressed && run.target === 'practice') await until(() => !!submitted(), 8000);
+              if (submitted()) { outcome = { kind: 'sent', text: s.text }; break; }
+              if (s.pressed && CONFIRMED.test(s.text)) { outcome = { kind: 'sent', text: (s.text.match(CONFIRMED)?.[0] ?? 'Application submitted') }; break; }
+              res = await runner!.run(run.session, s.pressed ? FOLLOW_UP : goal, progress);
+              continue;
+            }
+            outcome = { kind: 'fail', why: `The engine held the Submit: ${s.held ?? 'no reason given'}.`, code: queue.classifyFailure(s.held ?? '') };
           }
+          if (!outcome) outcome = submitted() ? { kind: 'sent', text: res.message } : { kind: 'fail', why: `Stopped after ${MAX_TURNS} turns without a confirmation: ${res.message}`, code: 'timeout' };
+          if (dry || run.target === 'live') run.inspection = await runner!.inspect(run.session).catch(() => undefined);
           shot = await runner!.shot(run.session).catch(() => undefined);
         } finally {
+          // Nothing the engine still holds for this page may go out after Tack leaves it.
+          if (dry || outcome?.kind !== 'sent') await runner!.release(run.startedAt, run.target === 'practice' ? run.url : hostOf(run.url)).catch(() => 0);
           await runner!.close(run.session);
         }
         run.endedAt = new Date().toISOString();
         run.ms = Date.parse(run.endedAt) - Date.parse(run.startedAt);
         if (shot) { saveShot(run.id, shot); run.shot = true; }
+        if (!outcome) return fail(run, 'The run ended without an outcome.', 'site-error');
+        if (outcome.kind === 'fail') return fail(run, outcome.why, outcome.code, outcome.question);
+        if (outcome.kind === 'dry') {
+          run.status = 'dry-run';
+          const f = run.inspection;
+          run.confirmation = `DRY RUN, not submitted. ${f ? `${f.filled} of ${f.found} fields filled${f.unfilled.length ? ` (left: ${f.unfilled.slice(0, 5).join(', ')})` : ''}, résumé ${f.resume ? 'attached' : 'not seen'}. ` : ''}${cut(outcome.text, 200)}`;
+          run.steps.push({ at: run.endedAt, kind: 'confirm', label: 'Dry run: filled, not submitted' });
+          save(run);
+          settleJob(run);
+          line(tag, 'dry-run', run.confirmation, 'ok');
+          return;
+        }
         const sub = submitted();
-        const ok = sent(res);
-        if (!ok) return fail(run, res.message || `The engine ended with status ${res.status}.`);
         run.status = 'applied';
         run.reference = sub?.ref;
-        run.confirmation = sub ? `Application submitted. Reference ${sub.ref}.` : cut(res.message, 300);
-        run.steps.push({ at: run.endedAt, kind: 'confirm', label: sub ? `Confirmed, reference ${sub.ref}` : `Confirmed: ${cut(res.message, 140)}` });
+        run.confirmation = sub ? `Application submitted. Reference ${sub.ref}.` : cut(outcome.text, 300);
+        run.steps.push({ at: run.endedAt, kind: 'confirm', label: sub ? `Confirmed, reference ${sub.ref}` : `Confirmed: ${cut(outcome.text, 140)}` });
         run.applicationId = record(run, p).id;
         save(run);
+        settleJob(run);
         line(tag, 'confirm', run.confirmation, 'ok');
       } catch (e) {
         fail(run, (e as Error).message);
       }
     }));
+    await tiling;
     await runner?.end().catch(() => {});
     return finish();
   })();
@@ -470,11 +749,46 @@ export function startBatch(postings: Posting[], deps: BatchDeps = {}): { batch: 
     batch.endedAt = new Date().toISOString();
     batch.ms = Date.now() - t0;
     const ok = batch.runs.filter((r) => r.status === 'applied').length;
-    batch.note = `${ok} of ${batch.runs.length} submitted in ${(batch.ms / 1000).toFixed(1)} s`;
+    const dryOk = batch.runs.filter((r) => r.status === 'dry-run').length;
+    batch.note = dry ? `DRY RUN: ${dryOk} of ${batch.runs.length} filled and left unsent in ${(batch.ms / 1000).toFixed(1)} s`
+      : `${ok} of ${batch.runs.length} submitted in ${(batch.ms / 1000).toFixed(1)} s`;
     persistBatch(batch);
-    try { emit({ run: 'apply', step: 'done', detail: batch.note, status: ok ? 'ok' : 'fail', ms: batch.ms }); } catch { /* best effort */ }
+    try { emit({ run: 'apply', step: 'done', detail: batch.note, status: ok || dryOk ? 'ok' : 'fail', ms: batch.ms }); } catch { /* best effort */ }
     return batch;
   }
 
+  return { batch, done };
+}
+
+// ---------------------------------------------------------------- through the queue
+
+export class ApplyError extends Error {
+  status: number;
+  constructor(status: number, message: string) { super(message); this.status = status; }
+}
+
+/** Queues these postings and starts them now. Ones applied to before are refused, with why. */
+export function applyNow(postings: Posting[], o: { source: 'manual' | 'autopilot'; autopilotRunId?: string; deps?: BatchDeps; why?: Map<string, string> } = { source: 'manual' }):
+  { batch: ApplyBatch; done: Promise<ApplyBatch>; skipped: { postingId: string; company: string; why: string }[] } | { batch: null; done: Promise<null>; skipped: { postingId: string; company: string; why: string }[] } {
+  const dry = isDryRun();
+  const { added, skipped } = queue.enqueue(postings, { source: o.source, autopilotRunId: o.autopilotRunId, dryRun: dry, why: o.why });
+  if (!added.length) return { batch: null, done: Promise.resolve(null), skipped };
+  const byId = new Map(postings.map((p) => [p.id, p]));
+  const jobs = new Map(added.map((j) => [j.postingId, j.id]));
+  const { batch, done } = startBatch(added.map((j) => byId.get(j.postingId)!).filter(Boolean), o.deps, { jobs, dryRun: dry });
+  return { batch, done, skipped };
+}
+
+/** Runs the queue's jobs whose turn has come: retries after their backoff, and answered questions. */
+export function runDue(o: { now?: Date; deps?: BatchDeps; limit?: number } = {}): { batch: ApplyBatch | null; done: Promise<ApplyBatch | null> } {
+  const busy = new Set(activeBatches().flatMap((b) => b.runs.map((r) => r.postingId)));
+  const due = queue.dueJobs(o.now, o.limit ?? MAX_PARALLEL).filter((j) => !busy.has(j.postingId));
+  const pairs = due.map((j) => ({ j, p: store.get<Posting>('posting', j.postingId) })).filter((x): x is { j: queue.ApplyJob; p: Posting } => {
+    if (x.p && !x.p.closedAt) return true;
+    queue.settle(x.j.id, { kind: 'failed', reason: 'form-not-found', detail: 'The posting has closed or left Tack.' });
+    return false;
+  });
+  if (!pairs.length) return { batch: null, done: Promise.resolve(null) };
+  const { batch, done } = startBatch(pairs.map((x) => x.p), o.deps, { jobs: new Map(pairs.map((x) => [x.p.id, x.j.id])), dryRun: pairs.some((x) => x.j.dryRun) || isDryRun() });
   return { batch, done };
 }

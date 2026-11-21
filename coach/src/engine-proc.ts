@@ -6,6 +6,7 @@ import { existsSync, mkdirSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { stateDir } from './store.ts';
+import { startModelProxy, type ModelProxy } from './limiter.ts';
 
 const ENGINE_DIR = fileURLToPath(new URL('../../engine/', import.meta.url));
 const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta/openai';
@@ -51,8 +52,12 @@ export function modelBase(url = process.env.TACK_MODEL_URL): string {
   return (url?.trim() || GEMINI_BASE).replace(/\/chat\/completions\/?$/, '').replace(/\/$/, '');
 }
 
-/** The environment the engine child runs with: its own state, no sign-in, Tack's model, approvals from TACK_APPROVALS. */
-export function childEnv(dir: string, src: NodeJS.ProcessEnv = process.env): NodeJS.ProcessEnv {
+/**
+ * The environment the engine child runs with: its own state, no sign-in, Tack's model and the engine's
+ * own approval gate, so a Submit goes only on the person's standing consent (apply.ts). With a
+ * pass-through, the engine's model calls share Tack's request budget and never see the provider key.
+ */
+export function childEnv(dir: string, src: NodeJS.ProcessEnv = process.env, proxy?: { url: string; token: string }): NodeJS.ProcessEnv {
   const model = src.TACK_ENGINE_MODEL || src.TACK_MODEL_SMART || src.TACK_MODEL_FAST || DEFAULT_MODEL;
   const env: NodeJS.ProcessEnv = {
     PATH: src.PATH, HOME: src.HOME, USER: src.USER, TMPDIR: src.TMPDIR, LANG: src.LANG,
@@ -60,14 +65,25 @@ export function childEnv(dir: string, src: NodeJS.ProcessEnv = process.env): Nod
     FANFOLD_AUTH: 'off',
     FANFOLD_EXTENSION_PORT: src.TACK_EXTENSION_PORT || '47611',
     FANFOLD_LOG_LEVEL: src.TACK_ENGINE_LOG || 'warn',
-    FANFOLD_MODEL_URL: modelBase(src.TACK_MODEL_URL),
-    FANFOLD_MODEL_KEY: src.TACK_MODEL_KEY || src.GEMINI_API_KEY || '',
+    FANFOLD_MODEL_URL: proxy ? proxy.url : modelBase(src.TACK_MODEL_URL),
+    FANFOLD_MODEL_KEY: proxy ? proxy.token : src.TACK_MODEL_KEY || src.GEMINI_API_KEY || '',
     FANFOLD_MODEL_STEP: model, FANFOLD_MODEL_PLAN: model, FANFOLD_MODEL_VISION: model, FANFOLD_MODEL_ANSWER: model,
-    BROWSER_AGENT_APPROVALS: src.TACK_APPROVALS ?? 'none',
   };
+  // Unset is the engine's default gate: anything that reaches a person waits, unless the standing yes covers it.
+  if (src.TACK_APPROVALS?.trim()) env.BROWSER_AGENT_APPROVALS = src.TACK_APPROVALS.trim();
   for (const k of ['GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET']) if (src[k]) env[k] = src[k];
   if (src.TACK_CHROME_PATH) env.BA_CHROME_PATH = src.TACK_CHROME_PATH;
   return env;
+}
+
+let proxy: Promise<ModelProxy | null> | null = null;
+
+/** The engine's way to the model, through Tack's budget. Off with TACK_MODEL_PROXY=off or without a key. */
+export function modelProxy(): Promise<ModelProxy | null> {
+  const key = process.env.TACK_MODEL_KEY || process.env.GEMINI_API_KEY || '';
+  if (!key || process.env.TACK_MODEL_PROXY === 'off') return Promise.resolve(null);
+  proxy ??= startModelProxy({ upstream: modelBase(process.env.TACK_MODEL_URL), key }).catch(() => { proxy = null; return null; });
+  return proxy;
 }
 
 /** The owner link Fanfold prints on start: http://127.0.0.1:<port>/?t=<token>. */
@@ -111,7 +127,8 @@ async function launch(): Promise<EngineHandle> {
   if (!existsSync(join(ENGINE_DIR, 'bin/serve.ts'))) throw new Error('engine/bin/serve.ts is missing');
   const args = ['--no-warnings', 'bin/serve.ts', '--no-open', '--no-scheduler', '--port', process.env.TACK_ENGINE_PORT || '0'];
   if (process.env.TACK_ENGINE_HEADLESS === '1') args.push('--headless');
-  const proc = spawn(process.execPath, args, { cwd: ENGINE_DIR, env: childEnv(dir), stdio: ['ignore', 'pipe', 'pipe'] });
+  const pass = await modelProxy();
+  const proc = spawn(process.execPath, args, { cwd: ENGINE_DIR, env: childEnv(dir, process.env, pass ?? undefined), stdio: ['ignore', 'pipe', 'pipe'] });
   child = proc;
   let out = '';
   let err = '';
