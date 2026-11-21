@@ -1,0 +1,69 @@
+{
+  "name": "Avery Quinn",
+  "headline": "Backend engineer, payments and commerce, 5 years",
+  "currentRole": "Senior Backend Engineer",
+  "yearsExperience": 5,
+  "summary": "Backend engineer who has spent five years on payment and commerce systems in Go and Python, owning a settlement service and a public payouts API. Wants to move into product management for AI products.",
+  "skills": [
+    { "id": "backend-engineering", "name": "Backend engineering", "level": 5, "evidence": ["Backend engineer with five years building payment and commerce systems in Go and Python", "Built order and inventory services in Go on AWS (ECS, RDS, SQS) handling 2 million orders a month"] },
+    { "id": "apis", "name": "APIs and integrations", "level": 5, "evidence": ["Designed the public Payouts API (REST and webhooks) used by 60+ merchant integrations", "added contract tests for partner APIs"] },
+    { "id": "technical-fluency", "name": "Technical fluency", "level": 5, "evidence": ["Own the merchant settlement service that moves ₹1,800 crore a month for 14,000 merchants"] },
+    { "id": "system-design", "name": "System design", "level": 4, "evidence": ["cut failed payouts from 1.9% to 0.4% by redesigning the retry and reconciliation flow", "Moved the catalogue sync from nightly batch jobs to a Kafka event pipeline"] },
+    { "id": "sql", "name": "SQL", "level": 4, "evidence": ["Write SQL daily against Postgres and BigQuery to investigate payout failures and size incidents"] },
+    { "id": "testing", "name": "Testing and quality", "level": 4, "evidence": ["Raised integration test coverage on the checkout path from 35% to 80%"] },
+    { "id": "technical-writing", "name": "Technical writing", "level": 4, "evidence": ["Wrote design docs and RFCs for three cross-team projects", "wrote the API reference and migration guides"] },
+    { "id": "stakeholder-management", "name": "Stakeholder management", "level": 3, "evidence": ["Led the reconciliation rewrite across finance, operations and two partner banks", "ran the weekly sync, kept a decision log and wrote the rollout plan"] },
+    { "id": "python", "name": "Python", "level": 3, "evidence": ["Built internal tooling in Python for catalogue quality checks"] },
+    { "id": "cloud-infrastructure", "name": "Cloud infrastructure", "level": 3, "evidence": ["Built order and inventory services in Go on AWS (ECS, RDS, SQS)"] },
+    { "id": "data-pipelines", "name": "Data pipelines", "level": 3, "evidence": ["Moved the catalogue sync from nightly batch jobs to a Kafka event pipeline, cutting stock mismatches by 70%"] },
+    { "id": "mentoring", "name": "Mentoring", "level": 3, "evidence": ["Mentor two engineers and run the backend interview loop for the team"] },
+    { "id": "experimentation", "name": "Experimentation", "level": 2, "evidence": ["Built the feature flag and experiment assignment service the growth team uses for checkout A/B tests", "worked with the analyst to read results and decide which variants shipped"] },
+    { "id": "product-analytics", "name": "Product analytics", "level": 2, "evidence": ["built the settlement health dashboard in Metabase that ops reviews every morning"] },
+    { "id": "prioritization", "name": "Prioritisation", "level": 2, "evidence": ["turned the top complaints into a prioritised fix list for the sprint"] },
+    { "id": "rag", "name": "Retrieval (RAG)", "level": 2, "evidence": ["a weekend RAG prototype that answers on-call questions from our internal runbooks"] },
+    { "id": "llm-fundamentals", "name": "LLM fundamentals", "level": 2, "evidence": ["using an open embedding model and a small vector index"] },
+    { "id": "prompt-engineering", "name": "Prompt engineering", "level": 2, "evidence": ["compared three prompt formats for summarising incident timelines"] }
+  ],
+  "experience": [
+    {
+      "title": "Senior Backend Engineer",
+      "company": "Ledgerline Payments",
+      "start": "Jul 2023",
+      "end": "Present",
+      "bullets": [
+        "Own the merchant settlement service that moves ₹1,800 crore a month for 14,000 merchants; cut failed payouts from 1.9% to 0.4% by redesigning the retry and reconciliation flow.",
+        "Designed the public Payouts API (REST and webhooks) used by 60+ merchant integrations; wrote the API reference and migration guides.",
+        "Built the feature flag and experiment assignment service the growth team uses for checkout A/B tests; worked with the analyst to read results and decide which variants shipped.",
+        "Led the reconciliation rewrite across finance, operations and two partner banks: ran the weekly sync, kept a decision log and wrote the rollout plan.",
+        "Write SQL daily against Postgres and BigQuery to investigate payout failures and size incidents; built the settlement health dashboard in Metabase that ops reviews every morning.",
+        "Mentor two engineers and run the backend interview loop for the team."
+      ]
+    },
+    {
+      "title": "Backend Engineer",
+      "company": "Cartwheel Commerce",
+      "start": "Jun 2021",
+      "end": "Jun 2023",
+      "bullets": [
+        "Built order and inventory services in Go on AWS (ECS, RDS, SQS) handling 2 million orders a month.",
+        "Moved the catalogue sync from nightly batch jobs to a Kafka event pipeline, cutting stock mismatches by 70%.",
+        "Wrote design docs and RFCs for three cross-team projects, including the returns workflow used by 400 sellers.",
+        "Raised integration test coverage on the checkout path from 35% to 80% and added contract tests for partner APIs.",
+        "Sat in on seller support calls during the returns launch and turned the top complaints into a prioritised fix list for the sprint."
+      ]
+    },
+    {
+      "title": "Software Engineering Intern",
+      "company": "Cartwheel Commerce",
+      "start": "Jan 2021",
+      "end": "May 2021",
+      "bullets": ["Built internal tooling in Python for catalogue quality checks."]
+    }
+  ],
+  "education": ["B.Tech, Computer Science, Deccan Institute of Technology, 2021"],
+  "projects": [
+    "Runbook Buddy: a weekend RAG prototype that answers on-call questions from internal runbooks, using an open embedding model and a small vector index; feedback from 12 engineers.",
+    "Prompt notebook: compared three prompt formats for summarising incident timelines on 40 past incidents."
+  ],
+  "source": "demo"
+}

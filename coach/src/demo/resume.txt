@@ -1,0 +1,39 @@
+AVERY QUINN
+Senior Backend Engineer, Bengaluru, India
+avery.quinn@mail.example | code.example/averyq
+
+SUMMARY
+Backend engineer with five years building payment and commerce systems in Go and Python. The part of the job I enjoy most is where an engineering decision meets a customer problem, and I want to move into product management for AI products.
+
+EXPERIENCE
+
+Senior Backend Engineer, Ledgerline Payments, Bengaluru
+Jul 2023 - Present
+- Own the merchant settlement service that moves ₹1,800 crore a month for 14,000 merchants; cut failed payouts from 1.9% to 0.4% by redesigning the retry and reconciliation flow.
+- Designed the public Payouts API (REST and webhooks) used by 60+ merchant integrations; wrote the API reference and migration guides.
+- Built the feature flag and experiment assignment service the growth team uses for checkout A/B tests; worked with the analyst to read results and decide which variants shipped.
+- Led the reconciliation rewrite across finance, operations and two partner banks: ran the weekly sync, kept a decision log and wrote the rollout plan.
+- Write SQL daily against Postgres and BigQuery to investigate payout failures and size incidents; built the settlement health dashboard in Metabase that ops reviews every morning.
+- Mentor two engineers and run the backend interview loop for the team.
+
+Backend Engineer, Cartwheel Commerce, Bengaluru
+Jun 2021 - Jun 2023
+- Built order and inventory services in Go on AWS (ECS, RDS, SQS) handling 2 million orders a month.
+- Moved the catalogue sync from nightly batch jobs to a Kafka event pipeline, cutting stock mismatches by 70%.
+- Wrote design docs and RFCs for three cross-team projects, including the returns workflow used by 400 sellers.
+- Raised integration test coverage on the checkout path from 35% to 80% and added contract tests for partner APIs.
+- Sat in on seller support calls during the returns launch and turned the top complaints into a prioritised fix list for the sprint.
+
+Software Engineering Intern, Cartwheel Commerce, Bengaluru
+Jan 2021 - May 2021
+- Built internal tooling in Python for catalogue quality checks.
+
+PROJECTS
+- Runbook Buddy: a weekend RAG prototype that answers on-call questions from our internal runbooks, using an open embedding model and a small vector index. Shared it with the team and collected feedback from 12 engineers.
+- Prompt notebook: compared three prompt formats for summarising incident timelines and wrote up which one held up on 40 past incidents.
+
+SKILLS
+Go, Python, SQL (Postgres, BigQuery), REST and gRPC APIs, Kafka, AWS, Docker, system design, test automation, Metabase.
+
+EDUCATION
+B.Tech, Computer Science, Deccan Institute of Technology, 2021

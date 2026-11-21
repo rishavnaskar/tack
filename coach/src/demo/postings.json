@@ -1,0 +1,2621 @@
+[
+  {
+    "id": "p01-kestrelledger",
+    "title": "Product Manager, AI Copilot",
+    "company": "Kestrel Ledger",
+    "location": "Bengaluru (hybrid, 3 days in office)",
+    "url": "https://careers.kestrelledger.example/jobs/product-manager-ai-copilot",
+    "source": "startup-board",
+    "postedAt": "2026-11-18",
+    "salary": "₹28–38 LPA",
+    "text": "Kestrel Ledger is 45 people building a bookkeeping copilot for small businesses and the CA firms that keep their books. We raised our Series A in March. Today our agent matches GST invoices against bank statement lines and drafts journal entries for an accountant to approve. About 1,200 firms use it every month-end, and the close still takes them too long.\n\nWe need a product manager who will own that agent end to end.\n\nWhat the work looks like\n- Sit with accountants in Koramangala and Indiranagar during the last week of the month and watch where the agent gets in their way.\n- Decide which reconciliation problems are worth automating next, and which ones we should leave to people.\n- Write specs that our six engineers can build from without a meeting.\n- Own the extraction test set: 3,000 real invoices, labelled, run before every prompt or model change.\n- Pull your own numbers from Postgres. Match rate, edits per entry and time to close are the ones we watch.\n\nYou should have\n- Three or more years as a PM, or as an engineer who did most of a PM's job.\n- Shipped at least one product where a model takes actions, not just answers questions.\n- Run customer interviews and changed your plan because of what you heard.\n- Comfort writing SQL without waiting for an analyst.\n\nGood to have\n- Working knowledge of GST, TDS or month-end close in Indian accounting.\n- Ideas about how to charge for an agent: per entry, per seat or per firm.\n\n₹28–38 LPA plus ESOPs. Bengaluru, three days a week in our HSR Layout office. You will report to the two founders.",
+    "harvestedAt": "2026-11-21T04:30:00.000Z",
+    "live": false,
+    "roleFamily": "agents",
+    "seniority": "mid",
+    "companySize": "startup",
+    "skills": [
+      {
+        "skillId": "llm-evaluation",
+        "name": "LLM evaluation",
+        "importance": "must",
+        "quote": "Own the extraction test set: 3,000 real invoices, labelled, run before every prompt or model change"
+      },
+      {
+        "skillId": "product-discovery",
+        "name": "Product discovery",
+        "importance": "must",
+        "quote": "Decide which reconciliation problems are worth automating next, and which ones we should leave to people"
+      },
+      {
+        "skillId": "ai-agents",
+        "name": "AI agents",
+        "importance": "must",
+        "quote": "Shipped at least one product where a model takes actions, not just answers questions"
+      },
+      {
+        "skillId": "user-research",
+        "name": "User research",
+        "importance": "must",
+        "quote": "Run customer interviews and changed your plan because of what you heard"
+      },
+      {
+        "skillId": "prd-writing",
+        "name": "PRD writing",
+        "importance": "must",
+        "quote": "Write specs that our six engineers can build from without a meeting"
+      },
+      {
+        "skillId": "sql",
+        "name": "SQL",
+        "importance": "must",
+        "quote": "Comfort writing SQL without waiting for an analyst"
+      },
+      {
+        "skillId": "domain-expertise",
+        "name": "Domain expertise",
+        "importance": "nice",
+        "quote": "Working knowledge of GST, TDS or month-end close in Indian accounting"
+      },
+      {
+        "skillId": "pricing",
+        "name": "Pricing and packaging",
+        "importance": "nice",
+        "quote": "Ideas about how to charge for an agent: per entry, per seat or per firm"
+      }
+    ]
+  },
+  {
+    "id": "p02-lumenfreight",
+    "title": "Senior Product Manager, AI Platform",
+    "company": "Lumen Freight",
+    "location": "Bengaluru",
+    "url": "https://careers.lumenfreight.example/jobs/senior-product-manager-ai-platform",
+    "source": "company-site",
+    "postedAt": "2026-11-15",
+    "salary": "₹45–60 LPA",
+    "text": "Senior Product Manager, AI Platform\n\nLumen Freight gives shippers and logistics providers a live view of 1.4 lakh shipments a day across road, rail and ports. We are 400 people and profitable. Six product teams now ship features built on language models: ETA explanations, exception triage, document reading and a support assistant. Each team built its own plumbing. That has to stop.\n\nYou will own the internal AI platform those teams build on.\n\nScope\n- A model gateway with routing, rate limits and fallbacks across hosted and open-weight models.\n- A prompt registry with versioning and review.\n- A shared evaluation service so every team can test a change against its own golden set before release.\n- Cost and latency reporting per feature and per customer.\n\nWhat we expect\n- 6+ years in product, at least 2 on developer-facing or platform products. Internal platforms count.\n- You can read an API spec and argue about it.\n- You have an engineering background, or have worked so closely with engineers that it barely matters.\n- You have set up or used offline evals for a model-backed feature and know where they mislead.\n- You can hold a roadmap steady for four quarters and sequence it so the platform stays ahead of demand.\n- You can keep six team leads and their directors aligned when they want different things.\n- You care about cost per request and know the levers: caching, routing, smaller models.\n- Your written specs are the main way the platform team hears from you.\n\nNice to have\n- Experience with retrieval: indexing, chunking and ranking.\n- Comfort defining adoption and reliability metrics for an internal product.\n\nCompensation: ₹45–60 LPA. Office: Bengaluru, Bellandur. Hybrid, two days a week.",
+    "harvestedAt": "2026-11-21T04:30:00.000Z",
+    "live": false,
+    "roleFamily": "platform",
+    "seniority": "senior",
+    "companySize": "scaleup",
+    "skills": [
+      {
+        "skillId": "apis",
+        "name": "APIs and integrations",
+        "importance": "must",
+        "quote": "You can read an API spec and argue about it"
+      },
+      {
+        "skillId": "technical-fluency",
+        "name": "Technical fluency",
+        "importance": "must",
+        "quote": "You have an engineering background, or have worked so closely with engineers that it barely matters"
+      },
+      {
+        "skillId": "llm-evaluation",
+        "name": "LLM evaluation",
+        "importance": "must",
+        "quote": "You have set up or used offline evals for a model-backed feature and know where they mislead"
+      },
+      {
+        "skillId": "roadmapping",
+        "name": "Roadmapping",
+        "importance": "must",
+        "quote": "You can hold a roadmap steady for four quarters and sequence it so the platform stays ahead of demand"
+      },
+      {
+        "skillId": "stakeholder-management",
+        "name": "Stakeholder management",
+        "importance": "must",
+        "quote": "You can keep six team leads and their directors aligned when they want different things"
+      },
+      {
+        "skillId": "ai-cost-latency",
+        "name": "Model cost and latency",
+        "importance": "must",
+        "quote": "You care about cost per request and know the levers: caching, routing, smaller models"
+      },
+      {
+        "skillId": "prd-writing",
+        "name": "PRD writing",
+        "importance": "must",
+        "quote": "Your written specs are the main way the platform team hears from you"
+      },
+      {
+        "skillId": "rag",
+        "name": "Retrieval (RAG)",
+        "importance": "nice",
+        "quote": "Experience with retrieval: indexing, chunking and ranking"
+      },
+      {
+        "skillId": "metrics-definition",
+        "name": "Metrics and KPIs",
+        "importance": "nice",
+        "quote": "Comfort defining adoption and reliability metrics for an internal product"
+      }
+    ]
+  },
+  {
+    "id": "p03-paperkite",
+    "title": "AI Product Manager",
+    "company": "Paperkite",
+    "location": "Remote (India)",
+    "url": "https://careers.paperkite.example/jobs/ai-product-manager",
+    "source": "startup-board",
+    "postedAt": "2026-11-12",
+    "text": "Paperkite helps in-house legal teams review contracts faster. Upload a vendor agreement and we flag risky clauses, suggest redlines against your playbook and cite the exact text we relied on. Legal teams at 140 companies in India and Singapore use us. We are 30 people, fully remote.\n\nHere is the honest version of the job. Lawyers are rightly sceptical, and a redline that is wrong once costs us their trust for months. Our models are good on standard NDAs and much weaker on long master service agreements. We need someone who will find out why and fix the product around it.\n\nYou will\n- Spend a few hours each week with general counsels and contract managers, watching them review real documents.\n- Work out which review steps are worth automating and which should stay with the lawyer.\n- Build evaluation sets with practising lawyers and decide what \"good enough to ship\" means for each clause type.\n- Make sure every suggestion carries a citation, and that the product says it is unsure when it should.\n- Write clear specs for a team of five engineers and one ML engineer.\n\nYou probably have\n- 3 to 6 years of product experience, ideally on B2B tools for professionals.\n- A working understanding of how large language models fail: hallucination, long context limits, sensitivity to wording.\n- Experience running user interviews and turning them into product decisions.\n- Care about safety and correctness that goes beyond a checkbox.\n\nBonus points\n- You have tuned prompts yourself and kept notes on what worked.\n- Any legal or compliance background.\n\nWe do not list a salary band publicly. We share it in the first call, and it is competitive for remote roles in India.",
+    "harvestedAt": "2026-11-21T04:30:00.000Z",
+    "live": false,
+    "roleFamily": "agents",
+    "seniority": "mid",
+    "companySize": "startup",
+    "skills": [
+      {
+        "skillId": "llm-evaluation",
+        "name": "LLM evaluation",
+        "importance": "must",
+        "quote": "Build evaluation sets with practising lawyers and decide what \"good enough to ship\" means for each clause type"
+      },
+      {
+        "skillId": "product-discovery",
+        "name": "Product discovery",
+        "importance": "must",
+        "quote": "Work out which review steps are worth automating and which should stay with the lawyer"
+      },
+      {
+        "skillId": "user-research",
+        "name": "User research",
+        "importance": "must",
+        "quote": "Experience running user interviews and turning them into product decisions"
+      },
+      {
+        "skillId": "responsible-ai",
+        "name": "Responsible AI",
+        "importance": "must",
+        "quote": "Care about safety and correctness that goes beyond a checkbox"
+      },
+      {
+        "skillId": "prd-writing",
+        "name": "PRD writing",
+        "importance": "must",
+        "quote": "Write clear specs for a team of five engineers and one ML engineer"
+      },
+      {
+        "skillId": "llm-fundamentals",
+        "name": "LLM fundamentals",
+        "importance": "must",
+        "quote": "A working understanding of how large language models fail: hallucination, long context limits, sensitivity to wording"
+      },
+      {
+        "skillId": "prompt-engineering",
+        "name": "Prompt engineering",
+        "importance": "nice",
+        "quote": "You have tuned prompts yourself and kept notes on what worked"
+      },
+      {
+        "skillId": "domain-expertise",
+        "name": "Domain expertise",
+        "importance": "nice",
+        "quote": "Any legal or compliance background"
+      }
+    ]
+  },
+  {
+    "id": "p04-vistaarbank",
+    "title": "Product Manager – Conversational Banking (GenAI)",
+    "company": "Vistaar Bank Digital",
+    "location": "Mumbai (BKC)",
+    "url": "https://careers.vistaarbank.example/jobs/product-manager-conversational-banking-genai",
+    "source": "job-board",
+    "postedAt": "2026-11-09",
+    "salary": "₹30–42 LPA",
+    "text": "Product Manager – Conversational Banking (GenAI)\nVistaar Bank Digital, Mumbai (BKC)\n\nAbout the unit\nVistaar Bank Digital runs the mobile, web and messaging channels for Vistaar Bank, serving 2.6 crore retail customers. The unit has 900 people across product, technology and operations.\n\nRole purpose\nThe Product Manager will own the generative AI assistant in the mobile app and on WhatsApp, which answers account, card and loan queries and hands complex cases to the contact centre.\n\nKey responsibilities\n- Define the quarterly roadmap for the assistant in line with the bank's digital strategy.\n- Prepare business requirement documents and product specifications for technology and vendor teams.\n- Coordinate with compliance, information security, legal, operations and the contact centre on every release.\n- Work with the model risk team to complete reviews before launch, including bias, privacy and fallback testing.\n- Track containment rate, customer satisfaction and complaint volumes, and present them monthly to senior management.\n\nQualifications\n- 4 to 7 years of product management in banking, fintech or financial services.\n- Sound knowledge of RBI guidelines on digital channels, customer grievance redressal and outsourcing.\n- Experience managing multiple internal and external stakeholders across large organisations.\n- Familiarity with responsible AI practices in regulated environments.\n\nPreferred\n- Understanding of how large language models generate answers and where they need guardrails.\n- Experience leading cross-functional teams of engineering, design and analytics.\n\nCompensation: ₹30–42 LPA. Location: Bandra Kurla Complex, Mumbai. Five days a week in office.",
+    "harvestedAt": "2026-11-21T04:30:00.000Z",
+    "live": false,
+    "roleFamily": "generalist",
+    "seniority": "mid",
+    "companySize": "enterprise",
+    "skills": [
+      {
+        "skillId": "stakeholder-management",
+        "name": "Stakeholder management",
+        "importance": "must",
+        "quote": "Experience managing multiple internal and external stakeholders across large organisations"
+      },
+      {
+        "skillId": "responsible-ai",
+        "name": "Responsible AI",
+        "importance": "must",
+        "quote": "Familiarity with responsible AI practices in regulated environments"
+      },
+      {
+        "skillId": "prd-writing",
+        "name": "PRD writing",
+        "importance": "must",
+        "quote": "Prepare business requirement documents and product specifications for technology and vendor teams"
+      },
+      {
+        "skillId": "roadmapping",
+        "name": "Roadmapping",
+        "importance": "must",
+        "quote": "Define the quarterly roadmap for the assistant in line with the bank's digital strategy"
+      },
+      {
+        "skillId": "domain-expertise",
+        "name": "Domain expertise",
+        "importance": "must",
+        "quote": "Sound knowledge of RBI guidelines on digital channels, customer grievance redressal and outsourcing"
+      },
+      {
+        "skillId": "metrics-definition",
+        "name": "Metrics and KPIs",
+        "importance": "must",
+        "quote": "Track containment rate, customer satisfaction and complaint volumes, and present them monthly to senior management"
+      },
+      {
+        "skillId": "llm-fundamentals",
+        "name": "LLM fundamentals",
+        "importance": "nice",
+        "quote": "Understanding of how large language models generate answers and where they need guardrails"
+      },
+      {
+        "skillId": "cross-functional-leadership",
+        "name": "Cross-functional leadership",
+        "importance": "nice",
+        "quote": "Experience leading cross-functional teams of engineering, design and analytics"
+      }
+    ]
+  },
+  {
+    "id": "p05-orbitly",
+    "title": "Growth Product Manager, AI Trip Planner",
+    "company": "Orbitly",
+    "location": "Bengaluru",
+    "url": "https://careers.orbitly.example/jobs/growth-product-manager-ai-trip-planner",
+    "source": "job-board",
+    "postedAt": "2026-11-19",
+    "salary": "₹32–45 LPA",
+    "text": "Orbitly is a travel app used by 6 million people a month to find trains, flights and hotels in India. Last year we launched an AI trip planner: tell it \"4 days in Coorg with a toddler, under ₹40,000\" and it builds an itinerary you can book in one tap. 900,000 people tried it. Only 7% booked anything from it. Your job is to change that number.\n\nWhat you'll own\n- The planner funnel from first prompt to booking, and the weekly experiment calendar behind it.\n- Deciding where the planner is losing people: bad suggestions, slow answers, prices that change, or a confusing hand-off to checkout.\n- The metrics: planner-to-booking conversion, repeat use within 60 days and answer quality complaints.\n\nHow you'll work\n- You will run two to four A/B tests a week with our growth engineers, and you will call results honestly, including the ones that hurt.\n- You will write SQL in our warehouse yourself. Our analysts are busy and you will move faster.\n- You will build and read dashboards in our analytics tool before every planning meeting.\n- You will interview travellers who abandoned a plan and figure out what problem they were actually trying to solve.\n\nYou bring\n- 3 to 5 years in product, with at least one growth or conversion role.\n- Hands-on experience designing experiments, including sample sizes and guardrail metrics.\n- Enough understanding of language models to know why the planner sometimes invents a hotel.\n\nNice to have\n- You have written and tested prompts for a consumer product.\n- You enjoy usability sessions and like watching people use the app in person.\n\n₹32–45 LPA. Bengaluru, Indiranagar office, four days a week.",
+    "harvestedAt": "2026-11-21T04:30:00.000Z",
+    "live": false,
+    "roleFamily": "growth",
+    "seniority": "mid",
+    "companySize": "scaleup",
+    "skills": [
+      {
+        "skillId": "experimentation",
+        "name": "Experimentation",
+        "importance": "must",
+        "quote": "You will run two to four A/B tests a week with our growth engineers, and you will call results honestly, including the ones that hurt"
+      },
+      {
+        "skillId": "sql",
+        "name": "SQL",
+        "importance": "must",
+        "quote": "You will write SQL in our warehouse yourself. Our analysts are busy and you will move faster"
+      },
+      {
+        "skillId": "product-analytics",
+        "name": "Product analytics",
+        "importance": "must",
+        "quote": "You will build and read dashboards in our analytics tool before every planning meeting"
+      },
+      {
+        "skillId": "product-discovery",
+        "name": "Product discovery",
+        "importance": "must",
+        "quote": "You will interview travellers who abandoned a plan and figure out what problem they were actually trying to solve"
+      },
+      {
+        "skillId": "metrics-definition",
+        "name": "Metrics and KPIs",
+        "importance": "must",
+        "quote": "The metrics: planner-to-booking conversion, repeat use within 60 days and answer quality complaints"
+      },
+      {
+        "skillId": "llm-fundamentals",
+        "name": "LLM fundamentals",
+        "importance": "must",
+        "quote": "Enough understanding of language models to know why the planner sometimes invents a hotel"
+      },
+      {
+        "skillId": "prompt-engineering",
+        "name": "Prompt engineering",
+        "importance": "nice",
+        "quote": "You have written and tested prompts for a consumer product"
+      },
+      {
+        "skillId": "user-research",
+        "name": "User research",
+        "importance": "nice",
+        "quote": "You enjoy usability sessions and like watching people use the app in person"
+      }
+    ]
+  },
+  {
+    "id": "p06-tessellatecloud",
+    "title": "Senior Product Manager, Generative AI",
+    "company": "Tessellate Cloud",
+    "location": "Hyderabad",
+    "url": "https://careers.tessellatecloud.example/jobs/senior-product-manager-generative-ai",
+    "source": "company-site",
+    "postedAt": "2026-11-06",
+    "text": "Senior Product Manager, Generative AI\nHyderabad | Full time\n\nTessellate Cloud makes IT service management software used by 3,500 enterprises in 11 countries. Our Hyderabad centre is home to 2,200 of our 8,000 colleagues and builds core parts of the suite.\n\nThe opportunity\nOur customers want AI that resolves tickets, writes knowledge articles and spots incidents before users notice. Several product lines have started pilots on their own. We are hiring a Senior Product Manager to bring them into one coherent plan and get them in front of customers.\n\nWhat you will do\n- Set the product strategy for generative AI across incident, change and knowledge management.\n- Build and maintain a multi-quarter roadmap, agreed with product leaders in Austin, Dublin and Hyderabad.\n- Work with engineering, design, security, legal and support leads who do not report to you, and get decisions made.\n- Keep executive sponsors and regional product heads informed and aligned, especially when priorities change.\n- Plan launches with product marketing and field sales, including pricing tiers, demos and enablement.\n\nWhat you will bring\n- 7+ years of product management, with at least 3 in enterprise software.\n- A solid grasp of how large language models work, what they cost to run and where they break.\n- A record of shipping to large enterprise buyers with procurement, security and legal reviews.\n\nIt would help if you have\n- Experience in B2B SaaS with seat-based or consumption-based licensing.\n- Exposure to evaluation methods for generated content, such as human review panels or automated test sets.\n\nSalary is discussed at the offer stage. Hybrid working, three days a week at our HITEC City campus.",
+    "harvestedAt": "2026-11-21T04:30:00.000Z",
+    "live": false,
+    "roleFamily": "generalist",
+    "seniority": "senior",
+    "companySize": "enterprise",
+    "skills": [
+      {
+        "skillId": "product-strategy",
+        "name": "Product strategy",
+        "importance": "must",
+        "quote": "Set the product strategy for generative AI across incident, change and knowledge management"
+      },
+      {
+        "skillId": "roadmapping",
+        "name": "Roadmapping",
+        "importance": "must",
+        "quote": "Build and maintain a multi-quarter roadmap, agreed with product leaders in Austin, Dublin and Hyderabad"
+      },
+      {
+        "skillId": "cross-functional-leadership",
+        "name": "Cross-functional leadership",
+        "importance": "must",
+        "quote": "Work with engineering, design, security, legal and support leads who do not report to you, and get decisions made"
+      },
+      {
+        "skillId": "stakeholder-management",
+        "name": "Stakeholder management",
+        "importance": "must",
+        "quote": "Keep executive sponsors and regional product heads informed and aligned, especially when priorities change"
+      },
+      {
+        "skillId": "llm-fundamentals",
+        "name": "LLM fundamentals",
+        "importance": "must",
+        "quote": "A solid grasp of how large language models work, what they cost to run and where they break"
+      },
+      {
+        "skillId": "go-to-market",
+        "name": "Go-to-market",
+        "importance": "must",
+        "quote": "Plan launches with product marketing and field sales, including pricing tiers, demos and enablement"
+      },
+      {
+        "skillId": "b2b-saas",
+        "name": "B2B SaaS",
+        "importance": "nice",
+        "quote": "Experience in B2B SaaS with seat-based or consumption-based licensing"
+      },
+      {
+        "skillId": "llm-evaluation",
+        "name": "LLM evaluation",
+        "importance": "nice",
+        "quote": "Exposure to evaluation methods for generated content, such as human review panels or automated test sets"
+      }
+    ]
+  },
+  {
+    "id": "p07-brightloop",
+    "title": "Product Manager, AI Agents",
+    "company": "Brightloop",
+    "location": "Bengaluru",
+    "url": "https://careers.brightloop.example/jobs/product-manager-ai-agents",
+    "source": "company-site",
+    "postedAt": "2026-11-17",
+    "salary": "₹35–48 LPA",
+    "text": "Brightloop automates customer support for 900 businesses, from D2C brands to lending apps. Our AI agent resolves 41% of conversations end to end today: it checks order status, issues refunds within limits, changes addresses and closes the ticket. We want that above 60% by next December without a rise in complaints.\n\nThe job\nYou will be the product manager for the agent itself. Not the dashboard around it, but the thing that talks to customers and takes actions in their systems.\n\nYou will\n- Decide which new actions the agent may take, and which should always go to a human.\n- Own the evaluation suite: 8,000 real transcripts, graded, rerun on every change to prompts, tools or models.\n- Define what a resolved conversation means, and defend that definition when sales wants a bigger number.\n- Spend time with support leads at customer companies to understand where hand-offs break.\n- Work on how we charge. Today it is per resolved conversation, and we are not sure that is right for every segment.\n- Write and test prompts with engineers when that is the fastest way to learn.\n\nYou have\n- 3 to 6 years in product, with at least one AI or automation product in production.\n- Strong opinions about agent design: tool use, confirmations, hand-off and failure recovery.\n- Hands-on experience building or running evals.\n- A habit of finding the real problem before choosing a solution.\n\nNice to have\n- SQL for your own analysis.\n- Experience with helpdesk or CRM APIs and webhooks.\n\n₹35–48 LPA plus ESOPs. Bengaluru, Domlur. Hybrid.",
+    "harvestedAt": "2026-11-21T04:30:00.000Z",
+    "live": false,
+    "roleFamily": "agents",
+    "seniority": "mid",
+    "companySize": "scaleup",
+    "skills": [
+      {
+        "skillId": "ai-agents",
+        "name": "AI agents",
+        "importance": "must",
+        "quote": "Strong opinions about agent design: tool use, confirmations, hand-off and failure recovery"
+      },
+      {
+        "skillId": "llm-evaluation",
+        "name": "LLM evaluation",
+        "importance": "must",
+        "quote": "Own the evaluation suite: 8,000 real transcripts, graded, rerun on every change to prompts, tools or models"
+      },
+      {
+        "skillId": "metrics-definition",
+        "name": "Metrics and KPIs",
+        "importance": "must",
+        "quote": "Define what a resolved conversation means, and defend that definition when sales wants a bigger number"
+      },
+      {
+        "skillId": "pricing",
+        "name": "Pricing and packaging",
+        "importance": "must",
+        "quote": "Work on how we charge. Today it is per resolved conversation, and we are not sure that is right for every segment"
+      },
+      {
+        "skillId": "product-discovery",
+        "name": "Product discovery",
+        "importance": "must",
+        "quote": "A habit of finding the real problem before choosing a solution"
+      },
+      {
+        "skillId": "prompt-engineering",
+        "name": "Prompt engineering",
+        "importance": "must",
+        "quote": "Write and test prompts with engineers when that is the fastest way to learn"
+      },
+      {
+        "skillId": "sql",
+        "name": "SQL",
+        "importance": "nice",
+        "quote": "SQL for your own analysis"
+      },
+      {
+        "skillId": "apis",
+        "name": "APIs and integrations",
+        "importance": "nice",
+        "quote": "Experience with helpdesk or CRM APIs and webhooks"
+      }
+    ]
+  },
+  {
+    "id": "p08-quantahealth",
+    "title": "Associate Product Manager, Clinical AI",
+    "company": "Quanta Health Systems",
+    "location": "Chennai",
+    "url": "https://careers.quantahealth.example/jobs/associate-product-manager-clinical-ai",
+    "source": "job-board",
+    "postedAt": "2026-11-11",
+    "salary": "₹14–20 LPA",
+    "text": "Associate Product Manager, Clinical AI\nQuanta Health Systems, Chennai\n\nQuanta's hospital information system runs in 600 hospitals across India, from 50-bed nursing homes to large multi-speciality chains. Doctors in those hospitals spend up to 40 minutes writing each discharge summary. We are building a feature that drafts the summary from the patient's record for the doctor to edit and sign.\n\nThis is an associate role. You will work under a senior product manager, with a clinical safety officer, three engineers and a data scientist.\n\nResponsibilities\n- Shadow doctors, nurses and medical records staff in partner hospitals and document how discharge summaries are written today.\n- Turn those observations into clear requirement documents, user stories and acceptance criteria.\n- Keep clinicians, hospital IT teams and our implementation managers informed about scope and timelines.\n- Prepare material for clinical safety reviews, including known failure cases and how the product handles them.\n- Present findings and progress to hospital administrators in plain language.\n\nRequirements\n- 1 to 3 years of experience in product, business analysis, consulting or clinical operations.\n- Comfort interviewing users and writing up what you learned.\n- Strong written communication. Most of this job is writing.\n- Ability to work with many stakeholders and stay organised.\n\nPreferred\n- A basic understanding of how large language models produce text and why they can be confidently wrong.\n- Interest in patient safety and the responsible use of AI in healthcare.\n- A clinical, pharmacy or health informatics background.\n\nCompensation: ₹14–20 LPA. Work location: Guindy, Chennai. Five days a week in office, with travel to hospitals in Tamil Nadu and Karnataka.",
+    "harvestedAt": "2026-11-21T04:30:00.000Z",
+    "live": false,
+    "roleFamily": "generalist",
+    "seniority": "associate",
+    "companySize": "enterprise",
+    "skills": [
+      {
+        "skillId": "user-research",
+        "name": "User research",
+        "importance": "must",
+        "quote": "Comfort interviewing users and writing up what you learned"
+      },
+      {
+        "skillId": "prd-writing",
+        "name": "PRD writing",
+        "importance": "must",
+        "quote": "Turn those observations into clear requirement documents, user stories and acceptance criteria"
+      },
+      {
+        "skillId": "stakeholder-management",
+        "name": "Stakeholder management",
+        "importance": "must",
+        "quote": "Ability to work with many stakeholders and stay organised"
+      },
+      {
+        "skillId": "communication",
+        "name": "Communication",
+        "importance": "must",
+        "quote": "Strong written communication. Most of this job is writing"
+      },
+      {
+        "skillId": "llm-fundamentals",
+        "name": "LLM fundamentals",
+        "importance": "nice",
+        "quote": "A basic understanding of how large language models produce text and why they can be confidently wrong"
+      },
+      {
+        "skillId": "responsible-ai",
+        "name": "Responsible AI",
+        "importance": "nice",
+        "quote": "Interest in patient safety and the responsible use of AI in healthcare"
+      },
+      {
+        "skillId": "domain-expertise",
+        "name": "Domain expertise",
+        "importance": "nice",
+        "quote": "A clinical, pharmacy or health informatics background"
+      }
+    ]
+  },
+  {
+    "id": "p09-fernhill",
+    "title": "Product Manager, AI Tutor",
+    "company": "Fernhill Learning",
+    "location": "Bengaluru",
+    "url": "https://careers.fernhill.example/jobs/product-manager-ai-tutor",
+    "source": "job-board",
+    "postedAt": "2026-11-14",
+    "salary": "₹28–36 LPA",
+    "text": "Fernhill is a learning app for Classes 6 to 10, used by 2 million students in English, Hindi and Marathi. In June we launched Ask Fern, an AI tutor that gives hints instead of answers. Students love it in the first week. By week four, 70% have stopped using it.\n\nWe are looking for a product manager to own Ask Fern and get week-four retention up.\n\nIn this role you will\n- Talk to students, parents and teachers every week, at home and in tuition centres, to understand why they come back or drift away.\n- Design and run experiments on hint styles, nudges and streaks, and read the results with our data scientist.\n- Use funnels and cohort analysis to find where learners drop off.\n- Work with our pedagogy team to build test sets that score the tutor's answers for correctness and for how well they teach.\n- Own content safety for a product used by children: what the tutor refuses, how it handles distress, what we log and who sees it.\n- Pick the problems worth solving each quarter and explain why to the team.\n\nWe are looking for\n- 3 to 5 years of product experience in a consumer app.\n- Experience running A/B tests and making calls from the data.\n- Comfort with product analytics tools and cohort analysis.\n- Seriousness about safety for young users.\n\nNice to have\n- Basic SQL for pulling your own numbers.\n- Some experience writing prompts or working closely with an ML team.\n\n₹28–36 LPA. Bengaluru, JP Nagar office, hybrid.",
+    "harvestedAt": "2026-11-21T04:30:00.000Z",
+    "live": false,
+    "roleFamily": "growth",
+    "seniority": "mid",
+    "companySize": "scaleup",
+    "skills": [
+      {
+        "skillId": "experimentation",
+        "name": "Experimentation",
+        "importance": "must",
+        "quote": "Design and run experiments on hint styles, nudges and streaks, and read the results with our data scientist"
+      },
+      {
+        "skillId": "user-research",
+        "name": "User research",
+        "importance": "must",
+        "quote": "Talk to students, parents and teachers every week, at home and in tuition centres, to understand why they come back or drift away"
+      },
+      {
+        "skillId": "product-analytics",
+        "name": "Product analytics",
+        "importance": "must",
+        "quote": "Use funnels and cohort analysis to find where learners drop off"
+      },
+      {
+        "skillId": "llm-evaluation",
+        "name": "LLM evaluation",
+        "importance": "must",
+        "quote": "Work with our pedagogy team to build test sets that score the tutor's answers for correctness and for how well they teach"
+      },
+      {
+        "skillId": "responsible-ai",
+        "name": "Responsible AI",
+        "importance": "must",
+        "quote": "Own content safety for a product used by children: what the tutor refuses, how it handles distress, what we log and who sees it"
+      },
+      {
+        "skillId": "product-discovery",
+        "name": "Product discovery",
+        "importance": "must",
+        "quote": "Pick the problems worth solving each quarter and explain why to the team"
+      },
+      {
+        "skillId": "sql",
+        "name": "SQL",
+        "importance": "nice",
+        "quote": "Basic SQL for pulling your own numbers"
+      },
+      {
+        "skillId": "prompt-engineering",
+        "name": "Prompt engineering",
+        "importance": "nice",
+        "quote": "Some experience writing prompts or working closely with an ML team"
+      }
+    ]
+  },
+  {
+    "id": "p10-riverstonepay",
+    "title": "Senior Product Manager, Risk Intelligence",
+    "company": "Riverstone Payments",
+    "location": "Bengaluru",
+    "url": "https://careers.riverstonepay.example/jobs/senior-product-manager-risk-intelligence",
+    "source": "company-site",
+    "postedAt": "2026-11-16",
+    "salary": "₹50–65 LPA",
+    "text": "Senior Product Manager, Risk Intelligence\n\nRiverstone processes payments for 80,000 merchants and sees roughly ₹9,000 crore of transactions a month. Our risk team blocks fraud in real time and handles about 30,000 chargebacks a month. This role owns the models and tools behind both.\n\nWhat you will own\n- Real-time fraud scoring: model features, thresholds and the precision and recall trade-off we choose for each merchant segment.\n- A new language model feature that reads dispute evidence and drafts chargeback responses for analysts to approve.\n- The risk metrics that leadership reviews every week, including fraud loss rate, false decline rate and dispute win rate.\n- A roadmap shared between risk operations, data science and the payments platform team.\n\nWhat we need from you\n- 6+ years in product, with at least 2 on ML-driven products. You should be able to explain overfitting, drift and why a model with 98% accuracy can be useless.\n- Strong SQL. You will query transaction data yourself, often in the middle of an incident.\n- Experience aligning operations, compliance and engineering leaders who see risk differently.\n- You have checked a model's output against labelled data before trusting it, and you can apply the same discipline to generated text.\n\nHelpful\n- Card network rules, chargeback reason codes or RBI payment aggregator guidelines.\n- Experience with payment APIs or merchant integrations.\n\n₹50–65 LPA plus ESOPs. Bengaluru, Koramangala. Hybrid, three days in office.",
+    "harvestedAt": "2026-11-21T04:30:00.000Z",
+    "live": false,
+    "roleFamily": "analytics",
+    "seniority": "senior",
+    "companySize": "scaleup",
+    "skills": [
+      {
+        "skillId": "ml-fundamentals",
+        "name": "ML fundamentals",
+        "importance": "must",
+        "quote": "You should be able to explain overfitting, drift and why a model with 98% accuracy can be useless"
+      },
+      {
+        "skillId": "metrics-definition",
+        "name": "Metrics and KPIs",
+        "importance": "must",
+        "quote": "The risk metrics that leadership reviews every week, including fraud loss rate, false decline rate and dispute win rate"
+      },
+      {
+        "skillId": "sql",
+        "name": "SQL",
+        "importance": "must",
+        "quote": "Strong SQL. You will query transaction data yourself, often in the middle of an incident"
+      },
+      {
+        "skillId": "stakeholder-management",
+        "name": "Stakeholder management",
+        "importance": "must",
+        "quote": "Experience aligning operations, compliance and engineering leaders who see risk differently"
+      },
+      {
+        "skillId": "roadmapping",
+        "name": "Roadmapping",
+        "importance": "must",
+        "quote": "A roadmap shared between risk operations, data science and the payments platform team"
+      },
+      {
+        "skillId": "llm-evaluation",
+        "name": "LLM evaluation",
+        "importance": "must",
+        "quote": "You have checked a model's output against labelled data before trusting it, and you can apply the same discipline to generated text"
+      },
+      {
+        "skillId": "domain-expertise",
+        "name": "Domain expertise",
+        "importance": "nice",
+        "quote": "Card network rules, chargeback reason codes or RBI payment aggregator guidelines"
+      },
+      {
+        "skillId": "apis",
+        "name": "APIs and integrations",
+        "importance": "nice",
+        "quote": "Experience with payment APIs or merchant integrations"
+      }
+    ]
+  },
+  {
+    "id": "p11-nimbusnotes",
+    "title": "Founding Product Manager, AI",
+    "company": "Nimbus Notes",
+    "location": "Remote (India)",
+    "url": "https://careers.nimbusnotes.example/jobs/founding-product-manager-ai",
+    "source": "startup-board",
+    "postedAt": "2026-11-20",
+    "salary": "₹40–55 LPA",
+    "text": "Hi, we're Nimbus. We make a meeting memory for small teams: it joins your calls, keeps notes, and answers questions like \"what did we promise the Pune client last month?\" We're 25 people, seed funded, and every one of us works remotely from somewhere in India.\n\nWe're hiring our first product manager. Until now the two founders have done the job between other jobs, and it shows.\n\nWhat you'd actually do\n- Talk to five or more users a week. Watch them use Nimbus, ask what they did before, and find the moments it saves them and the moments it embarrasses them.\n- Decide what we build next and what we stop doing. There will be fewer things in the second list than you want.\n- Run our first real pricing tests. Today everyone pays ₹499 a seat and we suspect that's wrong.\n- Set up simple experiments on onboarding and the first week, and tell us honestly what they show.\n- Write short specs. Two pages is long here.\n\nYou'd be good at this if\n- You've been a PM for 4+ years, or a founder, or an engineer who kept getting pulled into product calls.\n- You understand how language models behave well enough to explain to a customer why the summary missed something.\n- You'd rather ship a rough version on Tuesday than a polished one next month.\n- You can hold a messy week together without needing a process document for it.\n\nBonus\n- You've written prompts that went to production.\n- You've done launches for a B2B product before: pricing page, launch post, the works.\n\n₹40–55 LPA plus meaningful ESOPs. Remote within India, with a team offsite every quarter.",
+    "harvestedAt": "2026-11-21T04:30:00.000Z",
+    "live": false,
+    "roleFamily": "agents",
+    "seniority": "senior",
+    "companySize": "startup",
+    "skills": [
+      {
+        "skillId": "product-discovery",
+        "name": "Product discovery",
+        "importance": "must",
+        "quote": "Decide what we build next and what we stop doing. There will be fewer things in the second list than you want"
+      },
+      {
+        "skillId": "user-research",
+        "name": "User research",
+        "importance": "must",
+        "quote": "Talk to five or more users a week"
+      },
+      {
+        "skillId": "pricing",
+        "name": "Pricing and packaging",
+        "importance": "must",
+        "quote": "Run our first real pricing tests. Today everyone pays ₹499 a seat and we suspect that's wrong"
+      },
+      {
+        "skillId": "experimentation",
+        "name": "Experimentation",
+        "importance": "must",
+        "quote": "Set up simple experiments on onboarding and the first week, and tell us honestly what they show"
+      },
+      {
+        "skillId": "llm-fundamentals",
+        "name": "LLM fundamentals",
+        "importance": "must",
+        "quote": "You understand how language models behave well enough to explain to a customer why the summary missed something"
+      },
+      {
+        "skillId": "prd-writing",
+        "name": "PRD writing",
+        "importance": "must",
+        "quote": "Write short specs. Two pages is long here"
+      },
+      {
+        "skillId": "prompt-engineering",
+        "name": "Prompt engineering",
+        "importance": "nice",
+        "quote": "You've written prompts that went to production"
+      },
+      {
+        "skillId": "go-to-market",
+        "name": "Go-to-market",
+        "importance": "nice",
+        "quote": "You've done launches for a B2B product before: pricing page, launch post, the works"
+      }
+    ]
+  },
+  {
+    "id": "p12-helixretail",
+    "title": "Product Manager, AI Merchandising",
+    "company": "Helix Retail Group",
+    "location": "Gurugram",
+    "url": "https://careers.helixretail.example/jobs/product-manager-ai-merchandising",
+    "source": "job-board",
+    "postedAt": "2026-11-03",
+    "text": "Product Manager, AI Merchandising\nHelix Retail Group, Technology Centre, Gurugram\n\nHelix runs 1,100 grocery, fashion and electronics stores and three online storefronts. Helix Technology builds the systems behind them, with 1,400 engineers, analysts and product managers in Gurugram and Bengaluru.\n\nAbout the role\nOur buying and merchandising teams plan what every store stocks, at what price, and how it is described online. You will own two products that support them: a demand forecasting tool used by 300 category managers, and a new system that writes product titles and descriptions for 2 lakh online listings.\n\nKey responsibilities\n- Work with category heads, regional buyers, supply chain and marketing to agree priorities, then hold to them.\n- Maintain a 12-month roadmap for both products and review it with business leadership each quarter.\n- Work with data scientists on forecast models: understand how they are trained, how accuracy is measured and when they need retraining.\n- Write detailed requirements and acceptance criteria for engineering squads.\n- Define and report adoption and accuracy metrics, including forecast error and listing approval rate.\n\nRequirements\n- 4 to 7 years of product management, preferably in retail, e-commerce or supply chain.\n- Working knowledge of machine learning concepts such as training data, bias, overfitting and forecast error.\n- Proven ability to manage senior business stakeholders.\n\nDesirable\n- Experience setting up quality checks or human review for generated content.\n- Awareness of competitor retail technology and market trends.\n- Experience leading cross-functional programmes across business and technology.\n\nSalary as per company norms. Gurugram, Udyog Vihar. Five days a week in office.",
+    "harvestedAt": "2026-11-21T04:30:00.000Z",
+    "live": false,
+    "roleFamily": "generalist",
+    "seniority": "mid",
+    "companySize": "enterprise",
+    "skills": [
+      {
+        "skillId": "stakeholder-management",
+        "name": "Stakeholder management",
+        "importance": "must",
+        "quote": "Proven ability to manage senior business stakeholders"
+      },
+      {
+        "skillId": "roadmapping",
+        "name": "Roadmapping",
+        "importance": "must",
+        "quote": "Maintain a 12-month roadmap for both products and review it with business leadership each quarter"
+      },
+      {
+        "skillId": "ml-fundamentals",
+        "name": "ML fundamentals",
+        "importance": "must",
+        "quote": "Working knowledge of machine learning concepts such as training data, bias, overfitting and forecast error"
+      },
+      {
+        "skillId": "prd-writing",
+        "name": "PRD writing",
+        "importance": "must",
+        "quote": "Write detailed requirements and acceptance criteria for engineering squads"
+      },
+      {
+        "skillId": "metrics-definition",
+        "name": "Metrics and KPIs",
+        "importance": "must",
+        "quote": "Define and report adoption and accuracy metrics, including forecast error and listing approval rate"
+      },
+      {
+        "skillId": "llm-evaluation",
+        "name": "LLM evaluation",
+        "importance": "nice",
+        "quote": "Experience setting up quality checks or human review for generated content"
+      },
+      {
+        "skillId": "competitive-analysis",
+        "name": "Competitive analysis",
+        "importance": "nice",
+        "quote": "Awareness of competitor retail technology and market trends"
+      },
+      {
+        "skillId": "cross-functional-leadership",
+        "name": "Cross-functional leadership",
+        "importance": "nice",
+        "quote": "Experience leading cross-functional programmes across business and technology"
+      }
+    ]
+  },
+  {
+    "id": "p13-cobaltmetrics",
+    "title": "Product Manager, AI Insights",
+    "company": "Cobalt Metrics",
+    "location": "Bengaluru",
+    "url": "https://careers.cobaltmetrics.example/jobs/product-manager-ai-insights",
+    "source": "company-site",
+    "postedAt": "2026-11-13",
+    "salary": "₹34–46 LPA",
+    "text": "Product Manager, AI Insights\nCobalt Metrics, Bengaluru\n\nCobalt is product analytics for B2B software companies. 1,100 customers send us event data, and their PMs and analysts build funnels and retention charts on top of it. Last quarter we shipped Ask Cobalt: type a question in English, get a chart. It turns the question into SQL against the customer's event schema.\n\nAsk Cobalt is right about 78% of the time on our internal benchmark. Users can't tell which 22% is wrong. That is the problem you will own.\n\nWhat you'll do\n- Own the benchmark: 2,500 questions with verified SQL across 40 real schemas, and the process for growing it.\n- Decide how the product shows confidence, asks clarifying questions or refuses.\n- Work with our ML engineers on prompts, schema descriptions and few-shot examples.\n- Interview customer analysts about how they would check an answer, and what makes them trust one.\n- Write precise specs. Our engineers will ask about edge cases, so think about them first.\n\nWhat you'll need\n- 3+ years of product management on a B2B SaaS product, ideally data or developer tooling.\n- Fluent SQL. You should be able to look at a generated query and spot the wrong join in a minute.\n- Experience with language model features, including writing and testing prompts.\n- A disciplined approach to measuring quality before you ship.\n- The instinct to find the real question behind a feature request.\n\nNice to have\n- Experience with retrieval over schemas, docs or metadata.\n- Background as an analyst or in product analytics.\n\n₹34–46 LPA plus RSUs. Bengaluru, Indiranagar, hybrid.",
+    "harvestedAt": "2026-11-21T04:30:00.000Z",
+    "live": false,
+    "roleFamily": "analytics",
+    "seniority": "mid",
+    "companySize": "scaleup",
+    "skills": [
+      {
+        "skillId": "sql",
+        "name": "SQL",
+        "importance": "must",
+        "quote": "Fluent SQL. You should be able to look at a generated query and spot the wrong join in a minute"
+      },
+      {
+        "skillId": "llm-evaluation",
+        "name": "LLM evaluation",
+        "importance": "must",
+        "quote": "Own the benchmark: 2,500 questions with verified SQL across 40 real schemas, and the process for growing it"
+      },
+      {
+        "skillId": "prompt-engineering",
+        "name": "Prompt engineering",
+        "importance": "must",
+        "quote": "Experience with language model features, including writing and testing prompts"
+      },
+      {
+        "skillId": "product-discovery",
+        "name": "Product discovery",
+        "importance": "must",
+        "quote": "The instinct to find the real question behind a feature request"
+      },
+      {
+        "skillId": "prd-writing",
+        "name": "PRD writing",
+        "importance": "must",
+        "quote": "Write precise specs. Our engineers will ask about edge cases, so think about them first"
+      },
+      {
+        "skillId": "b2b-saas",
+        "name": "B2B SaaS",
+        "importance": "must",
+        "quote": "3+ years of product management on a B2B SaaS product, ideally data or developer tooling"
+      },
+      {
+        "skillId": "rag",
+        "name": "Retrieval (RAG)",
+        "importance": "nice",
+        "quote": "Experience with retrieval over schemas, docs or metadata"
+      },
+      {
+        "skillId": "product-analytics",
+        "name": "Product analytics",
+        "importance": "nice",
+        "quote": "Background as an analyst or in product analytics"
+      }
+    ]
+  },
+  {
+    "id": "p14-dhwanivoice",
+    "title": "Product Manager, Voice Agents",
+    "company": "Dhwani Voice",
+    "location": "Bengaluru",
+    "url": "https://careers.dhwanivoice.example/jobs/product-manager-voice-agents",
+    "source": "startup-board",
+    "postedAt": "2026-11-15",
+    "salary": "₹30–42 LPA",
+    "text": "Dhwani builds voice agents that speak nine Indian languages and call customers on behalf of lenders, insurers and telecom companies: payment reminders, policy renewals, KYC follow-ups. We handle 1.2 million calls a week. We are 60 people, most of them engineers and linguists, in Bengaluru.\n\nWe are hiring a PM for the voice agent product.\n\nThe problems on your desk\n- Latency. A pause of more than 900 milliseconds makes a call feel robotic. You will balance model size, streaming and caching against cost per minute, which our customers watch closely.\n- Quality across languages. An agent that is good in Hindi can be clumsy in Odia. You will build evaluation with native speakers, combining scored call samples and automated checks.\n- Actions. Agents now book callbacks, send payment links and update CRM records. You will decide what else they can safely do.\n- Understanding callers. You will listen to recordings every week and interview customers' operations teams.\n\nAbout you\n- 3 to 5 years in product, with something in production that used speech or language models.\n- You understand the moving parts of a language model system: context, latency, hallucination and the trade-offs between models.\n- You are comfortable with numbers and can work out what a model change does to cost per call.\n- You enjoy figuring out which problem matters most before anyone writes code.\n\nBonus\n- Experience with per-minute or outcome-based pricing.\n- Comfort with telephony or CRM APIs.\n\n₹30–42 LPA plus ESOPs. Bengaluru, HSR Layout, in office four days a week.",
+    "harvestedAt": "2026-11-21T04:30:00.000Z",
+    "live": false,
+    "roleFamily": "agents",
+    "seniority": "mid",
+    "companySize": "startup",
+    "skills": [
+      {
+        "skillId": "llm-evaluation",
+        "name": "LLM evaluation",
+        "importance": "must",
+        "quote": "You will build evaluation with native speakers, combining scored call samples and automated checks"
+      },
+      {
+        "skillId": "ai-cost-latency",
+        "name": "Model cost and latency",
+        "importance": "must",
+        "quote": "You will balance model size, streaming and caching against cost per minute, which our customers watch closely"
+      },
+      {
+        "skillId": "user-research",
+        "name": "User research",
+        "importance": "must",
+        "quote": "Understanding callers. You will listen to recordings every week and interview customers' operations teams"
+      },
+      {
+        "skillId": "ai-agents",
+        "name": "AI agents",
+        "importance": "must",
+        "quote": "Actions. Agents now book callbacks, send payment links and update CRM records. You will decide what else they can safely do"
+      },
+      {
+        "skillId": "llm-fundamentals",
+        "name": "LLM fundamentals",
+        "importance": "must",
+        "quote": "You understand the moving parts of a language model system: context, latency, hallucination and the trade-offs between models"
+      },
+      {
+        "skillId": "product-discovery",
+        "name": "Product discovery",
+        "importance": "must",
+        "quote": "You enjoy figuring out which problem matters most before anyone writes code"
+      },
+      {
+        "skillId": "pricing",
+        "name": "Pricing and packaging",
+        "importance": "nice",
+        "quote": "Experience with per-minute or outcome-based pricing"
+      },
+      {
+        "skillId": "apis",
+        "name": "APIs and integrations",
+        "importance": "nice",
+        "quote": "Comfort with telephony or CRM APIs"
+      }
+    ]
+  },
+  {
+    "id": "p15-atlasmutual",
+    "title": "Senior Product Manager, Claims AI",
+    "company": "Atlas Mutual Insurance",
+    "location": "Pune",
+    "url": "https://careers.atlasmutual.example/jobs/senior-product-manager-claims-ai",
+    "source": "job-board",
+    "postedAt": "2026-11-07",
+    "salary": "₹38–50 LPA",
+    "text": "Senior Product Manager – Claims AI\nAtlas Mutual Insurance | Pune\n\nAtlas Mutual is a general insurer with 7,000 employees and 1.8 crore policies across motor, health and property. We settle around 45,000 claims a month, and each one involves documents: hospital bills, discharge summaries, repair estimates, police reports and photographs.\n\nThe role\nWe are building document AI that reads and checks these documents, flags gaps and suggests a settlement range for the claims assessor to confirm. The Senior Product Manager will own this programme across motor and health claims.\n\nResponsibilities\n- Prepare the business case, including savings in turnaround time and leakage, and track it after launch.\n- Own a three-year roadmap and the release plan for each line of business.\n- Evaluate vendors and internal options, and recommend whether to build, buy or partner.\n- Write product requirement documents and work with IT, claims operations and our technology partners on delivery.\n- Engage claims leadership, underwriting, audit, legal and compliance through every stage.\n- Ensure every AI decision can be explained, reviewed and overridden, in line with IRDAI regulations and our model governance policy.\n\nRequirements\n- 8+ years of experience, including at least 4 in product management, preferably in insurance or financial services.\n- Strong understanding of the claims process and insurance regulation in India.\n- Demonstrated ability to manage senior stakeholders and influence decisions.\n- Experience with AI governance, explainability and audit requirements.\n\nGood to have\n- Familiarity with large language models and document understanding.\n- Experience measuring accuracy of AI systems against human decisions.\n\nCompensation: ₹38–50 LPA. Location: Pune, Baner. Hybrid, three days in office.",
+    "harvestedAt": "2026-11-21T04:30:00.000Z",
+    "live": false,
+    "roleFamily": "generalist",
+    "seniority": "senior",
+    "companySize": "enterprise",
+    "skills": [
+      {
+        "skillId": "stakeholder-management",
+        "name": "Stakeholder management",
+        "importance": "must",
+        "quote": "Demonstrated ability to manage senior stakeholders and influence decisions"
+      },
+      {
+        "skillId": "roadmapping",
+        "name": "Roadmapping",
+        "importance": "must",
+        "quote": "Own a three-year roadmap and the release plan for each line of business"
+      },
+      {
+        "skillId": "responsible-ai",
+        "name": "Responsible AI",
+        "importance": "must",
+        "quote": "Experience with AI governance, explainability and audit requirements"
+      },
+      {
+        "skillId": "domain-expertise",
+        "name": "Domain expertise",
+        "importance": "must",
+        "quote": "Strong understanding of the claims process and insurance regulation in India"
+      },
+      {
+        "skillId": "business-acumen",
+        "name": "Business acumen",
+        "importance": "must",
+        "quote": "Prepare the business case, including savings in turnaround time and leakage, and track it after launch"
+      },
+      {
+        "skillId": "prd-writing",
+        "name": "PRD writing",
+        "importance": "must",
+        "quote": "Write product requirement documents and work with IT, claims operations and our technology partners on delivery"
+      },
+      {
+        "skillId": "llm-fundamentals",
+        "name": "LLM fundamentals",
+        "importance": "nice",
+        "quote": "Familiarity with large language models and document understanding"
+      },
+      {
+        "skillId": "llm-evaluation",
+        "name": "LLM evaluation",
+        "importance": "nice",
+        "quote": "Experience measuring accuracy of AI systems against human decisions"
+      }
+    ]
+  },
+  {
+    "id": "p16-gridwise",
+    "title": "Product Manager, AI Forecasting",
+    "company": "Gridwise Energy",
+    "location": "Remote (India)",
+    "url": "https://careers.gridwise.example/jobs/product-manager-ai-forecasting",
+    "source": "startup-board",
+    "postedAt": "2026-11-10",
+    "text": "Product Manager, AI Forecasting\nRemote (India)\n\nGridwise forecasts electricity demand and solar and wind generation for 14 power utilities and 60 renewable parks across India. Our forecasts decide how much power a utility buys on the exchange each morning, so a bad day costs our customers real money.\n\nWe are 80 people, most of us engineers and data scientists. We need a product manager who can sit between them and the people in the control room.\n\nWhat you will do\n- Visit control rooms and solar parks with our customer success team. Learn what an operator does at 6 am when the forecast looks wrong.\n- Find the problems that matter most and say no to the rest.\n- Work with data scientists on forecast models: what goes in, how we measure error, and when a model drifts.\n- Lead a new feature that uses a language model to explain, in plain words, why today's forecast changed.\n- Pull data with SQL to check forecast accuracy and usage by customer.\n- Write requirements that our engineers can build without guessing.\n\nWhat you bring\n- 3 to 5 years of product experience, ideally on data or ML products.\n- Understanding of how ML models are trained and evaluated.\n- Comfort doing your own analysis in SQL.\n- Clear writing and the ability to explain technical ideas to utility managers who are not technical.\n- Experience running user interviews in the field.\n\nNice to have\n- Some experience with language model features.\n- Experience selling to or working with B2B or government customers.\n\nWe share the salary band in the first call. Fully remote within India, with travel to customer sites about once a month.",
+    "harvestedAt": "2026-11-21T04:30:00.000Z",
+    "live": false,
+    "roleFamily": "analytics",
+    "seniority": "mid",
+    "companySize": "startup",
+    "skills": [
+      {
+        "skillId": "ml-fundamentals",
+        "name": "ML fundamentals",
+        "importance": "must",
+        "quote": "Understanding of how ML models are trained and evaluated"
+      },
+      {
+        "skillId": "user-research",
+        "name": "User research",
+        "importance": "must",
+        "quote": "Experience running user interviews in the field"
+      },
+      {
+        "skillId": "product-discovery",
+        "name": "Product discovery",
+        "importance": "must",
+        "quote": "Find the problems that matter most and say no to the rest"
+      },
+      {
+        "skillId": "sql",
+        "name": "SQL",
+        "importance": "must",
+        "quote": "Comfort doing your own analysis in SQL"
+      },
+      {
+        "skillId": "prd-writing",
+        "name": "PRD writing",
+        "importance": "must",
+        "quote": "Write requirements that our engineers can build without guessing"
+      },
+      {
+        "skillId": "communication",
+        "name": "Communication",
+        "importance": "must",
+        "quote": "Clear writing and the ability to explain technical ideas to utility managers who are not technical"
+      },
+      {
+        "skillId": "llm-fundamentals",
+        "name": "LLM fundamentals",
+        "importance": "nice",
+        "quote": "Some experience with language model features"
+      },
+      {
+        "skillId": "b2b-saas",
+        "name": "B2B SaaS",
+        "importance": "nice",
+        "quote": "Experience selling to or working with B2B or government customers"
+      }
+    ]
+  },
+  {
+    "id": "p17-copperleaf",
+    "title": "Senior Product Manager, AI Recruiting",
+    "company": "Copperleaf HR",
+    "location": "Bengaluru",
+    "url": "https://careers.copperleaf.example/jobs/senior-product-manager-ai-recruiting",
+    "source": "company-site",
+    "postedAt": "2026-11-12",
+    "salary": "₹42–55 LPA",
+    "text": "Senior Product Manager, AI Recruiting\nCopperleaf HR | Bengaluru | Hybrid\n\nCopperleaf makes HR software for companies with 200 to 5,000 employees, and 2,800 companies run hiring, onboarding and payroll on us. This year we added an AI screening assistant that reads applications, summarises them against the job's requirements and suggests a shortlist for the recruiter.\n\nRecruiters like the time it saves. We also know that a screening tool can quietly shut people out, and we intend to get this right.\n\nWhat you'll do\n- Run regular bias audits with our data science team, comparing shortlist rates across gender, college tier and career breaks, and fix what you find.\n- Build evaluation sets with experienced recruiters and track how often they agree with the assistant.\n- Own the roadmap for AI across the recruiting module for the next four quarters.\n- Spend time with recruiters and hiring managers to understand how they actually screen, which is rarely what the process document says.\n- Keep sales, customer success, legal and our largest customers aligned on what the assistant does and does not do.\n- Design experiments that measure time to shortlist and quality of hire, not just clicks.\n\nWhat we're looking for\n- 6+ years of product management, including at least one AI or ML product.\n- Real experience with fairness and responsible AI, not just awareness of it.\n- A track record of discovering problems with users before committing to a solution.\n\nNice to have\n- Experience packaging and pricing an AI add-on.\n- Experience leading cross-functional work with data science and legal.\n\n₹42–55 LPA. Bengaluru, Whitefield office, three days a week.",
+    "harvestedAt": "2026-11-21T04:30:00.000Z",
+    "live": false,
+    "roleFamily": "generalist",
+    "seniority": "senior",
+    "companySize": "scaleup",
+    "skills": [
+      {
+        "skillId": "responsible-ai",
+        "name": "Responsible AI",
+        "importance": "must",
+        "quote": "Real experience with fairness and responsible AI, not just awareness of it"
+      },
+      {
+        "skillId": "llm-evaluation",
+        "name": "LLM evaluation",
+        "importance": "must",
+        "quote": "Build evaluation sets with experienced recruiters and track how often they agree with the assistant"
+      },
+      {
+        "skillId": "roadmapping",
+        "name": "Roadmapping",
+        "importance": "must",
+        "quote": "Own the roadmap for AI across the recruiting module for the next four quarters"
+      },
+      {
+        "skillId": "stakeholder-management",
+        "name": "Stakeholder management",
+        "importance": "must",
+        "quote": "Keep sales, customer success, legal and our largest customers aligned on what the assistant does and does not do"
+      },
+      {
+        "skillId": "product-discovery",
+        "name": "Product discovery",
+        "importance": "must",
+        "quote": "A track record of discovering problems with users before committing to a solution"
+      },
+      {
+        "skillId": "experimentation",
+        "name": "Experimentation",
+        "importance": "must",
+        "quote": "Design experiments that measure time to shortlist and quality of hire, not just clicks"
+      },
+      {
+        "skillId": "pricing",
+        "name": "Pricing and packaging",
+        "importance": "nice",
+        "quote": "Experience packaging and pricing an AI add-on"
+      },
+      {
+        "skillId": "cross-functional-leadership",
+        "name": "Cross-functional leadership",
+        "importance": "nice",
+        "quote": "Experience leading cross-functional work with data science and legal"
+      }
+    ]
+  },
+  {
+    "id": "p18-stackwise",
+    "title": "Product Manager, Developer Platform",
+    "company": "Stackwise",
+    "location": "Bengaluru",
+    "url": "https://careers.stackwise.example/jobs/product-manager-developer-platform",
+    "source": "startup-board",
+    "postedAt": "2026-11-19",
+    "salary": "₹36–50 LPA",
+    "text": "Stackwise is a developer platform for teams that ship features on language models. You version prompts like code, run evals in CI, and see what each change does to quality, latency and cost before it reaches users. About 1,900 teams use us, from two-person startups to banks. We are 40 people in Bengaluru, mostly engineers, and our customers are mostly engineers too.\n\nWe are hiring a product manager who can talk to those engineers as one of them.\n\nThe work\n- Own our public API and the Python and TypeScript SDKs. You will decide what goes in, what gets deprecated and how we avoid breaking anyone.\n- Talk to developers every week, in support threads, on calls and in their codebases, and work out what they are really stuck on.\n- Make our evaluation features better. You should have strong opinions about test sets, graders and regression checks.\n- Write specs and RFCs that engineers respect: short, precise, with the trade-offs written down.\n- Work on prompt management: templates, versions, review and rollback.\n\nYou\n- Have been a software engineer, or have worked closely enough with engineers that the difference rarely shows.\n- Have built against APIs and SDKs and have opinions about good ones.\n- Have shipped something with a language model and debugged it with real traffic.\n- Have 2 to 5 years of product experience, or are an engineer ready to make the move.\n\nNice\n- Developer marketing or launch experience: docs, changelogs, launch posts.\n- Ideas about usage-based pricing for developer tools.\n\n₹36–50 LPA plus ESOPs. Bengaluru, Indiranagar. In office three days a week.",
+    "harvestedAt": "2026-11-21T04:30:00.000Z",
+    "live": false,
+    "roleFamily": "platform",
+    "seniority": "mid",
+    "companySize": "startup",
+    "skills": [
+      {
+        "skillId": "apis",
+        "name": "APIs and integrations",
+        "importance": "must",
+        "quote": "Own our public API and the Python and TypeScript SDKs. You will decide what goes in, what gets deprecated and how we avoid breaking anyone"
+      },
+      {
+        "skillId": "technical-fluency",
+        "name": "Technical fluency",
+        "importance": "must",
+        "quote": "Have been a software engineer, or have worked closely enough with engineers that the difference rarely shows"
+      },
+      {
+        "skillId": "product-discovery",
+        "name": "Product discovery",
+        "importance": "must",
+        "quote": "Talk to developers every week, in support threads, on calls and in their codebases, and work out what they are really stuck on"
+      },
+      {
+        "skillId": "llm-evaluation",
+        "name": "LLM evaluation",
+        "importance": "must",
+        "quote": "Make our evaluation features better. You should have strong opinions about test sets, graders and regression checks"
+      },
+      {
+        "skillId": "prompt-engineering",
+        "name": "Prompt engineering",
+        "importance": "must",
+        "quote": "Work on prompt management: templates, versions, review and rollback"
+      },
+      {
+        "skillId": "prd-writing",
+        "name": "PRD writing",
+        "importance": "must",
+        "quote": "Write specs and RFCs that engineers respect: short, precise, with the trade-offs written down"
+      },
+      {
+        "skillId": "go-to-market",
+        "name": "Go-to-market",
+        "importance": "nice",
+        "quote": "Developer marketing or launch experience: docs, changelogs, launch posts"
+      },
+      {
+        "skillId": "pricing",
+        "name": "Pricing and packaging",
+        "importance": "nice",
+        "quote": "Ideas about usage-based pricing for developer tools"
+      }
+    ]
+  },
+  {
+    "id": "p19-meridiantel",
+    "title": "Product Manager – GenAI Customer Care",
+    "company": "Meridian Telecom",
+    "location": "Gurugram",
+    "url": "https://careers.meridiantel.example/jobs/product-manager-genai-customer-care",
+    "source": "job-board",
+    "postedAt": "2026-11-01",
+    "text": "Product Manager – GenAI Customer Care\nMeridian Telecom | Gurugram\n\nCompany overview\nMeridian Telecom serves 9 crore mobile and broadband subscribers across India. Our customer care organisation handles over 40 lakh contacts a month across the app, IVR, chat and 2,000 retail stores.\n\nPosition overview\nWe are looking for a Product Manager to lead generative AI products in customer care, including a self-service assistant in the Meridian app and an agent-assist tool used by 6,000 contact centre staff.\n\nKey responsibilities\n- Define and track KPIs including self-service containment, average handling time, first contact resolution and customer satisfaction.\n- Build and maintain the product roadmap in collaboration with the customer experience and IT leadership teams.\n- Coordinate with internal stakeholders across care operations, IT, legal, regulatory affairs and vendor partners.\n- Prepare product requirement documents, user stories and acceptance criteria.\n- Manage release planning and post-launch reviews with the care operations team.\n\nRequired skills and experience\n- 4 to 6 years of product management experience in telecom, e-commerce or large consumer businesses.\n- Understanding of large language models, their capabilities and limitations such as hallucination and context length.\n- Excellent stakeholder management and communication skills.\n- A data-driven approach to measuring product outcomes.\n\nDesired skills\n- Experience with retrieval-based assistants over knowledge bases.\n- Awareness of inference costs and latency trade-offs at large scale.\n- Experience leading cross-functional teams across business and technology.\n\nCompensation will be commensurate with experience. Location: Gurugram, Sector 44. Five days a week in office.",
+    "harvestedAt": "2026-11-21T04:30:00.000Z",
+    "live": false,
+    "roleFamily": "generalist",
+    "seniority": "mid",
+    "companySize": "enterprise",
+    "skills": [
+      {
+        "skillId": "stakeholder-management",
+        "name": "Stakeholder management",
+        "importance": "must",
+        "quote": "Excellent stakeholder management and communication skills"
+      },
+      {
+        "skillId": "metrics-definition",
+        "name": "Metrics and KPIs",
+        "importance": "must",
+        "quote": "Define and track KPIs including self-service containment, average handling time, first contact resolution and customer satisfaction"
+      },
+      {
+        "skillId": "roadmapping",
+        "name": "Roadmapping",
+        "importance": "must",
+        "quote": "Build and maintain the product roadmap in collaboration with the customer experience and IT leadership teams"
+      },
+      {
+        "skillId": "llm-fundamentals",
+        "name": "LLM fundamentals",
+        "importance": "must",
+        "quote": "Understanding of large language models, their capabilities and limitations such as hallucination and context length"
+      },
+      {
+        "skillId": "prd-writing",
+        "name": "PRD writing",
+        "importance": "must",
+        "quote": "Prepare product requirement documents, user stories and acceptance criteria"
+      },
+      {
+        "skillId": "rag",
+        "name": "Retrieval (RAG)",
+        "importance": "nice",
+        "quote": "Experience with retrieval-based assistants over knowledge bases"
+      },
+      {
+        "skillId": "ai-cost-latency",
+        "name": "Model cost and latency",
+        "importance": "nice",
+        "quote": "Awareness of inference costs and latency trade-offs at large scale"
+      },
+      {
+        "skillId": "cross-functional-leadership",
+        "name": "Cross-functional leadership",
+        "importance": "nice",
+        "quote": "Experience leading cross-functional teams across business and technology"
+      }
+    ]
+  },
+  {
+    "id": "p20-kitebird",
+    "title": "Growth Product Manager, AI Storefront",
+    "company": "Kitebird Commerce",
+    "location": "Bengaluru",
+    "url": "https://careers.kitebird.example/jobs/growth-product-manager-ai-storefront",
+    "source": "company-site",
+    "postedAt": "2026-11-16",
+    "salary": "₹30–40 LPA",
+    "text": "Growth Product Manager, AI Storefront\nKitebird Commerce, Bengaluru\n\n30,000 D2C brands run their online stores on Kitebird. Most of them are small: a founder, a few products, a lot of Instagram followers and a store that converts at 1.2%. Our AI Storefront writes product pages, builds collections and suggests bundles from a brand's catalogue in a few minutes. Brands that use it convert 18% better. Only 9% of new brands turn it on.\n\nYour mission is to make that 9% much larger and keep the conversion lift real.\n\nWhat you'll own\n- Onboarding: the first 30 minutes after a brand signs up, and the moment we offer AI Storefront.\n- The experiment backlog. We ship around six tests a month and you will decide which six.\n- Funnel and cohort analysis, from signup to first sale, by brand size and category.\n- Hard trade-offs: speed versus quality of generated pages, merchant control versus automation.\n\nYou should\n- Have 3 to 5 years in product, with at least one role where you owned a conversion or activation metric.\n- Have designed A/B tests and know when a result is noise.\n- Be fluent with SQL and product analytics tools.\n- Be able to talk to a merchant for an hour and come back with the one problem that matters.\n- Say no to good ideas so the great ones get done.\n\nNice to have\n- Experience writing prompts for generated marketing or product copy.\n- Launch experience with merchants or small businesses.\n- Comfort defining north star metrics for a new product.\n\n₹30–40 LPA plus ESOPs. Bengaluru, Koramangala. Hybrid, three days a week.",
+    "harvestedAt": "2026-11-21T04:30:00.000Z",
+    "live": false,
+    "roleFamily": "growth",
+    "seniority": "mid",
+    "companySize": "scaleup",
+    "skills": [
+      {
+        "skillId": "experimentation",
+        "name": "Experimentation",
+        "importance": "must",
+        "quote": "Have designed A/B tests and know when a result is noise"
+      },
+      {
+        "skillId": "sql",
+        "name": "SQL",
+        "importance": "must",
+        "quote": "Be fluent with SQL and product analytics tools"
+      },
+      {
+        "skillId": "product-analytics",
+        "name": "Product analytics",
+        "importance": "must",
+        "quote": "Funnel and cohort analysis, from signup to first sale, by brand size and category"
+      },
+      {
+        "skillId": "prioritization",
+        "name": "Prioritisation",
+        "importance": "must",
+        "quote": "Say no to good ideas so the great ones get done"
+      },
+      {
+        "skillId": "product-discovery",
+        "name": "Product discovery",
+        "importance": "must",
+        "quote": "Be able to talk to a merchant for an hour and come back with the one problem that matters"
+      },
+      {
+        "skillId": "prompt-engineering",
+        "name": "Prompt engineering",
+        "importance": "nice",
+        "quote": "Experience writing prompts for generated marketing or product copy"
+      },
+      {
+        "skillId": "go-to-market",
+        "name": "Go-to-market",
+        "importance": "nice",
+        "quote": "Launch experience with merchants or small businesses"
+      },
+      {
+        "skillId": "metrics-definition",
+        "name": "Metrics and KPIs",
+        "importance": "nice",
+        "quote": "Comfort defining north star metrics for a new product"
+      }
+    ]
+  },
+  {
+    "id": "p21-quillhealth",
+    "title": "Associate Product Manager, AI",
+    "company": "Quill Health",
+    "location": "Hyderabad",
+    "url": "https://careers.quillhealth.example/jobs/associate-product-manager-ai",
+    "source": "startup-board",
+    "postedAt": "2026-11-17",
+    "salary": "₹18–24 LPA",
+    "text": "Associate Product Manager, AI\nQuill Health, Hyderabad\n\nQuill helps people living with diabetes, hypertension and thyroid conditions manage their care between doctor visits. 180,000 patients use our app, and our care coaches look after the ones who need the most help. Six months ago we added a care assistant that answers questions, books lab tests and reminds people about medicines. It now handles 60% of messages.\n\nWe are 50 people. This role is for someone early in their product career who wants a lot of responsibility and a lot of support. You will work directly with our head of product, who will spend real time coaching you.\n\nWhat you will do\n- Interview patients and care coaches every week. Many patients are over 55 and some are not comfortable with apps, so learn how they actually manage their health.\n- Review the assistant's conversations with our medical team and keep a scored test set of tricky questions.\n- Write clear requirements for features, with the edge cases spelled out.\n- Help decide what goes into each two-week sprint and what waits.\n- Learn how language models behave, where they fail, and how we keep them inside safe limits.\n\nWhat we look for\n- 0 to 2 years of experience in product, consulting, analytics, healthcare operations or engineering.\n- Curiosity about people and a habit of asking why.\n- Clear writing and the patience to explain things more than once.\n\nNice to have\n- Some SQL, or the willingness to learn it in your first month.\n- Interest in medical safety and the responsible use of AI in healthcare.\n\n₹18–24 LPA. Hyderabad, Madhapur. In office four days a week.",
+    "harvestedAt": "2026-11-21T04:30:00.000Z",
+    "live": false,
+    "roleFamily": "agents",
+    "seniority": "associate",
+    "companySize": "startup",
+    "skills": [
+      {
+        "skillId": "user-research",
+        "name": "User research",
+        "importance": "must",
+        "quote": "Interview patients and care coaches every week. Many patients are over 55 and some are not comfortable with apps, so learn how they actually manage their health"
+      },
+      {
+        "skillId": "llm-evaluation",
+        "name": "LLM evaluation",
+        "importance": "must",
+        "quote": "Review the assistant's conversations with our medical team and keep a scored test set of tricky questions"
+      },
+      {
+        "skillId": "prd-writing",
+        "name": "PRD writing",
+        "importance": "must",
+        "quote": "Write clear requirements for features, with the edge cases spelled out"
+      },
+      {
+        "skillId": "prioritization",
+        "name": "Prioritisation",
+        "importance": "must",
+        "quote": "Help decide what goes into each two-week sprint and what waits"
+      },
+      {
+        "skillId": "llm-fundamentals",
+        "name": "LLM fundamentals",
+        "importance": "must",
+        "quote": "Learn how language models behave, where they fail, and how we keep them inside safe limits"
+      },
+      {
+        "skillId": "responsible-ai",
+        "name": "Responsible AI",
+        "importance": "nice",
+        "quote": "Interest in medical safety and the responsible use of AI in healthcare"
+      },
+      {
+        "skillId": "sql",
+        "name": "SQL",
+        "importance": "nice",
+        "quote": "Some SQL, or the willingness to learn it in your first month"
+      }
+    ]
+  },
+  {
+    "id": "p22-banyancloud",
+    "title": "Senior Product Manager, AI Infrastructure",
+    "company": "Banyan Cloud Services",
+    "location": "Bengaluru",
+    "url": "https://careers.banyancloud.example/jobs/senior-product-manager-ai-infrastructure",
+    "source": "company-site",
+    "postedAt": "2026-11-08",
+    "salary": "₹55–75 LPA",
+    "text": "Senior Product Manager, AI Infrastructure\nBanyan Cloud Services, Bengaluru\n\nBanyan is an Indian cloud provider with data centres in Mumbai, Chennai and Noida, serving 6,000 enterprises and government bodies that need their data to stay in India. Demand for GPU capacity and managed model hosting has grown five-fold this year.\n\nYou will own Banyan AI Compute: GPU instances, managed model serving and a catalogue of open-weight models customers can deploy in a click.\n\nWhat you will be responsible for\n- Pricing and packaging for GPU and inference products: on-demand, reserved and per token. This decision is worth crores.\n- Capacity planning with the infrastructure team, two to three quarters ahead.\n- Performance targets for serving: tokens per second, time to first token and cost per million tokens.\n- The product roadmap, agreed with sales, solutions engineering and data centre operations.\n- Requirements from enterprise and public sector customers, including data residency and audit needs.\n\nWhat you need\n- 7+ years of product experience, at least 3 on cloud, infrastructure or developer products.\n- A technical background: you should be comfortable discussing GPU memory, batching and quantisation with engineers.\n- Experience selling to and serving enterprise customers in B2B.\n- Strong judgement on pricing and margins.\n- Experience working with senior leaders in sales, finance and operations.\n\nGood to have\n- Experience designing APIs for developers.\n- Launch experience for infrastructure products.\n- Familiarity with model benchmarks and how customers evaluate models before adopting them.\n\n₹55–75 LPA plus annual bonus. Bengaluru, Whitefield. Hybrid.",
+    "harvestedAt": "2026-11-21T04:30:00.000Z",
+    "live": false,
+    "roleFamily": "platform",
+    "seniority": "senior",
+    "companySize": "enterprise",
+    "skills": [
+      {
+        "skillId": "technical-fluency",
+        "name": "Technical fluency",
+        "importance": "must",
+        "quote": "A technical background: you should be comfortable discussing GPU memory, batching and quantisation with engineers"
+      },
+      {
+        "skillId": "pricing",
+        "name": "Pricing and packaging",
+        "importance": "must",
+        "quote": "Pricing and packaging for GPU and inference products: on-demand, reserved and per token. This decision is worth crores"
+      },
+      {
+        "skillId": "ai-cost-latency",
+        "name": "Model cost and latency",
+        "importance": "must",
+        "quote": "Performance targets for serving: tokens per second, time to first token and cost per million tokens"
+      },
+      {
+        "skillId": "roadmapping",
+        "name": "Roadmapping",
+        "importance": "must",
+        "quote": "The product roadmap, agreed with sales, solutions engineering and data centre operations"
+      },
+      {
+        "skillId": "b2b-saas",
+        "name": "B2B SaaS",
+        "importance": "must",
+        "quote": "Experience selling to and serving enterprise customers in B2B"
+      },
+      {
+        "skillId": "stakeholder-management",
+        "name": "Stakeholder management",
+        "importance": "must",
+        "quote": "Experience working with senior leaders in sales, finance and operations"
+      },
+      {
+        "skillId": "apis",
+        "name": "APIs and integrations",
+        "importance": "nice",
+        "quote": "Experience designing APIs for developers"
+      },
+      {
+        "skillId": "go-to-market",
+        "name": "Go-to-market",
+        "importance": "nice",
+        "quote": "Launch experience for infrastructure products"
+      },
+      {
+        "skillId": "llm-evaluation",
+        "name": "LLM evaluation",
+        "importance": "nice",
+        "quote": "Familiarity with model benchmarks and how customers evaluate models before adopting them"
+      }
+    ]
+  },
+  {
+    "id": "p23-ledgerly",
+    "title": "Product Manager, Underwriting AI",
+    "company": "Ledgerly",
+    "location": "Bengaluru",
+    "url": "https://careers.ledgerly.example/jobs/product-manager-underwriting-ai",
+    "source": "job-board",
+    "postedAt": "2026-11-05",
+    "salary": "₹32–44 LPA",
+    "text": "Product Manager, Underwriting AI\nLedgerly, Bengaluru\n\nLedgerly is a digital lender for salaried borrowers, with an NBFC licence and 1.1 million active loans. We decide on most applications in under four minutes. Behind that decision are credit models, bureau data and a bank statement parser that reads 25,000 statements a day.\n\nThe role\nYou will own underwriting: the models, the rules around them and the statement parser, which we are rebuilding on a language model.\n\nWhat you'll do\n- Work with credit risk and data science on model changes. Know how a model is trained and validated, and when it is drifting.\n- Run controlled experiments on approval policy and measure approval rate, first-payment default and loss rate over time.\n- Write SQL against our loan and repayment data to answer your own questions.\n- Make sure every decision can be explained to the borrower and audited, and that we lend fairly across regions and demographics.\n- Keep credit, collections, compliance and the founders aligned on policy changes.\n\nYou bring\n- 3 to 6 years of product experience in lending, payments or risk.\n- Understanding of ML concepts such as features, overfitting, AUC and calibration.\n- Experience with experiments where the outcome takes months to arrive.\n- Strong SQL and a habit of checking your own numbers.\n- Comfort defining and tracking risk metrics.\n\nNice to have\n- Experience checking document extraction accuracy against labelled samples.\n- Knowledge of RBI digital lending guidelines and credit bureau data.\n\n₹32–44 LPA. Bengaluru, Bellandur. Hybrid, three days a week.",
+    "harvestedAt": "2026-11-21T04:30:00.000Z",
+    "live": false,
+    "roleFamily": "analytics",
+    "seniority": "mid",
+    "companySize": "scaleup",
+    "skills": [
+      {
+        "skillId": "ml-fundamentals",
+        "name": "ML fundamentals",
+        "importance": "must",
+        "quote": "Understanding of ML concepts such as features, overfitting, AUC and calibration"
+      },
+      {
+        "skillId": "sql",
+        "name": "SQL",
+        "importance": "must",
+        "quote": "Write SQL against our loan and repayment data to answer your own questions"
+      },
+      {
+        "skillId": "experimentation",
+        "name": "Experimentation",
+        "importance": "must",
+        "quote": "Run controlled experiments on approval policy and measure approval rate, first-payment default and loss rate over time"
+      },
+      {
+        "skillId": "metrics-definition",
+        "name": "Metrics and KPIs",
+        "importance": "must",
+        "quote": "Comfort defining and tracking risk metrics"
+      },
+      {
+        "skillId": "responsible-ai",
+        "name": "Responsible AI",
+        "importance": "must",
+        "quote": "Make sure every decision can be explained to the borrower and audited, and that we lend fairly across regions and demographics"
+      },
+      {
+        "skillId": "stakeholder-management",
+        "name": "Stakeholder management",
+        "importance": "must",
+        "quote": "Keep credit, collections, compliance and the founders aligned on policy changes"
+      },
+      {
+        "skillId": "llm-evaluation",
+        "name": "LLM evaluation",
+        "importance": "nice",
+        "quote": "Experience checking document extraction accuracy against labelled samples"
+      },
+      {
+        "skillId": "domain-expertise",
+        "name": "Domain expertise",
+        "importance": "nice",
+        "quote": "Knowledge of RBI digital lending guidelines and credit bureau data"
+      }
+    ]
+  },
+  {
+    "id": "p24-marigoldmedia",
+    "title": "Product Manager, Search and Personalisation",
+    "company": "Marigold Media",
+    "location": "Mumbai",
+    "url": "https://careers.marigoldmedia.example/jobs/product-manager-search-and-personalisation",
+    "source": "company-site",
+    "postedAt": "2026-11-11",
+    "text": "Marigold streams films and series in Hindi, Tamil, Telugu, Bengali, Marathi and nine other languages to 22 million subscribers. People search for \"that Malayalam thriller with the twins\" and get nothing. We want to fix that.\n\nProduct Manager, Search and Personalisation\nMumbai, Lower Parel\n\nWhat you'll work on\n- Semantic search across 40,000 titles and 14 languages, using embeddings, metadata and transcripts so people find what they mean, not what they typed.\n- Recommendations on the home screen and after every episode.\n- Watch-time and retention experiments. We run about 20 a quarter on search and recommendations.\n- The search and discovery metrics: zero-result rate, search-to-play rate and minutes watched per session.\n\nWhat we expect\n- 3 to 6 years in product, with experience on search, feeds or recommendations.\n- You've run A/B tests on ranking or recommendations and know why online and offline metrics disagree.\n- You understand how retrieval works: indexing, embeddings, ranking and relevance tuning.\n- You use dashboards and analytics tools daily and trust your own reading of them.\n- You find out what viewers are trying to do before deciding what to build.\n- You can explain a ranking change to our content and marketing teams without jargon.\n\nNice to have\n- SQL for your own analysis.\n- Experience grading search relevance or generated answers with human raters.\n- Interest in talking to viewers in smaller towns, where most of our growth is.\n\nWe'll share the salary range after the first conversation. Hybrid, three days a week in our Lower Parel office.",
+    "harvestedAt": "2026-11-21T04:30:00.000Z",
+    "live": false,
+    "roleFamily": "growth",
+    "seniority": "mid",
+    "companySize": "scaleup",
+    "skills": [
+      {
+        "skillId": "experimentation",
+        "name": "Experimentation",
+        "importance": "must",
+        "quote": "You've run A/B tests on ranking or recommendations and know why online and offline metrics disagree"
+      },
+      {
+        "skillId": "rag",
+        "name": "Retrieval (RAG)",
+        "importance": "must",
+        "quote": "You understand how retrieval works: indexing, embeddings, ranking and relevance tuning"
+      },
+      {
+        "skillId": "product-analytics",
+        "name": "Product analytics",
+        "importance": "must",
+        "quote": "You use dashboards and analytics tools daily and trust your own reading of them"
+      },
+      {
+        "skillId": "metrics-definition",
+        "name": "Metrics and KPIs",
+        "importance": "must",
+        "quote": "The search and discovery metrics: zero-result rate, search-to-play rate and minutes watched per session"
+      },
+      {
+        "skillId": "product-discovery",
+        "name": "Product discovery",
+        "importance": "must",
+        "quote": "You find out what viewers are trying to do before deciding what to build"
+      },
+      {
+        "skillId": "sql",
+        "name": "SQL",
+        "importance": "nice",
+        "quote": "SQL for your own analysis"
+      },
+      {
+        "skillId": "llm-evaluation",
+        "name": "LLM evaluation",
+        "importance": "nice",
+        "quote": "Experience grading search relevance or generated answers with human raters"
+      },
+      {
+        "skillId": "user-research",
+        "name": "User research",
+        "importance": "nice",
+        "quote": "Interest in talking to viewers in smaller towns, where most of our growth is"
+      }
+    ]
+  },
+  {
+    "id": "p25-trellis",
+    "title": "Senior Product Manager, AI Platform",
+    "company": "Trellis Workspace",
+    "location": "Remote (India)",
+    "url": "https://careers.trellis.example/jobs/senior-product-manager-ai-platform",
+    "source": "company-site",
+    "postedAt": "2026-11-18",
+    "salary": "₹48–62 LPA",
+    "text": "Senior Product Manager, AI Platform\nTrellis Workspace · Remote (India)\n\nTrellis is a collaboration suite for docs, tasks and chat, used by 12,000 companies. We are 380 people, remote-first, and we write more than we meet. Eight feature teams now ship AI: meeting summaries, doc drafting, search answers and task suggestions. They share one AI platform team, and that team needs a product manager.\n\nWhat the platform does\nIt gives feature teams retrieval over customer workspaces, an evaluation harness, model routing across providers, and cost and latency budgets per feature.\n\nWhat you will do\n- Treat feature teams as your customers. Find out what slows them down and fix the platform, not the symptoms.\n- Set a roadmap for two to three quarters and write it down so anyone can understand it.\n- Build the evaluation harness into every team's release process. No AI change ships without passing its test set.\n- Own AI cost per seat. It has doubled this year and should not double again.\n- Write specs that engineers in three time zones can pick up without a call.\n- Lead decisions across engineering, data science, security and legal, none of whom report to you.\n\nWhat we look for\n- 6+ years in product, including platform, infrastructure or API products.\n- Technical depth: you were an engineer, or you can look at a design doc and find the weak spot.\n- Experience designing or using APIs that other teams build on.\n- Hands-on experience with offline and online evaluation of language model features.\n\nNice to have\n- Experience with retrieval and search quality.\n- Experience managing senior stakeholders across a remote company.\n\n₹48–62 LPA plus RSUs. Remote anywhere in India, with two team offsites a year.",
+    "harvestedAt": "2026-11-21T04:30:00.000Z",
+    "live": false,
+    "roleFamily": "platform",
+    "seniority": "senior",
+    "companySize": "scaleup",
+    "skills": [
+      {
+        "skillId": "llm-evaluation",
+        "name": "LLM evaluation",
+        "importance": "must",
+        "quote": "Build the evaluation harness into every team's release process. No AI change ships without passing its test set"
+      },
+      {
+        "skillId": "apis",
+        "name": "APIs and integrations",
+        "importance": "must",
+        "quote": "Experience designing or using APIs that other teams build on"
+      },
+      {
+        "skillId": "technical-fluency",
+        "name": "Technical fluency",
+        "importance": "must",
+        "quote": "Technical depth: you were an engineer, or you can look at a design doc and find the weak spot"
+      },
+      {
+        "skillId": "roadmapping",
+        "name": "Roadmapping",
+        "importance": "must",
+        "quote": "Set a roadmap for two to three quarters and write it down so anyone can understand it"
+      },
+      {
+        "skillId": "cross-functional-leadership",
+        "name": "Cross-functional leadership",
+        "importance": "must",
+        "quote": "Lead decisions across engineering, data science, security and legal, none of whom report to you"
+      },
+      {
+        "skillId": "ai-cost-latency",
+        "name": "Model cost and latency",
+        "importance": "must",
+        "quote": "Own AI cost per seat. It has doubled this year and should not double again"
+      },
+      {
+        "skillId": "prd-writing",
+        "name": "PRD writing",
+        "importance": "must",
+        "quote": "Write specs that engineers in three time zones can pick up without a call"
+      },
+      {
+        "skillId": "rag",
+        "name": "Retrieval (RAG)",
+        "importance": "nice",
+        "quote": "Experience with retrieval and search quality"
+      },
+      {
+        "skillId": "stakeholder-management",
+        "name": "Stakeholder management",
+        "importance": "nice",
+        "quote": "Experience managing senior stakeholders across a remote company"
+      }
+    ]
+  },
+  {
+    "id": "p26-sundiallogistics",
+    "title": "Product Manager, AI Operations",
+    "company": "Sundial Logistics",
+    "location": "Pune",
+    "url": "https://careers.sundiallogistics.example/jobs/product-manager-ai-operations",
+    "source": "job-board",
+    "postedAt": "2026-11-04",
+    "salary": "₹24–32 LPA",
+    "text": "Product Manager, AI Operations\nSundial Logistics | Pune | Full time\n\nAbout Sundial\nSundial is a third-party logistics company running 140 warehouses and a fleet of 9,000 trucks for retail, pharma and auto clients. Every day around 3,500 shipments are delayed for one reason or another, and our control tower team spends most of its day finding out why and telling customers.\n\nThe role\nWe are building AI agents that triage delayed shipments, check carrier and warehouse systems, draft updates for customers and raise exceptions to the right person. You will own these agents from pilot to rollout across all regions.\n\nResponsibilities\n- Visit warehouses and the control tower, and work out which delays and tasks are worth automating first.\n- Decide what the agents may do on their own, such as rebooking a carrier, and what needs a human.\n- Write detailed requirements and acceptance criteria for the engineering team and our system integrator.\n- Build the roadmap for operations AI and review it monthly with regional operations heads.\n- Work with operations leaders, client account managers and IT to agree priorities and manage change on the ground.\n\nRequirements\n- 4 to 6 years of experience in product management, ideally in logistics, supply chain or operations software.\n- Experience designing workflows where software takes actions in other systems.\n- Strong stakeholder management with operations teams.\n- Clear, structured written requirements.\n\nPreferred\n- SQL to analyse shipment and delay data.\n- Experience defining operational KPIs such as on-time delivery and exception resolution time.\n\nCompensation: ₹24–32 LPA. Location: Pune, Hinjewadi. Five days a week, with regular travel to warehouses.",
+    "harvestedAt": "2026-11-21T04:30:00.000Z",
+    "live": false,
+    "roleFamily": "generalist",
+    "seniority": "mid",
+    "companySize": "enterprise",
+    "skills": [
+      {
+        "skillId": "stakeholder-management",
+        "name": "Stakeholder management",
+        "importance": "must",
+        "quote": "Strong stakeholder management with operations teams"
+      },
+      {
+        "skillId": "prd-writing",
+        "name": "PRD writing",
+        "importance": "must",
+        "quote": "Write detailed requirements and acceptance criteria for the engineering team and our system integrator"
+      },
+      {
+        "skillId": "product-discovery",
+        "name": "Product discovery",
+        "importance": "must",
+        "quote": "Visit warehouses and the control tower, and work out which delays and tasks are worth automating first"
+      },
+      {
+        "skillId": "roadmapping",
+        "name": "Roadmapping",
+        "importance": "must",
+        "quote": "Build the roadmap for operations AI and review it monthly with regional operations heads"
+      },
+      {
+        "skillId": "ai-agents",
+        "name": "AI agents",
+        "importance": "must",
+        "quote": "Experience designing workflows where software takes actions in other systems"
+      },
+      {
+        "skillId": "sql",
+        "name": "SQL",
+        "importance": "nice",
+        "quote": "SQL to analyse shipment and delay data"
+      },
+      {
+        "skillId": "metrics-definition",
+        "name": "Metrics and KPIs",
+        "importance": "nice",
+        "quote": "Experience defining operational KPIs such as on-time delivery and exception resolution time"
+      }
+    ]
+  },
+  {
+    "id": "p27-pebblefinance",
+    "title": "Associate Product Manager, AI",
+    "company": "Pebble Finance",
+    "location": "Bengaluru",
+    "url": "https://careers.pebblefinance.example/jobs/associate-product-manager-ai",
+    "source": "startup-board",
+    "postedAt": "2026-11-19",
+    "salary": "₹16–22 LPA",
+    "text": "Pebble helps first-time earners save and invest. Most of our 900,000 users are 21 to 28 and got their first salary in the last two years. We are 70 people in Bengaluru.\n\nThis year we launched Pebble Coach, an assistant that answers money questions in plain language: should I start an SIP, what is an emergency fund, why did my bank charge me ₹590. People like it. We want more of them to act on what it says.\n\nWe are hiring an Associate Product Manager to work on Coach and onboarding.\n\nWhat you'll do\n- Call users every week. Ask what they were trying to do and where they got stuck.\n- Run onboarding experiments with our growth engineer, and look at the results yourself before anyone tells you what they mean.\n- Use SQL and our analytics dashboards to track activation, first investment and Coach usage.\n- Write specs for small features end to end, from problem to acceptance criteria.\n- Sit in on reviews of Coach answers with our compliance lead.\n\nWhat we're looking for\n- 0 to 2 years of experience: product, analytics, consulting, engineering or a startup of your own.\n- Comfortable with SQL, or learning it fast.\n- A basic understanding of A/B testing and why sample size matters.\n- Someone who talks to users without being told to.\n- Someone who writes short, clear messages.\n\nNice to have\n- You have played with language models and know why they make things up sometimes.\n- Experience reviewing or scoring AI answers for quality.\n\n₹16–22 LPA plus ESOPs. Bengaluru, HSR Layout. In office four days a week.",
+    "harvestedAt": "2026-11-21T04:30:00.000Z",
+    "live": false,
+    "roleFamily": "growth",
+    "seniority": "associate",
+    "companySize": "startup",
+    "skills": [
+      {
+        "skillId": "sql",
+        "name": "SQL",
+        "importance": "must",
+        "quote": "Comfortable with SQL, or learning it fast"
+      },
+      {
+        "skillId": "experimentation",
+        "name": "Experimentation",
+        "importance": "must",
+        "quote": "Run onboarding experiments with our growth engineer, and look at the results yourself before anyone tells you what they mean"
+      },
+      {
+        "skillId": "product-analytics",
+        "name": "Product analytics",
+        "importance": "must",
+        "quote": "Use SQL and our analytics dashboards to track activation, first investment and Coach usage"
+      },
+      {
+        "skillId": "user-research",
+        "name": "User research",
+        "importance": "must",
+        "quote": "Call users every week. Ask what they were trying to do and where they got stuck"
+      },
+      {
+        "skillId": "prd-writing",
+        "name": "PRD writing",
+        "importance": "must",
+        "quote": "Write specs for small features end to end, from problem to acceptance criteria"
+      },
+      {
+        "skillId": "llm-fundamentals",
+        "name": "LLM fundamentals",
+        "importance": "nice",
+        "quote": "You have played with language models and know why they make things up sometimes"
+      },
+      {
+        "skillId": "llm-evaluation",
+        "name": "LLM evaluation",
+        "importance": "nice",
+        "quote": "Experience reviewing or scoring AI answers for quality"
+      }
+    ]
+  },
+  {
+    "id": "p28-corvidsec",
+    "title": "Senior Product Manager, Security Copilot",
+    "company": "Corvid Security",
+    "location": "Bengaluru",
+    "url": "https://careers.corvidsec.example/jobs/senior-product-manager-security-copilot",
+    "source": "company-site",
+    "postedAt": "2026-11-14",
+    "salary": "₹50–68 LPA",
+    "text": "Senior Product Manager, Security Copilot\nCorvid Security, Bengaluru\n\nCorvid builds security operations software for 450 enterprises, mostly banks, insurers and large manufacturers. Their analysts face thousands of alerts a day. Our Security Copilot investigates an alert the way a senior analyst would: it pulls logs, checks the user and device, looks up threat intelligence and writes up what happened with a recommendation.\n\nCustomers trust it on simple phishing cases. They do not yet trust it on anything else. You will change that, carefully.\n\nResponsibilities\n- Own the investigation agent: which tools it can call, which actions it can take, and where a human must approve.\n- Build evaluation with our detection engineers: replayed incidents, scored investigations and false positive tracking on every release.\n- Run red-team exercises against the copilot, including prompt injection through log data.\n- Work with SOC managers at customers to understand which investigations eat their time and why.\n- Represent the copilot to CISOs, customer security reviews and our own leadership team.\n\nRequirements\n- 7+ years in product, at least 2 on security, observability or infrastructure products.\n- Strong technical depth. You should understand logs, identity systems and how attacks move through a network.\n- Experience designing agent workflows with tool use and human approval.\n- Hands-on evaluation of language model systems.\n- Serious attention to AI safety and misuse.\n- Experience working with senior customer and internal stakeholders.\n\nNice to have\n- Experience pricing and packaging an AI product for enterprises.\n- Experience launching security products to market.\n\n₹50–68 LPA plus RSUs. Bengaluru, Outer Ring Road. Hybrid, three days in office.",
+    "harvestedAt": "2026-11-21T04:30:00.000Z",
+    "live": false,
+    "roleFamily": "agents",
+    "seniority": "senior",
+    "companySize": "scaleup",
+    "skills": [
+      {
+        "skillId": "llm-evaluation",
+        "name": "LLM evaluation",
+        "importance": "must",
+        "quote": "Hands-on evaluation of language model systems"
+      },
+      {
+        "skillId": "ai-agents",
+        "name": "AI agents",
+        "importance": "must",
+        "quote": "Experience designing agent workflows with tool use and human approval"
+      },
+      {
+        "skillId": "product-discovery",
+        "name": "Product discovery",
+        "importance": "must",
+        "quote": "Work with SOC managers at customers to understand which investigations eat their time and why"
+      },
+      {
+        "skillId": "stakeholder-management",
+        "name": "Stakeholder management",
+        "importance": "must",
+        "quote": "Experience working with senior customer and internal stakeholders"
+      },
+      {
+        "skillId": "technical-fluency",
+        "name": "Technical fluency",
+        "importance": "must",
+        "quote": "Strong technical depth. You should understand logs, identity systems and how attacks move through a network"
+      },
+      {
+        "skillId": "responsible-ai",
+        "name": "Responsible AI",
+        "importance": "must",
+        "quote": "Serious attention to AI safety and misuse"
+      },
+      {
+        "skillId": "pricing",
+        "name": "Pricing and packaging",
+        "importance": "nice",
+        "quote": "Experience pricing and packaging an AI product for enterprises"
+      },
+      {
+        "skillId": "go-to-market",
+        "name": "Go-to-market",
+        "importance": "nice",
+        "quote": "Experience launching security products to market"
+      }
+    ]
+  },
+  {
+    "id": "p29-indradiagnostics",
+    "title": "Product Manager, AI Reporting",
+    "company": "Indra Diagnostics",
+    "location": "Bengaluru",
+    "url": "https://careers.indradiagnostics.example/jobs/product-manager-ai-reporting",
+    "source": "job-board",
+    "postedAt": "2026-11-02",
+    "text": "Product Manager, AI Reporting\nIndra Diagnostics, Bengaluru\n\nIndra Diagnostics runs 42 laboratories and 300 sample collection centres across South India and reports around 25,000 tests a day. Patients receive their reports on WhatsApp and in our app, and most of them cannot tell what the numbers mean. They call us, or they worry.\n\nWe are building a feature that explains each report in plain language, in English, Kannada, Tamil and Telugu, after a pathologist has reviewed it. You will own this product.\n\nWhat you will do\n- Interview patients at our collection centres and over the phone to understand what they want to know and how they feel when they open a report.\n- Write product requirement documents and user stories for the engineering team and our technology vendor.\n- Work with pathologists to review generated explanations and maintain a checklist of what must never be said.\n- Make sure the product handles consent, privacy and clinical risk properly, working with our legal and medical teams.\n- Coordinate across labs, customer care, marketing and IT.\n\nWhat you bring\n- 3 to 5 years of product management experience.\n- Experience conducting user research with non-technical users.\n- Clear documentation skills.\n- Understanding of responsible AI in healthcare: safety, privacy and the limits of automation.\n- Experience working with clinical or other expert reviewers to evaluate AI output.\n- Ability to align multiple internal teams.\n\nGood to have\n- Healthcare or diagnostics domain experience.\n- Basic understanding of how large language models work.\n\nSalary will be discussed with shortlisted candidates. Location: Bengaluru, Malleshwaram head office. Five days a week.",
+    "harvestedAt": "2026-11-21T04:30:00.000Z",
+    "live": false,
+    "roleFamily": "generalist",
+    "seniority": "mid",
+    "companySize": "enterprise",
+    "skills": [
+      {
+        "skillId": "user-research",
+        "name": "User research",
+        "importance": "must",
+        "quote": "Experience conducting user research with non-technical users"
+      },
+      {
+        "skillId": "prd-writing",
+        "name": "PRD writing",
+        "importance": "must",
+        "quote": "Write product requirement documents and user stories for the engineering team and our technology vendor"
+      },
+      {
+        "skillId": "responsible-ai",
+        "name": "Responsible AI",
+        "importance": "must",
+        "quote": "Understanding of responsible AI in healthcare: safety, privacy and the limits of automation"
+      },
+      {
+        "skillId": "stakeholder-management",
+        "name": "Stakeholder management",
+        "importance": "must",
+        "quote": "Ability to align multiple internal teams"
+      },
+      {
+        "skillId": "llm-evaluation",
+        "name": "LLM evaluation",
+        "importance": "must",
+        "quote": "Experience working with clinical or other expert reviewers to evaluate AI output"
+      },
+      {
+        "skillId": "domain-expertise",
+        "name": "Domain expertise",
+        "importance": "nice",
+        "quote": "Healthcare or diagnostics domain experience"
+      },
+      {
+        "skillId": "llm-fundamentals",
+        "name": "LLM fundamentals",
+        "importance": "nice",
+        "quote": "Basic understanding of how large language models work"
+      }
+    ]
+  },
+  {
+    "id": "p30-fieldnote",
+    "title": "Product Manager, Conversation Intelligence",
+    "company": "Fieldnote",
+    "location": "Remote (India)",
+    "url": "https://careers.fieldnote.example/jobs/product-manager-conversation-intelligence",
+    "source": "startup-board",
+    "postedAt": "2026-11-13",
+    "salary": "₹30–40 LPA",
+    "text": "Fieldnote listens to sales calls so sales reps don't have to take notes. After each call we write a summary, pull out next steps and objections, and sync it all to the CRM. 600 B2B sales teams use us, mostly SaaS companies in India, Singapore and the US. We are 35 people and fully remote.\n\nWe need a PM for the core product: summaries, next steps and CRM sync.\n\nWhat you'd be doing\n- Getting on calls with sales reps and sales managers, and watching how they use, ignore or rewrite our summaries.\n- Working out which of the hundred feature requests in our backlog actually matter, and saying no to the rest without losing customers.\n- Owning summary quality: a graded set of real calls, a scoring rubric and regression checks on every model or prompt change.\n- Working with engineers on prompts for summaries and next steps.\n- Owning our CRM integrations and their APIs, which break in creative ways.\n\nYou\n- 3 to 5 years in product, ideally B2B SaaS.\n- Have evaluated language model output systematically, not just by reading a few examples.\n- Understand APIs, webhooks and data sync well enough to debug with an engineer.\n- Have written prompts and know how much small changes can matter.\n- Find the real problem behind what customers say they want.\n- Are comfortable prioritising with incomplete data.\n\nBonus\n- Enough SQL to check usage numbers yourself.\n- Opinions about how conversation intelligence should be priced.\n\n₹30–40 LPA plus ESOPs. Remote within India.",
+    "harvestedAt": "2026-11-21T04:30:00.000Z",
+    "live": false,
+    "roleFamily": "agents",
+    "seniority": "mid",
+    "companySize": "startup",
+    "skills": [
+      {
+        "skillId": "llm-evaluation",
+        "name": "LLM evaluation",
+        "importance": "must",
+        "quote": "Owning summary quality: a graded set of real calls, a scoring rubric and regression checks on every model or prompt change"
+      },
+      {
+        "skillId": "apis",
+        "name": "APIs and integrations",
+        "importance": "must",
+        "quote": "Understand APIs, webhooks and data sync well enough to debug with an engineer"
+      },
+      {
+        "skillId": "product-discovery",
+        "name": "Product discovery",
+        "importance": "must",
+        "quote": "Find the real problem behind what customers say they want"
+      },
+      {
+        "skillId": "prompt-engineering",
+        "name": "Prompt engineering",
+        "importance": "must",
+        "quote": "Have written prompts and know how much small changes can matter"
+      },
+      {
+        "skillId": "prioritization",
+        "name": "Prioritisation",
+        "importance": "must",
+        "quote": "Working out which of the hundred feature requests in our backlog actually matter, and saying no to the rest without losing customers"
+      },
+      {
+        "skillId": "user-research",
+        "name": "User research",
+        "importance": "must",
+        "quote": "Getting on calls with sales reps and sales managers, and watching how they use, ignore or rewrite our summaries"
+      },
+      {
+        "skillId": "sql",
+        "name": "SQL",
+        "importance": "nice",
+        "quote": "Enough SQL to check usage numbers yourself"
+      },
+      {
+        "skillId": "pricing",
+        "name": "Pricing and packaging",
+        "importance": "nice",
+        "quote": "Opinions about how conversation intelligence should be priced"
+      }
+    ]
+  },
+  {
+    "id": "p31-granary",
+    "title": "Product Manager, Farmer Advisory AI",
+    "company": "Granary Agritech",
+    "location": "Bengaluru",
+    "url": "https://careers.granary.example/jobs/product-manager-farmer-advisory-ai",
+    "source": "job-board",
+    "postedAt": "2026-11-09",
+    "salary": "₹22–30 LPA",
+    "text": "Product Manager, Farmer Advisory AI\nGranary Agritech, Bengaluru\n\nGranary serves 1.5 million farmers in Karnataka, Maharashtra and Telangana with crop advice, soil testing and a marketplace for seeds and inputs. Farmers ask us 50,000 questions a month on WhatsApp and by voice, mostly in Kannada, Marathi and Telugu. Our agronomists can't answer them all.\n\nWe are building a vernacular advisory assistant that answers routine questions and passes hard ones to an agronomist. You'll own it.\n\nWhat you'll do\n- Spend at least four days a month in villages and with our field staff. Farmers' real questions are different from the ones we imagine.\n- Work out which questions the assistant should answer, which it should route, and which it should never attempt.\n- Work with agronomists to build and grow a scored set of real questions and answers, and use it to judge every change.\n- Learn how language models handle Indian languages, voice input and local crop names, and where they fail.\n- Track answer accuracy, farmer follow-through and repeat usage.\n\nYou have\n- 3 to 5 years in product, preferably in rural, agri, fintech or social impact products.\n- Hands-on user research in the field, with users who are not like you.\n- A working understanding of language models.\n- A careful approach to quality, because a wrong answer can cost a farmer a season.\n\nNice to have\n- Experience writing prompts in Indian languages.\n- Experience launching products through field teams or partners.\n- The ability to explain technical decisions to field staff and partners.\n\n₹22–30 LPA. Bengaluru, Hebbal office, with regular field travel.",
+    "harvestedAt": "2026-11-21T04:30:00.000Z",
+    "live": false,
+    "roleFamily": "generalist",
+    "seniority": "mid",
+    "companySize": "scaleup",
+    "skills": [
+      {
+        "skillId": "user-research",
+        "name": "User research",
+        "importance": "must",
+        "quote": "Hands-on user research in the field, with users who are not like you"
+      },
+      {
+        "skillId": "product-discovery",
+        "name": "Product discovery",
+        "importance": "must",
+        "quote": "Work out which questions the assistant should answer, which it should route, and which it should never attempt"
+      },
+      {
+        "skillId": "llm-fundamentals",
+        "name": "LLM fundamentals",
+        "importance": "must",
+        "quote": "A working understanding of language models"
+      },
+      {
+        "skillId": "llm-evaluation",
+        "name": "LLM evaluation",
+        "importance": "must",
+        "quote": "Work with agronomists to build and grow a scored set of real questions and answers, and use it to judge every change"
+      },
+      {
+        "skillId": "metrics-definition",
+        "name": "Metrics and KPIs",
+        "importance": "must",
+        "quote": "Track answer accuracy, farmer follow-through and repeat usage"
+      },
+      {
+        "skillId": "prompt-engineering",
+        "name": "Prompt engineering",
+        "importance": "nice",
+        "quote": "Experience writing prompts in Indian languages"
+      },
+      {
+        "skillId": "go-to-market",
+        "name": "Go-to-market",
+        "importance": "nice",
+        "quote": "Experience launching products through field teams or partners"
+      },
+      {
+        "skillId": "communication",
+        "name": "Communication",
+        "importance": "nice",
+        "quote": "The ability to explain technical decisions to field staff and partners"
+      }
+    ]
+  },
+  {
+    "id": "p32-monsoongames",
+    "title": "Product Manager, AI Live Ops",
+    "company": "Monsoon Games",
+    "location": "Hyderabad",
+    "url": "https://careers.monsoongames.example/jobs/product-manager-ai-live-ops",
+    "source": "company-site",
+    "postedAt": "2026-11-15",
+    "text": "Monsoon Games makes casual mobile games played by 9 million people a month, with 40 million installs to date. Our live ops team runs the events, offers and seasons that keep players coming back. We now use language and image models to generate event themes, quests and offer copy, which lets us run three times as many events.\n\nProduct Manager, AI Live Ops\nHyderabad, Gachibowli\n\nYour job is to turn that extra volume into better retention and revenue without hurting the game.\n\nWhat you'll do\n- Run experiments on events and offers, and judge them by day-7 retention and revenue per paying user, not just clicks.\n- Live in our analytics: cohorts, funnels and the economy dashboards.\n- Query player data in SQL to understand spending and churn.\n- Decide which of the many ideas from game designers and the AI team are worth a slot in the live ops calendar.\n- Understand what our generation models can and cannot do, and design the content pipeline around that.\n- Define the metrics each event is judged on before it goes live.\n\nWhat you bring\n- 3 to 5 years in product for games or consumer apps.\n- Strong experiment design and analysis.\n- SQL and product analytics.\n- Practical knowledge of generative models.\n- Good judgement on priorities when everything looks urgent.\n\nNice to have\n- Experience writing prompts for creative content.\n- Experience with player safety, moderation or age-appropriate content.\n\nSalary shared after the first call. Our studio has 250 people and works from the Hyderabad office five days a week.",
+    "harvestedAt": "2026-11-21T04:30:00.000Z",
+    "live": false,
+    "roleFamily": "growth",
+    "seniority": "mid",
+    "companySize": "scaleup",
+    "skills": [
+      {
+        "skillId": "experimentation",
+        "name": "Experimentation",
+        "importance": "must",
+        "quote": "Run experiments on events and offers, and judge them by day-7 retention and revenue per paying user, not just clicks"
+      },
+      {
+        "skillId": "product-analytics",
+        "name": "Product analytics",
+        "importance": "must",
+        "quote": "Live in our analytics: cohorts, funnels and the economy dashboards"
+      },
+      {
+        "skillId": "sql",
+        "name": "SQL",
+        "importance": "must",
+        "quote": "Query player data in SQL to understand spending and churn"
+      },
+      {
+        "skillId": "llm-fundamentals",
+        "name": "LLM fundamentals",
+        "importance": "must",
+        "quote": "Practical knowledge of generative models"
+      },
+      {
+        "skillId": "prioritization",
+        "name": "Prioritisation",
+        "importance": "must",
+        "quote": "Good judgement on priorities when everything looks urgent"
+      },
+      {
+        "skillId": "metrics-definition",
+        "name": "Metrics and KPIs",
+        "importance": "must",
+        "quote": "Define the metrics each event is judged on before it goes live"
+      },
+      {
+        "skillId": "prompt-engineering",
+        "name": "Prompt engineering",
+        "importance": "nice",
+        "quote": "Experience writing prompts for creative content"
+      },
+      {
+        "skillId": "responsible-ai",
+        "name": "Responsible AI",
+        "importance": "nice",
+        "quote": "Experience with player safety, moderation or age-appropriate content"
+      }
+    ]
+  },
+  {
+    "id": "p33-asterisklabs",
+    "title": "Technical Product Manager, Evaluation Platform",
+    "company": "Asterisk Labs",
+    "location": "Bengaluru",
+    "url": "https://careers.asterisklabs.example/jobs/technical-product-manager-evaluation-platform",
+    "source": "startup-board",
+    "postedAt": "2026-11-20",
+    "salary": "₹40–55 LPA",
+    "text": "Technical Product Manager, Evaluation Platform\nAsterisk Labs, Bengaluru\n\nAsterisk makes tools for teams building on language models: build eval sets from production traces, run regression suites in CI, and catch quality drops after release. 300 companies use us, including several large banks and two of India's biggest consumer apps. We are 20 people. Both founders were ML engineers and still review pull requests.\n\nWe are hiring our first product manager, and this is a technical role.\n\nWhat you will do\n- Spend most of your week with AI engineers at customer companies. Find out what makes them stop trusting their evals.\n- Define the product: how datasets are versioned, how graders work, and what a regression report shows and who it goes to.\n- Shape our APIs and SDKs with the engineering team. Our users live in code, not dashboards.\n- Write specs that are short and exact.\n- Own launches: docs, release notes, demos and the material our two salespeople use with engineering leaders.\n\nYou have\n- An engineering background, or years working closely with engineers on developer tools.\n- Built or run evaluations for language model features yourself. You know the difference between a grader that is useful and one that only looks good.\n- Experience with developer-facing APIs.\n- At least 4 years in product or engineering.\n\nNice to have\n- Experience pricing a developer tool.\n- A solid grasp of language model fundamentals: tokenisation, sampling, context and fine-tuning.\n\n₹40–55 LPA plus ESOPs. Bengaluru, Indiranagar. In office three days a week.",
+    "harvestedAt": "2026-11-21T04:30:00.000Z",
+    "live": false,
+    "roleFamily": "platform",
+    "seniority": "senior",
+    "companySize": "startup",
+    "skills": [
+      {
+        "skillId": "llm-evaluation",
+        "name": "LLM evaluation",
+        "importance": "must",
+        "quote": "Built or run evaluations for language model features yourself. You know the difference between a grader that is useful and one that only looks good"
+      },
+      {
+        "skillId": "technical-fluency",
+        "name": "Technical fluency",
+        "importance": "must",
+        "quote": "An engineering background, or years working closely with engineers on developer tools"
+      },
+      {
+        "skillId": "product-discovery",
+        "name": "Product discovery",
+        "importance": "must",
+        "quote": "Spend most of your week with AI engineers at customer companies. Find out what makes them stop trusting their evals"
+      },
+      {
+        "skillId": "apis",
+        "name": "APIs and integrations",
+        "importance": "must",
+        "quote": "Shape our APIs and SDKs with the engineering team. Our users live in code, not dashboards"
+      },
+      {
+        "skillId": "go-to-market",
+        "name": "Go-to-market",
+        "importance": "must",
+        "quote": "Own launches: docs, release notes, demos and the material our two salespeople use with engineering leaders"
+      },
+      {
+        "skillId": "prd-writing",
+        "name": "PRD writing",
+        "importance": "must",
+        "quote": "Write specs that are short and exact"
+      },
+      {
+        "skillId": "pricing",
+        "name": "Pricing and packaging",
+        "importance": "nice",
+        "quote": "Experience pricing a developer tool"
+      },
+      {
+        "skillId": "llm-fundamentals",
+        "name": "LLM fundamentals",
+        "importance": "nice",
+        "quote": "A solid grasp of language model fundamentals: tokenisation, sampling, context and fine-tuning"
+      }
+    ]
+  },
+  {
+    "id": "p34-crescentglobal",
+    "title": "Product Manager, GenAI Accelerators",
+    "company": "Crescent Global Services",
+    "location": "Bengaluru",
+    "url": "https://careers.crescentglobal.example/jobs/product-manager-genai-accelerators",
+    "source": "job-board",
+    "postedAt": "2026-11-06",
+    "salary": "₹25–35 LPA",
+    "text": "Product Manager – GenAI Accelerators\nCrescent Global Services | Bengaluru (Electronic City)\n\nAbout us\nCrescent Global Services is an IT services and consulting firm with 60,000 employees serving clients in banking, retail, manufacturing and healthcare across 30 countries.\n\nAbout the role\nOur GenAI practice builds reusable accelerators that client delivery teams use to start projects faster: a document question-answering kit, a customer service assistant template and a code modernisation toolkit. The Product Manager will own two of these accelerators and make them easy for delivery teams to adopt.\n\nKey responsibilities\n- Define features and write product requirement documents for each accelerator release.\n- Work with delivery leaders, solution architects and client account teams to understand needs and plan adoption.\n- Support pre-sales: build demos, answer technical questions from clients and help shape proposals.\n- Maintain the retrieval and grounding components of the document question-answering kit with the engineering team.\n- Prepare clear documentation, training material and presentations for internal and client audiences.\n\nRequired qualifications\n- 4 to 7 years of experience in product management, solution consulting or technical pre-sales.\n- Good understanding of large language models and their limitations.\n- Hands-on knowledge of retrieval-augmented generation patterns.\n- Strong stakeholder management across delivery, sales and clients.\n- Excellent written and verbal communication.\n- Experience taking products to market through sales or partner teams.\n\nPreferred qualifications\n- Experience estimating and optimising model costs for client projects.\n- Familiarity with evaluation of generated answers.\n\nCompensation: ₹25–35 LPA. Hybrid, three days a week at the Electronic City campus.",
+    "harvestedAt": "2026-11-21T04:30:00.000Z",
+    "live": false,
+    "roleFamily": "generalist",
+    "seniority": "mid",
+    "companySize": "enterprise",
+    "skills": [
+      {
+        "skillId": "stakeholder-management",
+        "name": "Stakeholder management",
+        "importance": "must",
+        "quote": "Strong stakeholder management across delivery, sales and clients"
+      },
+      {
+        "skillId": "llm-fundamentals",
+        "name": "LLM fundamentals",
+        "importance": "must",
+        "quote": "Good understanding of large language models and their limitations"
+      },
+      {
+        "skillId": "rag",
+        "name": "Retrieval (RAG)",
+        "importance": "must",
+        "quote": "Hands-on knowledge of retrieval-augmented generation patterns"
+      },
+      {
+        "skillId": "prd-writing",
+        "name": "PRD writing",
+        "importance": "must",
+        "quote": "Define features and write product requirement documents for each accelerator release"
+      },
+      {
+        "skillId": "communication",
+        "name": "Communication",
+        "importance": "must",
+        "quote": "Excellent written and verbal communication"
+      },
+      {
+        "skillId": "go-to-market",
+        "name": "Go-to-market",
+        "importance": "must",
+        "quote": "Experience taking products to market through sales or partner teams"
+      },
+      {
+        "skillId": "ai-cost-latency",
+        "name": "Model cost and latency",
+        "importance": "nice",
+        "quote": "Experience estimating and optimising model costs for client projects"
+      },
+      {
+        "skillId": "llm-evaluation",
+        "name": "LLM evaluation",
+        "importance": "nice",
+        "quote": "Familiarity with evaluation of generated answers"
+      }
+    ]
+  },
+  {
+    "id": "p35-hearthfinance",
+    "title": "Senior Product Manager, Digital Lending AI",
+    "company": "Hearth Home Finance",
+    "location": "Bengaluru",
+    "url": "https://careers.hearthfinance.example/jobs/senior-product-manager-digital-lending-ai",
+    "source": "job-board",
+    "postedAt": "2026-10-31",
+    "text": "Senior Product Manager – Digital Lending AI\nHearth Home Finance | Bengaluru\n\nHearth Home Finance is a housing finance company with 180 branches and a loan book of ₹28,000 crore. Our credit officers review property papers, income proofs and bank statements for every application, and a typical file takes nine working days to approve.\n\nWe are bringing AI into this process: automated document checks, an assistant that helps credit officers find information in a file, and early warnings on risky cases. The Senior Product Manager will own this programme.\n\nKey responsibilities\n- Build a three-quarter roadmap and sequence work across document checks, the credit officer assistant and risk alerts.\n- Decide what comes first when credit, operations, IT and compliance all have urgent requests.\n- Work with credit heads, branch operations, IT and our technology partners, and keep senior leadership informed.\n- Set up evaluation of AI output against the decisions of experienced credit officers before any rollout.\n- Ensure the programme complies with NHB and RBI guidelines and our internal model risk policy, with clear human oversight.\n\nRequirements\n- 7+ years of experience, with at least 3 in product management for lending or banking products.\n- Strong understanding of home loan processes and documentation in India.\n- Experience managing senior stakeholders in a regulated financial institution.\n- Experience with responsible AI, explainability and audit.\n\nGood to have\n- Ability to analyse loan and turnaround data in SQL.\n- Familiarity with large language models and document AI.\n\nCompensation is competitive and will be discussed during the process. Location: Bengaluru, MG Road head office.",
+    "harvestedAt": "2026-11-21T04:30:00.000Z",
+    "live": false,
+    "roleFamily": "generalist",
+    "seniority": "senior",
+    "companySize": "enterprise",
+    "skills": [
+      {
+        "skillId": "roadmapping",
+        "name": "Roadmapping",
+        "importance": "must",
+        "quote": "Build a three-quarter roadmap and sequence work across document checks, the credit officer assistant and risk alerts"
+      },
+      {
+        "skillId": "stakeholder-management",
+        "name": "Stakeholder management",
+        "importance": "must",
+        "quote": "Experience managing senior stakeholders in a regulated financial institution"
+      },
+      {
+        "skillId": "domain-expertise",
+        "name": "Domain expertise",
+        "importance": "must",
+        "quote": "Strong understanding of home loan processes and documentation in India"
+      },
+      {
+        "skillId": "llm-evaluation",
+        "name": "LLM evaluation",
+        "importance": "must",
+        "quote": "Set up evaluation of AI output against the decisions of experienced credit officers before any rollout"
+      },
+      {
+        "skillId": "prioritization",
+        "name": "Prioritisation",
+        "importance": "must",
+        "quote": "Decide what comes first when credit, operations, IT and compliance all have urgent requests"
+      },
+      {
+        "skillId": "responsible-ai",
+        "name": "Responsible AI",
+        "importance": "must",
+        "quote": "Experience with responsible AI, explainability and audit"
+      },
+      {
+        "skillId": "sql",
+        "name": "SQL",
+        "importance": "nice",
+        "quote": "Ability to analyse loan and turnaround data in SQL"
+      },
+      {
+        "skillId": "llm-fundamentals",
+        "name": "LLM fundamentals",
+        "importance": "nice",
+        "quote": "Familiarity with large language models and document AI"
+      }
+    ]
+  },
+  {
+    "id": "p36-tidewater",
+    "title": "Group Product Manager, AI",
+    "company": "Tidewater Analytics",
+    "location": "Pune",
+    "url": "https://careers.tidewater.example/jobs/group-product-manager-ai",
+    "source": "company-site",
+    "postedAt": "2026-11-12",
+    "salary": "₹70–90 LPA",
+    "text": "Group Product Manager, AI\nTidewater Analytics, Pune\n\nTidewater makes business intelligence and reporting software used by 4,000 enterprises worldwide. We are 2,000 people, and our Pune centre leads product for the core platform. AI is now the first thing every customer asks us about: natural-language queries, automated insights and generated reports.\n\nWe are hiring a Group Product Manager to lead AI across the suite.\n\nWhat you will lead\n- AI product strategy for the BI suite: where we build, where we partner, and where we deliberately stay out.\n- A team of three product managers. You will hire, coach and grow them.\n- A shared roadmap across the query, dashboard and reporting product lines.\n- Alignment with engineering, data science, design, sales and customer success leaders across three continents.\n- Quality standards for AI features, including evaluation before release and monitoring after.\n- Business cases for new AI capabilities, with revenue, cost and margin impact.\n\nWhat you bring\n- 10+ years in product, including at least 3 managing product managers.\n- A record of setting strategy for a major product area and seeing it through.\n- Experience leading through influence across large engineering and commercial organisations.\n- Strong business judgement and comfort with P&L conversations.\n- Enough depth in AI evaluation to challenge your teams on quality.\n\nNice to have\n- Experience designing packaging and pricing for AI add-ons.\n- Deep knowledge of the BI and analytics market and competitors.\n\n₹70–90 LPA plus annual bonus and RSUs. Pune, Kharadi. Hybrid, three days a week.",
+    "harvestedAt": "2026-11-21T04:30:00.000Z",
+    "live": false,
+    "roleFamily": "platform",
+    "seniority": "lead",
+    "companySize": "enterprise",
+    "skills": [
+      {
+        "skillId": "product-strategy",
+        "name": "Product strategy",
+        "importance": "must",
+        "quote": "AI product strategy for the BI suite: where we build, where we partner, and where we deliberately stay out"
+      },
+      {
+        "skillId": "roadmapping",
+        "name": "Roadmapping",
+        "importance": "must",
+        "quote": "A shared roadmap across the query, dashboard and reporting product lines"
+      },
+      {
+        "skillId": "mentoring",
+        "name": "Mentoring",
+        "importance": "must",
+        "quote": "A team of three product managers. You will hire, coach and grow them"
+      },
+      {
+        "skillId": "cross-functional-leadership",
+        "name": "Cross-functional leadership",
+        "importance": "must",
+        "quote": "Experience leading through influence across large engineering and commercial organisations"
+      },
+      {
+        "skillId": "llm-evaluation",
+        "name": "LLM evaluation",
+        "importance": "must",
+        "quote": "Enough depth in AI evaluation to challenge your teams on quality"
+      },
+      {
+        "skillId": "business-acumen",
+        "name": "Business acumen",
+        "importance": "must",
+        "quote": "Strong business judgement and comfort with P&L conversations"
+      },
+      {
+        "skillId": "pricing",
+        "name": "Pricing and packaging",
+        "importance": "nice",
+        "quote": "Experience designing packaging and pricing for AI add-ons"
+      },
+      {
+        "skillId": "competitive-analysis",
+        "name": "Competitive analysis",
+        "importance": "nice",
+        "quote": "Deep knowledge of the BI and analytics market and competitors"
+      }
+    ]
+  },
+  {
+    "id": "p37-kindredcare",
+    "title": "Product Manager, AI Matching",
+    "company": "Kindred Care",
+    "location": "Bengaluru",
+    "url": "https://careers.kindredcare.example/jobs/product-manager-ai-matching",
+    "source": "startup-board",
+    "postedAt": "2026-11-16",
+    "salary": "₹24–32 LPA",
+    "text": "Kindred Care matches families with trained caregivers and nurses for elderly parents at home. We work in Bengaluru, Chennai and Hyderabad and have arranged 30,000 care visits so far. We are 40 people.\n\nFinding the right caregiver is hard. Families care about language, experience with dementia or diabetes, gender, distance and whether the person feels kind. We use AI to read caregiver profiles and family requests and suggest the best matches. When the match is good, families stay with us for years. When it isn't, they leave after one visit.\n\nWe're hiring a Product Manager, AI Matching.\n\nWhat you'll do\n- Talk to families and caregivers every week, at home and on the phone.\n- Find out what makes a match work, then decide what to build to get more good matches.\n- Run experiments on the matching and booking flow and measure booking conversion and 60-day retention.\n- Use analytics to find where families drop off between enquiry and first visit.\n- Pull your own data from our database with SQL.\n- Choose what not to build. We are small.\n\nWhat we're looking for\n- 3 to 5 years in product, ideally marketplaces or consumer apps.\n- Experience designing and reading A/B tests.\n- Comfort with SQL and product analytics.\n- Warmth with users and patience with sensitive conversations.\n\nNice to have\n- Some experience with language model features.\n- Experience checking AI suggestions against human judgement.\n\n₹24–32 LPA plus ESOPs. Bengaluru, Jayanagar. In office four days a week.",
+    "harvestedAt": "2026-11-21T04:30:00.000Z",
+    "live": false,
+    "roleFamily": "growth",
+    "seniority": "mid",
+    "companySize": "startup",
+    "skills": [
+      {
+        "skillId": "experimentation",
+        "name": "Experimentation",
+        "importance": "must",
+        "quote": "Run experiments on the matching and booking flow and measure booking conversion and 60-day retention"
+      },
+      {
+        "skillId": "user-research",
+        "name": "User research",
+        "importance": "must",
+        "quote": "Talk to families and caregivers every week, at home and on the phone"
+      },
+      {
+        "skillId": "product-discovery",
+        "name": "Product discovery",
+        "importance": "must",
+        "quote": "Find out what makes a match work, then decide what to build to get more good matches"
+      },
+      {
+        "skillId": "product-analytics",
+        "name": "Product analytics",
+        "importance": "must",
+        "quote": "Use analytics to find where families drop off between enquiry and first visit"
+      },
+      {
+        "skillId": "sql",
+        "name": "SQL",
+        "importance": "must",
+        "quote": "Pull your own data from our database with SQL"
+      },
+      {
+        "skillId": "prioritization",
+        "name": "Prioritisation",
+        "importance": "must",
+        "quote": "Choose what not to build. We are small"
+      },
+      {
+        "skillId": "llm-fundamentals",
+        "name": "LLM fundamentals",
+        "importance": "nice",
+        "quote": "Some experience with language model features"
+      },
+      {
+        "skillId": "llm-evaluation",
+        "name": "LLM evaluation",
+        "importance": "nice",
+        "quote": "Experience checking AI suggestions against human judgement"
+      }
+    ]
+  },
+  {
+    "id": "p38-payfern",
+    "title": "Product Manager, AI Compliance Assistant",
+    "company": "Payfern",
+    "location": "Bengaluru",
+    "url": "https://careers.payfern.example/jobs/product-manager-ai-compliance-assistant",
+    "source": "company-site",
+    "postedAt": "2026-11-18",
+    "salary": "₹30–42 LPA",
+    "text": "Product Manager, AI Compliance Assistant\nPayfern · Bengaluru · Hybrid\n\nPayfern runs payroll for 9,000 Indian companies and handles PF, ESI, professional tax and TDS filings for them. Payroll admins send us around 18,000 questions a month, and the answers depend on state rules, salary structures and deadlines that change every year.\n\nWe're building an assistant that answers these questions using the customer's own payroll data and, with the admin's approval, prepares and files returns. You'll own it.\n\nWhat you'll do\n- Decide which tasks the assistant can complete on its own, which need approval and which it must refuse.\n- Build test sets with our compliance experts and run them on every change. A wrong TDS answer is a real problem for our customers.\n- Interview payroll admins and finance managers to understand where compliance work gets stuck.\n- Write specs for agent workflows that touch payroll data and government portals.\n- Use SQL to understand usage, deflection and error patterns.\n\nYou'll need\n- 3 to 5 years in product for B2B SaaS, fintech or HR tech.\n- Experience shipping an AI agent or workflow automation that takes real actions.\n- Good knowledge of Indian payroll and statutory compliance, or the willingness to learn it fast.\n- Disciplined evaluation habits.\n- Comfort with SQL.\n\nNice to have\n- Experience pricing an AI add-on for business customers.\n- Experience with audit trails, approvals and safeguards for automated decisions.\n\n₹30–42 LPA. Bengaluru, Koramangala, three days a week in office.",
+    "harvestedAt": "2026-11-21T04:30:00.000Z",
+    "live": false,
+    "roleFamily": "agents",
+    "seniority": "mid",
+    "companySize": "scaleup",
+    "skills": [
+      {
+        "skillId": "ai-agents",
+        "name": "AI agents",
+        "importance": "must",
+        "quote": "Experience shipping an AI agent or workflow automation that takes real actions"
+      },
+      {
+        "skillId": "llm-evaluation",
+        "name": "LLM evaluation",
+        "importance": "must",
+        "quote": "Build test sets with our compliance experts and run them on every change. A wrong TDS answer is a real problem for our customers"
+      },
+      {
+        "skillId": "domain-expertise",
+        "name": "Domain expertise",
+        "importance": "must",
+        "quote": "Good knowledge of Indian payroll and statutory compliance, or the willingness to learn it fast"
+      },
+      {
+        "skillId": "product-discovery",
+        "name": "Product discovery",
+        "importance": "must",
+        "quote": "Interview payroll admins and finance managers to understand where compliance work gets stuck"
+      },
+      {
+        "skillId": "prd-writing",
+        "name": "PRD writing",
+        "importance": "must",
+        "quote": "Write specs for agent workflows that touch payroll data and government portals"
+      },
+      {
+        "skillId": "sql",
+        "name": "SQL",
+        "importance": "must",
+        "quote": "Use SQL to understand usage, deflection and error patterns"
+      },
+      {
+        "skillId": "pricing",
+        "name": "Pricing and packaging",
+        "importance": "nice",
+        "quote": "Experience pricing an AI add-on for business customers"
+      },
+      {
+        "skillId": "responsible-ai",
+        "name": "Responsible AI",
+        "importance": "nice",
+        "quote": "Experience with audit trails, approvals and safeguards for automated decisions"
+      }
+    ]
+  },
+  {
+    "id": "p39-opaline",
+    "title": "Senior Product Manager, Search Relevance and GenAI",
+    "company": "Opaline Commerce",
+    "location": "Bengaluru",
+    "url": "https://careers.opaline.example/jobs/senior-product-manager-search-relevance-and-genai",
+    "source": "company-site",
+    "postedAt": "2026-11-10",
+    "salary": "₹55–70 LPA",
+    "text": "Senior Product Manager, Search Relevance and GenAI\nOpaline Commerce | Bengaluru\n\nOpaline is one of India's largest online marketplaces, with 50 million monthly shoppers and 1.2 lakh sellers. Search drives more than half of our orders, and shoppers increasingly type full questions such as \"running shoes for flat feet under 3000\".\n\nThe team\nSearch Relevance is 60 engineers, applied scientists and analysts. We are adding generated answers, query rewriting and conversational refinement on top of our ranking stack.\n\nWhat you will own\n- Query understanding and retrieval for long, natural-language queries, using embeddings alongside our keyword index.\n- The relevance metrics: NDCG from human ratings, search conversion, null-search rate and reformulation rate.\n- A large experiment programme. We run 25 to 30 search experiments a quarter, and you will decide which ones run and how they are read.\n- The half-yearly roadmap for search, agreed with category, ads and app teams.\n- Alignment with the many teams who depend on search, including ads, which has its own goals.\n\nWhat you need\n- 6+ years in product, with at least 3 on search, ranking or recommendations at scale.\n- Deep familiarity with retrieval: embeddings, hybrid search and relevance tuning.\n- Experience running and interpreting large online experiments.\n- Fluency in SQL.\n- The ability to manage senior stakeholders with competing interests.\n\nNice to have\n- Experience evaluating generated answers with human raters.\n- Experience writing prompts for query rewriting.\n\n₹55–70 LPA plus RSUs. Bengaluru, Bellandur campus. Hybrid.",
+    "harvestedAt": "2026-11-21T04:30:00.000Z",
+    "live": false,
+    "roleFamily": "growth",
+    "seniority": "senior",
+    "companySize": "enterprise",
+    "skills": [
+      {
+        "skillId": "rag",
+        "name": "Retrieval (RAG)",
+        "importance": "must",
+        "quote": "Deep familiarity with retrieval: embeddings, hybrid search and relevance tuning"
+      },
+      {
+        "skillId": "experimentation",
+        "name": "Experimentation",
+        "importance": "must",
+        "quote": "Experience running and interpreting large online experiments"
+      },
+      {
+        "skillId": "metrics-definition",
+        "name": "Metrics and KPIs",
+        "importance": "must",
+        "quote": "The relevance metrics: NDCG from human ratings, search conversion, null-search rate and reformulation rate"
+      },
+      {
+        "skillId": "sql",
+        "name": "SQL",
+        "importance": "must",
+        "quote": "Fluency in SQL"
+      },
+      {
+        "skillId": "roadmapping",
+        "name": "Roadmapping",
+        "importance": "must",
+        "quote": "The half-yearly roadmap for search, agreed with category, ads and app teams"
+      },
+      {
+        "skillId": "stakeholder-management",
+        "name": "Stakeholder management",
+        "importance": "must",
+        "quote": "The ability to manage senior stakeholders with competing interests"
+      },
+      {
+        "skillId": "llm-evaluation",
+        "name": "LLM evaluation",
+        "importance": "nice",
+        "quote": "Experience evaluating generated answers with human raters"
+      },
+      {
+        "skillId": "prompt-engineering",
+        "name": "Prompt engineering",
+        "importance": "nice",
+        "quote": "Experience writing prompts for query rewriting"
+      }
+    ]
+  },
+  {
+    "id": "p40-wayfarermaps",
+    "title": "Lead Product Manager, AI Platform",
+    "company": "Wayfarer Maps",
+    "location": "Remote (India)",
+    "url": "https://careers.wayfarermaps.example/jobs/lead-product-manager-ai-platform",
+    "source": "company-site",
+    "postedAt": "2026-11-17",
+    "salary": "₹65–85 LPA",
+    "text": "Lead Product Manager, AI Platform\nWayfarer Maps · Remote (India)\n\nWayfarer provides maps, geocoding and routing APIs to 7,000 businesses, from delivery startups to banks verifying addresses. We are 500 people. Our next platform adds AI on top of location: address understanding for messy Indian addresses, natural-language place search and route explanations.\n\nYou will lead the product for this AI platform and manage two product managers.\n\nWhat you'll do\n- Set the platform strategy: which AI capabilities become APIs, which stay internal and which we drop.\n- Own the roadmap across address AI, place search and routing, and keep it tied to revenue.\n- Hire and coach two PMs. Give them real ownership and hold the bar on quality.\n- Lead across engineering, data science, sales and support without formal authority.\n- Keep model cost and latency within budget. Customers call our APIs millions of times a day and expect answers in under 200 milliseconds.\n- Make sure every model change is measured against real addresses and queries before release.\n\nWhat you bring\n- 8+ years in product, including API or platform products and at least 2 years managing PMs.\n- A record of setting strategy for a technical product and delivering it.\n- Strong judgement on cost, latency and quality trade-offs.\n- Experience leading cross-functional teams across time zones.\n\nNice to have\n- Experience building business cases and pricing for API products.\n- Hands-on experience designing developer APIs.\n\n₹65–85 LPA plus RSUs. Remote within India, with occasional travel to Bengaluru and Delhi.",
+    "harvestedAt": "2026-11-21T04:30:00.000Z",
+    "live": false,
+    "roleFamily": "platform",
+    "seniority": "lead",
+    "companySize": "scaleup",
+    "skills": [
+      {
+        "skillId": "product-strategy",
+        "name": "Product strategy",
+        "importance": "must",
+        "quote": "Set the platform strategy: which AI capabilities become APIs, which stay internal and which we drop"
+      },
+      {
+        "skillId": "roadmapping",
+        "name": "Roadmapping",
+        "importance": "must",
+        "quote": "Own the roadmap across address AI, place search and routing, and keep it tied to revenue"
+      },
+      {
+        "skillId": "mentoring",
+        "name": "Mentoring",
+        "importance": "must",
+        "quote": "Hire and coach two PMs. Give them real ownership and hold the bar on quality"
+      },
+      {
+        "skillId": "cross-functional-leadership",
+        "name": "Cross-functional leadership",
+        "importance": "must",
+        "quote": "Lead across engineering, data science, sales and support without formal authority"
+      },
+      {
+        "skillId": "ai-cost-latency",
+        "name": "Model cost and latency",
+        "importance": "must",
+        "quote": "Keep model cost and latency within budget. Customers call our APIs millions of times a day and expect answers in under 200 milliseconds"
+      },
+      {
+        "skillId": "llm-evaluation",
+        "name": "LLM evaluation",
+        "importance": "must",
+        "quote": "Make sure every model change is measured against real addresses and queries before release"
+      },
+      {
+        "skillId": "business-acumen",
+        "name": "Business acumen",
+        "importance": "nice",
+        "quote": "Experience building business cases and pricing for API products"
+      },
+      {
+        "skillId": "apis",
+        "name": "APIs and integrations",
+        "importance": "nice",
+        "quote": "Hands-on experience designing developer APIs"
+      }
+    ]
+  }
+]
