@@ -6,6 +6,7 @@ import type {
   Goal,
   InterviewSession,
   InterviewTurn,
+  Kit,
   Plan,
   PortfolioProject,
   Posting,
@@ -143,6 +144,11 @@ export const api = {
   brief: () => call<Brief>('GET', '/brief'),
 
   eventsUrl: () => `${API_BASE}/events`,
+
+  kit: (postingId: string) => call<Kit>('GET', `/kit/${encodeURIComponent(postingId)}`),
+  buildKit: (postingId: string, fresh = false) => call<Kit>('POST', `/kit/${encodeURIComponent(postingId)}${fresh ? '?fresh=1' : ''}`),
+  setDeliverables: (id: string, deliverablesDone: string[]) =>
+    call<PortfolioProject>('PATCH', `/portfolio/${encodeURIComponent(id)}`, { deliverablesDone }),
 };
 
 /** Reads a File as base64 without the data: prefix. */

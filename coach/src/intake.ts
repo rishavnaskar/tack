@@ -55,7 +55,7 @@ Rules:
 - Prefer these skill names when they fit: ${catalogNames().join(', ')}. Otherwise use a short common name.
 - List 8 to 20 skills. Include transferable ones (stakeholder work, experimentation, writing) when the résumé shows them.
 - headline: one line in the person's own voice, e.g. "Backend engineer, payments, 5 years".
-- summary: two sentences, plain and factual.
+- summary: two sentences, plain and factual. If the résumé says what kind of role they want next, keep that in the summary.
 - yearsExperience: total professional years as a number.
 - Dates as written in the résumé, "Present" for current roles.`;
 
@@ -72,12 +72,10 @@ export async function parseResume(input: ResumeInput): Promise<Profile> {
       source = 'pdf';
       const pdf = Buffer.from(input.pdfBase64, 'base64');
       if (pdf.subarray(0, 5).toString('latin1') !== '%PDF-') throw new InputError('that file is not a PDF');
-      text = pdfText(pdf);
-      if (text.length < 200) {
-        // Embedded-font PDFs (most browser and Word exports) need a real reader.
-        const read = await engine.resumeText(pdf, 'application/pdf');
-        if (read.ok && read.text.length > text.length) text = read.text;
-      }
+      // The engine's reader handles embedded fonts and non-Latin glyphs; the stream scan is the fallback.
+      const read = await engine.resumeText(pdf, 'application/pdf');
+      const local = pdfText(pdf);
+      text = read.ok && read.text.length >= Math.min(200, local.length) ? read.text : local;
       t.step('pdf', `${input.filename ?? 'resume.pdf'}, ${Math.round(pdf.length / 1024)} KB, ${text.length} characters of text found locally`);
       try {
         t.step('read', 'sending the PDF to the model');
@@ -104,6 +102,15 @@ export async function parseResume(input: ResumeInput): Promise<Profile> {
 
 export class InputError extends Error {}
 
+// PDF text often breaks lines inside words ("integ\nrations"); match with all whitespace and
+// soft hyphens ignored and keep the model's spacing. Returns undefined when the words are not there.
+export function wrappedQuote(text: string, quote: string | undefined): string | undefined {
+  const q = quote?.trim().replace(/^["'“‘\s-]+|["'”’\s.,;:]+$/g, '');
+  if (!q || q.length < 12) return undefined;
+  const squash = (t: string) => t.toLowerCase().replace(/[‘’]/g, "'").replace(/[“”]/g, '"').replace(/-\s*\n/g, '').replace(/\s+/g, '');
+  return squash(text).includes(squash(q)) ? q.replace(/\s+/g, ' ') : undefined;
+}
+
 function fromText(text: string): Promise<RawProfile> {
   return json<RawProfile>({ task: 'intake.resume', system: PROFILE_SYSTEM, prompt: `Résumé:\n\n${text.slice(0, MAX_TEXT)}`, schema: PROFILE_SCHEMA });
 }
@@ -118,7 +125,7 @@ export function finishProfile(raw: RawProfile, sourceText: string, source: Profi
     // PDF line breaks are layout, not content.
     const tidy = (q: string | undefined) => (source === 'pdf' ? q?.replace(/\s+/g, ' ') : q);
     const evidence = (s.evidence ?? [])
-      .map((q) => tidy(check ? findQuote(sourceText, q) : q?.trim()))
+      .map((q) => tidy(check ? findQuote(sourceText, q) ?? (source === 'pdf' ? wrappedQuote(sourceText, q) : undefined) : q?.trim()))
       .filter((q): q is string => Boolean(q && q.length >= 3));
     if (!evidence.length) continue;
     const c = canonical(s.name);

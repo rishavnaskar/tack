@@ -5,6 +5,7 @@ import type {
   GapSkill,
   Goal,
   InterviewSession,
+  Kit,
   Plan,
   PlanTask,
   PlanWeek,
@@ -927,4 +928,53 @@ export function buildBrief(plan: Plan | undefined, insights: TrackerInsights | u
   if (nextApp) items.push({ kind: 'apply', text: `Apply to ${nextApp.company}, ${nextApp.title}. ${nextApp.why}`, action: 'Apply' });
   items.push({ kind: 'interview', text: 'Practise one technical question on model evaluation.', action: 'Start interview' });
   return { headline: plan ? 'Week 3: experiments with a decision rule' : 'Start by reading the market', items };
+}
+
+/* application kit: résumé lines reordered by the posting's skills, one tailored line per top match */
+
+export function buildKit(posting: Posting, profile: Profile, gap: GapMap | undefined): Kit {
+  const asks = posting.skills ?? [];
+  const lines = [...profile.experience.flatMap((r) => r.bullets), ...profile.projects];
+  const own = new Map(profile.skills.map((s) => [s.id, s]));
+  const score = (line: string) =>
+    asks.reduce((a, s) => a + ((own.get(s.skillId)?.evidence ?? []).some((e) => line.includes(e) || e.includes(line)) ? (s.importance === 'must' ? 2 : 1) : 0), 0);
+  const ranked = lines.map((line, i) => ({ line, i, n: score(line) })).sort((a, b) => b.n - a.n || a.i - b.i).slice(0, 5);
+  const bullets = ranked.map(({ line }, i) => {
+    if (i > 1) return { text: line, basedOn: line };
+    const words = line.split(/\s+/);
+    const basedOn = words.slice(0, Math.min(words.length, 12)).join(' ');
+    const ask = asks.find((s) => s.importance === 'must' && own.has(s.skillId))?.name.toLowerCase() ?? 'the work this team does';
+    return { text: i === 0 ? `${line.replace(/\.$/, '')}, the same muscle as ${ask} here.` : line.replace(/^Wrote/, 'Wrote and owned'), basedOn };
+  });
+  const strong = asks.filter((s) => (own.get(s.skillId)?.level ?? 0) >= 3);
+  const weak = asks
+    .map((s) => ({ s, g: gap?.skills.find((x) => x.id === s.skillId) }))
+    .filter(({ s, g }) => (g ? g.level !== 'strong' : (own.get(s.skillId)?.level ?? 0) < 3))
+    .slice(0, 4);
+  const names = strong.slice(0, 3).map((s) => s.name.toLowerCase());
+  return {
+    postingId: posting.id,
+    generatedAt: new Date().toISOString(),
+    fit: posting.fit ?? 60,
+    headline: `${profile.currentRole}, ${profile.yearsExperience} years · strongest here: ${names.join(', ') || 'technical depth'}`,
+    bullets,
+    coverNote: [
+      `Hello ${posting.company} team,`,
+      `I would like to apply for the ${posting.title} role. I am a ${profile.currentRole} with ${profile.yearsExperience} years of experience, and the parts of my work closest to what you describe are ${names.join(', ') || 'the technical side'}.`,
+      ['Most relevant from my résumé:', ...bullets.slice(0, 2).map((b) => `- ${b.basedOn}`)].join('\n'),
+      weak.length ? `Your posting also asks for ${weak.map(({ s }) => s.name.toLowerCase()).join(', ')}. I have not done these in a job yet, and I am working on them now through my plan.` : '',
+      'I would welcome a conversation about how this background fits the role.',
+      profile.name,
+    ].filter(Boolean).join('\n\n'),
+    talkingPoints: strong.slice(0, 4).map((s) => `They ask for ${s.name.toLowerCase()} ("${s.quote}"). Point to: ${own.get(s.skillId)?.evidence[0] ?? ''}`),
+    gapsToAddress: weak.map(({ s, g }) => ({
+      skill: g?.name ?? s.name,
+      howToFrame: g?.bridge ? `Say it is new to you, then bridge from ${g.bridge.from.toLowerCase()}: ${g.bridge.note}` : `Say plainly that you have not done ${s.name.toLowerCase()} in a job yet, then point to week 4 of your plan.`,
+    })),
+    questionsToAsk: [
+      ...(weak[0] ? [`You mention "${weak[0].s.quote}". How does the team do that today, and what would you want this hire to change first?`] : []),
+      'How do you decide a model change is good enough to ship, and who makes that call?',
+      'What would a strong first 90 days look like in this role?',
+    ],
+  };
 }

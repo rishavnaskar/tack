@@ -6,6 +6,7 @@ import type {
   Goal,
   InterviewSession,
   InterviewTurn,
+  Kit,
   Plan,
   PortfolioProject,
   Posting,
@@ -17,6 +18,7 @@ import {
   buildBrief,
   buildGap,
   buildInterviews,
+  buildKit,
   buildPlan,
   buildPortfolio,
   buildPostings,
@@ -44,6 +46,7 @@ interface Db {
   portfolio: PortfolioProject[];
   interviews: InterviewSession[];
   applications: Application[];
+  kits?: Record<string, Kit>;
 }
 
 const KEY = 'tack.mock.v1';
@@ -335,10 +338,11 @@ on('POST', '/portfolio/build', async () => {
 
 on('GET', '/portfolio', () => db.portfolio);
 
-on('PATCH', '/portfolio/:id', (p, body: { status: PortfolioProject['status'] }) => {
+on('PATCH', '/portfolio/:id', (p, body: { status?: PortfolioProject['status']; deliverablesDone?: string[] }) => {
   const project = db.portfolio.find((x) => x.id === decodeURIComponent(p[0]));
   if (!project) throw new ApiError(404, 'No such project.', '/portfolio');
-  project.status = body.status;
+  if (body.status) project.status = body.status;
+  if (body.deliverablesDone) project.deliverablesDone = project.deliverables.filter((d) => body.deliverablesDone!.includes(d));
   save();
   return project;
 });
@@ -448,6 +452,30 @@ on('POST', '/apply', () => ({
 on('GET', '/progress', () => computeProgress(db.plan, db.gap, db.interviews));
 
 on('GET', '/brief', () => buildBrief(db.plan, db.applications.length ? computeInsights(db.applications, db.postings) : undefined));
+
+const kitId = (raw: string) => decodeURIComponent(raw.split('?')[0]);
+
+on('POST', '/kit/:id', async (p) => {
+  const id = kitId(p[0]);
+  const fresh = p[0].includes('fresh=1');
+  const posting = db.postings.find((x) => x.id === id);
+  if (!posting) throw new ApiError(404, `No posting ${id}`, '/kit');
+  if (!db.profile) throw new ApiError(409, 'Add a résumé before preparing an application.', '/kit');
+  const cached = db.kits?.[id];
+  if (cached && !fresh) return cached;
+  await script('kit-1', [
+    ['kit', `${posting.title} at ${posting.company}`, 0],
+    ['read', `${posting.skills?.length ?? 0} skills against ${db.profile.experience.flatMap((r) => r.bullets).length} résumé lines`, 500],
+    ['draft', 'tailoring bullets, cover note and talking points', 1600],
+    ['guard', 'every bullet traces to a résumé line', 400],
+  ]);
+  const kit = buildKit(posting, db.profile, db.gap);
+  db.kits = { ...db.kits, [id]: kit };
+  save();
+  return kit;
+});
+
+on('GET', '/kit/:id', (p) => need(db.kits?.[kitId(p[0])], 'application kit'));
 
 const clone = <T,>(v: T): T => (v === undefined || typeof v === 'string' ? v : JSON.parse(JSON.stringify(v)));
 

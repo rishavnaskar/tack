@@ -59,7 +59,7 @@ export function computeProgress(input: ProgressInput): Progress {
   const onTrack = !input.plan || hoursDone >= expected * 0.8 - 0.5;
   let note: string;
   if (!input.plan) note = 'Build a plan to start tracking progress.';
-  else if (weekOf(input.plan, today) === 0) note = `The plan starts on ${input.plan.weeks[0]?.startDate}.`;
+  else if (weekOf(input.plan, today) === 0) note = `The plan starts on ${dayName(input.plan.weeks[0]?.startDate)}.`;
   else if (hoursDone >= expected) note = `Ahead of plan: ${hoursDone}h done against ${expected}h expected by today.`;
   else if (onTrack) note = `On track: ${hoursDone}h done against ${expected}h expected by today.`;
   else note = `Behind by ${round1(expected - hoursDone)}h: replan to roll late tasks forward and rebalance the weeks.`;
@@ -114,4 +114,10 @@ export function brief(input: BriefInput): Brief {
   const theme = week ? `Week ${cur} of ${plan.weeks.length}: ${week.theme}.` : '';
   const pace = progress.onTrack ? 'On track.' : 'Behind plan.';
   return { headline: `${theme} Readiness ${Math.round(input.gap.readiness)}. ${pace}`.trim(), items: items.slice(0, 3) };
+}
+
+function dayName(iso: string | undefined): string {
+  const d = iso ? new Date(`${iso}T00:00:00Z`) : null;
+  if (!d || Number.isNaN(d.getTime())) return iso ?? 'the first Monday';
+  return d.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
 }

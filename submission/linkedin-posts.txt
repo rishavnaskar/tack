@@ -1,0 +1,56 @@
+POST 1
+
+I am building today in the Product Space Agentic AI Hackathon.
+We have one day to build from scratch and submit by midnight.
+
+There were five problem statements to pick from.
+I picked the Career pivot coach.
+
+Most career tools stop at advice.
+They give you a generic list and tell you to "learn SQL".
+They never look at what companies are asking for this week.
+They never check if your applications actually got a reply.
+
+My plan is a coach that closes the loop:
+It reads real job postings live.
+It maps them to your resume using exact lines as proof.
+It builds a week by week plan.
+It runs mock interviews scored on a rubric.
+Then it learns from which applications get replies.
+
+It is called Tack.
+The name comes from sailing: changing tack means a deliberate change of course.
+
+I will share progress later today.
+
+Tag: @Product Space
+Hashtags: #AgenticAI #Hackathon #BuildInPublic
+
+POST 2
+
+Quick progress update on Tack, my career pivot coach for the Product Space Agentic AI Hackathon.
+
+What works right now:
+It pulled 40 real AI Product Manager postings from 60 company career boards in about 10 seconds.
+That includes Razorpay, Glean, Paytm, Sarvam AI, UiPath, and others.
+
+The gap map:
+It maps every skill those postings ask for.
+Each skill is sized by how often it comes up.
+It is filled by how much proof your resume shows.
+Click any skill to see the resume line on the left and the posting lines on the right.
+
+Mock interviews:
+Each answer is scored on five criteria.
+Every score quotes your own words back to you.
+
+One thing I learned:
+The model is good at reading and judging, but I do not let it do the maths.
+Demand, readiness, and the plan schedule are plain code.
+That way, every number can be explained.
+Every quote is also checked to be a real substring of the source, so nothing is made up.
+
+Screenshot attached: the gap map for a backend engineer moving to AI Product Manager.
+
+Tag: @Product Space
+Hashtags: #AgenticAI #Hackathon #BuildInPublic #ProductManagement

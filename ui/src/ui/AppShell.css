@@ -25,6 +25,34 @@
   opacity: 1;
 }
 
+/* Desktop app on macOS: the title bar is hidden, so the top strip moves the window and the
+   rail starts below the traffic lights. Controls under the strip stay clickable. */
+.shell__drag {
+  display: none;
+}
+
+:root[data-titlebar='inset'] .shell__drag {
+  display: block;
+  position: fixed;
+  z-index: calc(var(--z-toast) + 1);
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 30px;
+  pointer-events: none;
+  -webkit-app-region: drag;
+}
+
+:root[data-titlebar='inset'] :is(a, button, input, textarea, select, label, summary, [role='button'], [role='tab'], [role='switch'], [tabindex]:not([tabindex='-1'])) {
+  -webkit-app-region: no-drag;
+}
+
+@media (min-width: 720px) {
+  :root[data-titlebar='inset'] .rail {
+    padding-top: 58px;
+  }
+}
+
 .rail {
   position: fixed;
   z-index: var(--z-rail);

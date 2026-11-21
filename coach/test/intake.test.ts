@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { deflateSync } from 'node:zlib';
-import { adjacentRoles, finishProfile, pdfText } from '../src/intake.ts';
+import { adjacentRoles, finishProfile, pdfText, wrappedQuote } from '../src/intake.ts';
 import { demoProfile } from '../src/demo/load.ts';
 
 function tinyPdf(lines: string[], compress: boolean): Buffer {
@@ -53,4 +53,11 @@ test('adjacent roles rank by overlap with the profile', () => {
   for (let i = 1; i < roles.length; i++) assert.ok(roles[i - 1].overlap >= roles[i].overlap);
   assert.ok(roles.every((r) => r.overlap >= 0 && r.overlap <= 100 && r.why.length > 10));
   assert.ok(roles[0].overlap > 50);
+});
+
+test('PDF quotes survive line breaks inside words, and invented ones still fail', () => {
+  const text = 'Designed the public Payouts API used by 60+ merchant integ\nrations; wrote the API reference.';
+  assert.equal(wrappedQuote(text, 'used by 60+ merchant integrations'), 'used by 60+ merchant integrations');
+  assert.equal(wrappedQuote(text, 'used by 600 merchant integrations'), undefined);
+  assert.equal(wrappedQuote(text, 'short'), undefined);
 });

@@ -94,6 +94,17 @@ export const BRIDGES: Record<string, { from: string[]; note: string }> = {
   'business-acumen': { from: ['product-analytics', 'sql'], note: 'Reading the numbers is the first step; tying them to revenue and cost is the next.' },
 };
 
+// Skills a résumé shows without naming them: five years of backend work is the technical
+// fluency PM postings ask for. The implied level is the source level minus `drop`.
+export const IMPLIED: Record<string, { from: string; drop: number }[]> = {
+  'technical-fluency': [{ from: 'backend-engineering', drop: 0 }, { from: 'system-design', drop: 0 }, { from: 'apis', drop: 1 }],
+  'system-design': [{ from: 'backend-engineering', drop: 1 }],
+  'communication': [{ from: 'technical-writing', drop: 1 }],
+  'stakeholder-management': [{ from: 'cross-functional-leadership', drop: 1 }],
+  'cross-functional-leadership': [{ from: 'stakeholder-management', drop: 1 }],
+  'llm-fundamentals': [{ from: 'rag', drop: 0 }, { from: 'prompt-engineering', drop: 0 }],
+};
+
 const BY_ID = new Map(CATALOG.map((s) => [s.id, s]));
 const ALIASES = new Map<string, string>();
 for (const s of CATALOG) {

@@ -76,7 +76,7 @@ function createWindow() {
     titleBarStyle: 'hiddenInset',
     backgroundColor: '#0B0B0C',
     show: false,
-    webPreferences: { contextIsolation: true, nodeIntegration: false, sandbox: true },
+    webPreferences: { contextIsolation: true, nodeIntegration: false, sandbox: true, preload: join(here, 'shell-preload.cjs') },
   });
   win.once('ready-to-show', () => win?.show());
   win.on('closed', () => { win = null; });

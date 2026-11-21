@@ -368,6 +368,7 @@ export async function wordPlan(
     const out = await ask<Wording>({ task: 'plan.wording', system: WORDING_SYSTEM, prompt, schema: WORDING_SCHEMA, tier: 'smart' });
     const next = structuredClone(plan);
     let verifiedBudget = 8;
+    const checks: { task: PlanTask; url: string; title: string }[] = [];
     for (const ww of out?.weeks ?? []) {
       const week = next.weeks.find((w) => w.index === ww.index);
       if (!week) continue;
@@ -383,12 +384,14 @@ export async function wordPlan(
         const query = clean(wt.resourceQuery, 120);
         if (query) task.resource = searchResource(query);
         if (wt.resourceUrl && /^https:\/\//.test(wt.resourceUrl) && ctx.verify && verifiedBudget-- > 0) {
-          if (await ctx.verify(wt.resourceUrl).catch(() => false)) {
-            task.resource = { title: query || task.title, url: wt.resourceUrl, verified: true };
-          }
+          checks.push({ task, url: wt.resourceUrl, title: query || task.title });
         }
       }
     }
+    // Link checks run side by side; one at a time they could hold the plan for a minute.
+    await Promise.all(checks.map(async (c) => {
+      if (await ctx.verify!(c.url).catch(() => false)) c.task.resource = { title: c.title, url: c.url, verified: true };
+    }));
     return { plan: next, worded: true };
   } catch (e) {
     return { plan, worded: false, error: (e as Error).message };

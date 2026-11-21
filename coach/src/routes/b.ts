@@ -16,6 +16,7 @@ import { buildPortfolio } from '../portfolio.ts';
 import { judge, latestFinishedScore, makeQuestions, recordTurn, skillEffects, type SessionKind } from '../interview.ts';
 import { applyEvent, insights, isResponse, markGhosted, mulberry32, statusFrom } from '../tracker.ts';
 import { brief, computeProgress } from '../progress.ts';
+import { buildKit, cachedKit, KitError } from '../kit.ts';
 
 const SINGLE = 'single';
 const START_KIND = 'skillbase';
@@ -219,8 +220,17 @@ export function mount(r: Router): void {
 
   r.patch('/portfolio/:id', ({ params, body }) => {
     const p = must<PortfolioProject>('portfolio', params.id, `No project ${params.id}`, 404);
-    if (!['idea', 'building', 'shipped'].includes(body?.status)) throw new HttpError(400, 'status must be idea, building or shipped');
-    p.status = body.status;
+    const done = body?.deliverablesDone;
+    if (body?.status === undefined && done === undefined) throw new HttpError(400, 'send status and/or deliverablesDone');
+    if (body?.status !== undefined) {
+      if (!['idea', 'building', 'shipped'].includes(body.status)) throw new HttpError(400, 'status must be idea, building or shipped');
+      p.status = body.status;
+    }
+    if (done !== undefined) {
+      if (!Array.isArray(done) || done.some((d: unknown) => typeof d !== 'string')) throw new HttpError(400, 'deliverablesDone must be an array of strings');
+      // Only deliverables the project has, in the project's order.
+      p.deliverablesDone = p.deliverables.filter((d) => done.includes(d));
+    }
     store.put('portfolio', p.id, p);
     return p;
   });
@@ -388,5 +398,22 @@ export function mount(r: Router): void {
       progress, sessions: sessions(), insights: store.list<Application>('application').length || store.list<Posting>('posting').length ? trackerInsights() : undefined,
       now: new Date(),
     });
+  });
+
+  // ---- application kit ----
+  const kitError = (e: unknown) => (e instanceof KitError ? new HttpError(e.status, e.message) : e);
+
+  r.post('/kit/:postingId', async ({ params, query }) => {
+    try {
+      return await buildKit(params.postingId, { fresh: query.get('fresh') === '1', ask: ask() });
+    } catch (e) {
+      throw kitError(e);
+    }
+  });
+
+  r.get('/kit/:postingId', ({ params }) => {
+    const kit = cachedKit(params.postingId);
+    if (!kit) throw new HttpError(404, `No application kit for ${params.postingId} yet`);
+    return kit;
   });
 }

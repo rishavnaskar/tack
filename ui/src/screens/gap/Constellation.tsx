@@ -3,7 +3,7 @@ import { motion } from 'motion/react';
 import type { GapSkill } from '../../api/types';
 import { LevelGlyph, levelLabel, ease } from '../../ui';
 import { pct } from '../../lib/format';
-import { layoutConstellation } from './layout';
+import { layoutConstellation, visibleSkills } from './layout';
 
 export interface ConstellationProps {
   skills: GapSkill[];
@@ -29,7 +29,8 @@ function useWidth<T extends HTMLElement>() {
 export function Constellation({ skills, ranks, selected, onSelect }: ConstellationProps) {
   const [wrap, width] = useWidth<HTMLDivElement>();
   const cols = width && width < 700 ? 2 : 3;
-  const layout = useMemo(() => layoutConstellation(skills, cols, cols === 3 ? 1000 : 640), [skills, cols]);
+  const shown = useMemo(() => visibleSkills(skills, new Set(ranks.keys())), [skills, ranks]);
+  const layout = useMemo(() => layoutConstellation(shown, cols, cols === 3 ? 1000 : 640), [shown, cols]);
   const [hover, setHover] = useState<string>();
   const active = hover ?? selected;
   const activeNode = layout.nodes.find((n) => n.skill.id === hover);
@@ -170,6 +171,11 @@ export function Constellation({ skills, ranks, selected, onSelect }: Constellati
           </span>
           <span className="tip__hint t-micro">Click for evidence</span>
         </div>
+      )}
+      {shown.length < skills.length && (
+        <p className="constellation__more t-micro">
+          Showing the {shown.length} most requested of {skills.length} skills. The other {skills.length - shown.length} are in the list view.
+        </p>
       )}
     </div>
   );

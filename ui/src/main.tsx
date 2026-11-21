@@ -13,6 +13,10 @@ import { App } from './App';
 // file:// (packaged shell without a server) cannot use history routing.
 const Router = location.protocol === 'file:' ? HashRouter : BrowserRouter;
 
+// The desktop app hides the macOS title bar; the shell then leaves room for the traffic lights.
+const desktop = (window as { tackDesktop?: { titleBar?: string } }).tackDesktop;
+if (desktop?.titleBar === 'hiddenInset') document.documentElement.dataset.titlebar = 'inset';
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <MotionConfig reducedMotion="user">

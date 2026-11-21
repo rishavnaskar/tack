@@ -139,3 +139,24 @@ test('recompute writes the gap, posting fits and readiness points from the store
   const skill = after.skills.find((s) => s.id === 'llm-evaluation')!;
   assert.deepEqual(skill.evidence.resume, ['Mock interview: scored 4.5 on eval questions']);
 });
+
+test('a skill the résumé implies counts as had, with the lines behind it', async () => {
+  const { haveLevel, resumeEvidence } = await import('../src/gap.ts');
+  const eng: Profile = {
+    ...profile,
+    skills: [{ id: 'backend-engineering', name: 'Backend engineering', level: 5, evidence: ['Built payment services in Go'] }],
+  };
+  assert.equal(haveLevel(eng, 'technical-fluency'), 5);
+  assert.equal(haveLevel(eng, 'system-design'), 4);
+  assert.equal(haveLevel(eng, 'roadmapping'), 0);
+  assert.deepEqual(resumeEvidence(eng, 'technical-fluency'), ['Built payment services in Go']);
+  assert.deepEqual(resumeEvidence(eng, 'roadmapping'), []);
+});
+
+test('market locations use one name per city', async () => {
+  const { town } = await import('../src/gap.ts');
+  for (const l of ['Bangalore, Karnataka', 'Bengaluru', 'Hybrid in Bangalore, India', 'Bangalore - Engineering']) assert.equal(town(l), 'Bengaluru', l);
+  assert.equal(town('Remote - India'), 'Remote');
+  assert.equal(town('Gurgaon, Haryana'), 'Gurugram');
+  assert.equal(town('Pune, Maharashtra'), 'Pune');
+});

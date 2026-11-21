@@ -1,7 +1,7 @@
 import type { GapMap, GapSkill, Level, Posting, Profile } from './types.ts';
 import * as store from './store.ts';
 import { json } from './llm.ts';
-import { BRIDGES, canonical, catalogNames, findQuote, skillId } from './skills.ts';
+import { BRIDGES, canonical, catalogNames, findQuote, IMPLIED, skillId } from './skills.ts';
 import { run, type Run } from './trace.ts';
 
 type PostingSkill = NonNullable<Posting['skills']>[number];
@@ -9,13 +9,28 @@ type PostingSkill = NonNullable<Posting['skills']>[number];
 const BATCH = 5;
 const MAX_TEXT = 6000;
 
-// Level 1-5 the profile shows for a skill, 0 when there is no evidence.
-export function haveLevel(profile: Profile, id: string): number {
+function directLevel(profile: Profile, id: string): number {
   let best = 0;
   for (const s of profile.skills) {
     if ((s.id || skillId(s.name)) === id) best = Math.max(best, Math.max(0, Math.min(5, Math.round(s.level))));
   }
   return best;
+}
+
+// Level 1-5 the profile shows for a skill, named or implied by another, 0 when there is no evidence.
+export function haveLevel(profile: Profile, id: string): number {
+  let best = directLevel(profile, id);
+  for (const { from, drop } of IMPLIED[id] ?? []) best = Math.max(best, directLevel(profile, from) - drop);
+  return best;
+}
+
+// Résumé lines for a skill; for an implied skill, the lines behind the skill that implies it.
+export function resumeEvidence(profile: Profile, id: string): string[] {
+  const own = (sid: string) => profile.skills.filter((s) => (s.id || skillId(s.name)) === sid).flatMap((s) => s.evidence);
+  const direct = own(id);
+  if (direct.length) return direct.slice(0, 4);
+  const via = (IMPLIED[id] ?? []).filter(({ from, drop }) => directLevel(profile, from) - drop > 0);
+  return via.flatMap(({ from }) => own(from)).slice(0, 4);
 }
 
 function levelOf(have: number, need: number): Level {
@@ -61,9 +76,17 @@ function bridgeFor(profile: Profile, id: string): GapSkill['bridge'] {
   return from ? { from: canonical(from.f).name, note: b.note } : undefined;
 }
 
-function town(location: string): string {
+const CITY_NAMES: [RegExp, string][] = [
+  [/\b(bengaluru|bangalore|blr)\b/i, 'Bengaluru'], [/\b(gurugram|gurgaon)\b/i, 'Gurugram'], [/\b(mumbai|bombay)\b/i, 'Mumbai'],
+  [/\b(new delhi|delhi)\b/i, 'Delhi'], [/\b(chennai|madras)\b/i, 'Chennai'], [/\b(kolkata|calcutta)\b/i, 'Kolkata'],
+];
+
+// One name per city, so "Bangalore, Karnataka" and "Hybrid in Bengaluru" count together.
+export function town(location: string): string {
   if (/remote/i.test(location)) return 'Remote';
-  return location.split(/[,(/·|-]/)[0].trim() || 'Unspecified';
+  const known = CITY_NAMES.find(([re]) => re.test(location));
+  if (known) return known[1];
+  return location.replace(/^(hybrid|onsite|on-site|in office)\b( in)?\s*/i, '').split(/[,(/·|-]/)[0].trim() || 'Unspecified';
 }
 
 function counts(values: string[], top: number): { name: string; count: number }[] {
@@ -148,7 +171,7 @@ export function computeGap(profile: Profile, postings: Posting[], prev?: GapMap,
     const need = needLevel(demand, mustShare);
     const have = haveLevel(profile, id);
     const level = levelOf(have, need);
-    const resume = profile.skills.filter((s) => (s.id || skillId(s.name)) === id).flatMap((s) => s.evidence).slice(0, 4);
+    const resume = resumeEvidence(profile, id);
     const status: GapSkill['status'] = have >= need ? 'closed' : prevStatus.get(id) === 'learning' ? 'learning' : 'open';
     skills.push({
       id,
@@ -307,17 +330,28 @@ export function cleanSkills(text: string, raw: { name: string; importance: strin
   return [...out.values()].slice(0, 10);
 }
 
-export async function extractSkills(postings: Posting[], trace?: Run): Promise<Posting[]> {
+// One model call per batch, all in flight at once (the llm rate limiter paces them). Past the
+// budget the build goes ahead with what has landed; later batches still store their skills.
+const EXTRACT_TIMEOUT_MS = 45_000;
+const EXTRACT_RETRIES = 2;
+
+export interface ExtractResult { done: Posting[]; failed: number; pending: Promise<Posting[]> | null }
+
+export async function extractSkills(postings: Posting[], trace?: Run, budgetMs = Number(process.env.TACK_GAP_BUDGET_MS) || 80_000): Promise<ExtractResult> {
   const batches: Posting[][] = [];
   for (let i = 0; i < postings.length; i += BATCH) batches.push(postings.slice(i, i + BATCH));
   const done: Posting[] = [];
-  let failures = 0;
-  await Promise.all(batches.map(async (batch, bi) => {
-    const label = `postings ${bi * BATCH + 1}-${bi * BATCH + batch.length} of ${postings.length}`;
-    trace?.step('extract', `reading ${label}`);
+  const seen = new Set<string>();
+  let failed = 0;
+  let settled = 0;
+  trace?.step('extract', `${postings.length} postings in ${batches.length} batches of ${BATCH}, read in parallel`);
+  const work = Promise.all(batches.map(async (batch, bi) => {
+    const label = `postings ${bi * BATCH + 1}-${bi * BATCH + batch.length}`;
     const prompt = batch.map((p) => `### id: ${p.id}\nTitle: ${p.title}\nCompany: ${p.company}\nLocation: ${p.location}\n\n${p.text.slice(0, MAX_TEXT)}`).join('\n\n');
     try {
-      const res = await json<Extracted>({ task: 'gap.extract', system: EXTRACT_SYSTEM, prompt, schema: EXTRACT_SCHEMA });
+      const res = await json<Extracted>({
+        task: 'gap.extract', system: EXTRACT_SYSTEM, prompt, schema: EXTRACT_SCHEMA, timeoutMs: EXTRACT_TIMEOUT_MS, retries: EXTRACT_RETRIES,
+      });
       for (const p of batch) {
         const got = res.postings.find((x) => x.id === p.id) ?? res.postings[batch.indexOf(p)];
         if (!got) continue;
@@ -332,15 +366,28 @@ export async function extractSkills(postings: Posting[], trace?: Run): Promise<P
         };
         store.put('posting', p.id, next);
         done.push(next);
-        trace?.step('skills', `${p.company}: ${skills.map((s) => s.name).join(', ')}`);
+        for (const sk of skills) seen.add(sk.skillId);
+        trace?.step('skills', `${p.company}: ${skills.map((sk) => sk.name).join(', ')}`);
       }
     } catch (err) {
-      failures++;
-      trace?.step('extract', `${label} failed: ${(err as Error).message.slice(0, 160)}`);
+      failed++;
+      trace?.step('extract', `${label} not read, left out of this build: ${(err as Error).message.slice(0, 140)}`);
+    } finally {
+      settled++;
+      trace?.step('extract', `${done.length} of ${postings.length} postings read, ${seen.size} distinct skills so far (${settled} of ${batches.length} batches)`);
     }
-  }));
-  if (failures === batches.length && batches.length) throw new Error('skill extraction failed for every batch');
-  return done;
+  })).then(() => done);
+
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const late = new Promise<'late'>((r) => { timer = setTimeout(() => r('late'), budgetMs); });
+  const first = await Promise.race([work.then(() => 'all' as const), late]);
+  clearTimeout(timer);
+  if (first === 'late' && !done.length) await work;
+  const pending = first === 'late' && done.length && settled < batches.length ? work : null;
+  const left = batches.length - settled;
+  if (pending) trace?.step('extract', `${left} batch${left === 1 ? '' : 'es'} still reading after ${Math.round(budgetMs / 1000)} s; building from the ${done.length} postings read so far`);
+  if (failed === batches.length && batches.length) throw new Error('skill extraction failed for every batch');
+  return { done: [...done], failed, pending };
 }
 
 // Full build: extracts skills for postings that lack them, then recomputes and stores the gap.
@@ -353,10 +400,17 @@ export async function buildGap(): Promise<GapMap> {
     if (!postings.length) throw new Error('no postings yet');
     const todo = postings.filter((p) => !p.skills?.length);
     t.step('postings', `${postings.length} postings, ${todo.length} need skill extraction`);
-    if (todo.length) await extractSkills(todo, t);
+    const out = todo.length ? await extractSkills(todo, t) : null;
     t.step('maths', 'demand, need, have, priority and readiness');
     const gap = refresh(true);
-    t.ok(`readiness ${gap.readiness}, ${gap.skills.length} skills from ${gap.postingCount} postings`);
+    const missed = todo.length - (out?.done.length ?? 0);
+    t.ok(`readiness ${gap.readiness}, ${gap.skills.length} skills from ${gap.postingCount} postings${missed > 0 && !out?.pending ? `; ${missed} could not be read, Rebuild tries them again` : ''}`);
+    out?.pending?.then((all) => {
+      if (all.length <= out.done.length) return;
+      const later = refresh(false);
+      const lt = run('gap');
+      lt.ok(`${all.length - out.done.length} late postings added: readiness ${later.readiness}, ${later.skills.length} skills from ${later.postingCount} postings`);
+    }).catch(() => {});
     return gap;
   } catch (err) {
     t.fail((err as Error).message);

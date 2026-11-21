@@ -3,8 +3,9 @@ import { useSearchParams } from 'react-router';
 import { motion } from 'motion/react';
 import { actions, useAppState, usePostings } from '../api/hooks';
 import type { Posting } from '../api/types';
-import { ago, countBy, hostOf, median, sizeLabel } from '../lib/format';
+import { ago, cityOf, countBy, hostOf, median, sizeLabel } from '../lib/format';
 import { Bar, Button, Card, Chip, Drawer, EmptyState, ErrorState, Icon, Meter, PageHeader, Skeleton, Stat, Tabs, ease, useToast } from '../ui';
+import { KitSheet, type KitTarget } from './kit/KitSheet';
 import './Market.css';
 
 type Size = 'all' | 'startup' | 'scaleup' | 'enterprise';
@@ -37,6 +38,7 @@ export function Market() {
   const [sort, setSort] = useState<Sort>('fit');
   const [harvesting, setHarvesting] = useState(false);
   const [harvestKey, setHarvestKey] = useState(0);
+  const [kitFor, setKitFor] = useState<KitTarget>();
   const toast = useToast();
 
   const all = postings.data ?? [];
@@ -186,7 +188,23 @@ export function Market() {
         </>
       )}
 
-      <PostingDrawer posting={open} onClose={() => setOpen()} engineOn={!!state?.engine.available} />
+      <PostingDrawer
+        posting={open}
+        onClose={() => setOpen()}
+        engineOn={!!state?.engine.available}
+        onPrepare={(p) => {
+          setKitFor({ postingId: p.id, title: p.title, company: p.company, url: p.url });
+          setOpen();
+        }}
+      />
+      <KitSheet
+        target={kitFor}
+        onClose={() => {
+          // back to the posting the kit was opened from
+          if (kitFor) setOpen(kitFor.postingId);
+          setKitFor(undefined);
+        }}
+      />
     </div>
   );
 }
@@ -223,7 +241,7 @@ function FilterGroup({
 
 function MarketStrip({ postings }: { postings: Posting[] }) {
   const companies = countBy(postings, (p) => p.company).slice(0, 5);
-  const locations = countBy(postings, (p) => p.location).slice(0, 5);
+  const locations = countBy(postings, (p) => cityOf(p.location)).slice(0, 5);
   const seniority = countBy(postings, sen).sort((a, b) => byLevel(a.name, b.name));
   const fits = postings.map((p) => p.fit).filter((f): f is number => f !== undefined);
   const strong = fits.filter((f) => f >= 70).length;
@@ -430,7 +448,7 @@ function EmptyMarket({ canRun, onRun }: { canRun: boolean; onRun: () => void }) 
 
 /* drawer */
 
-function PostingDrawer({ posting, onClose, engineOn }: { posting?: Posting; onClose: () => void; engineOn: boolean }) {
+function PostingDrawer({ posting, onClose, engineOn, onPrepare }: { posting?: Posting; onClose: () => void; engineOn: boolean; onPrepare: (p: Posting) => void }) {
   const [focus, setFocus] = useState<string>();
   const [applying, setApplying] = useState(false);
   const toast = useToast();
@@ -476,6 +494,9 @@ function PostingDrawer({ posting, onClose, engineOn }: { posting?: Posting; onCl
             {!engineOn && <span className="drawer-note">Applying needs live mode.</span>}
             <Button variant="ghost" onClick={onClose}>
               Close
+            </Button>
+            <Button variant="ghost" iconLeft="file" onClick={() => onPrepare(p)}>
+              Prepare application
             </Button>
             <Button variant="primary" icon="arrow-right" onClick={apply} loading={applying}>
               Apply through the engine

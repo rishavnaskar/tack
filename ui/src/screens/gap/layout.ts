@@ -6,7 +6,29 @@ import type { GapSkill } from '../../api/types';
  * of box-overlap passes push them apart, label included. Same input, same picture.
  */
 
-export const CATEGORY_ORDER = ['Product craft', 'AI and ML', 'Data and metrics', 'Engineering depth', 'Leadership', 'Go to market'];
+export const CATEGORY_ORDER = [
+  'product', 'ai', 'data', 'technical', 'collaboration', 'business',
+  'Product craft', 'AI and ML', 'Data and metrics', 'Engineering depth', 'Leadership', 'Go to market',
+];
+
+/** Most a cell holds before labels collide, and most the whole map draws; the rest stay in the list view. */
+export const PER_CATEGORY = 9;
+export const MAX_NODES = 30;
+
+/** The skills the map draws: ranked ones always, then by demand, within both caps. */
+export function visibleSkills(skills: GapSkill[], keep: Set<string> = new Set()): GapSkill[] {
+  const order = [...skills].sort((a, b) => Number(keep.has(b.id)) - Number(keep.has(a.id)) || b.demand - a.demand || a.id.localeCompare(b.id));
+  const perCat = new Map<string, number>();
+  const out: GapSkill[] = [];
+  for (const s of order) {
+    if (out.length >= MAX_NODES) break;
+    const n = perCat.get(s.category) ?? 0;
+    if (n >= PER_CATEGORY && !keep.has(s.id)) continue;
+    perCat.set(s.category, n + 1);
+    out.push(s);
+  }
+  return out;
+}
 
 export interface LaidNode {
   skill: GapSkill;
@@ -69,8 +91,14 @@ export function layoutConstellation(skills: GapSkill[], cols: number, width = 10
   ];
   const rows = Math.max(1, Math.ceil(cats.length / cols));
   const cellW = width / cols;
-  const cellH = cellW * (cols >= 3 ? 0.92 : 0.9);
-  const height = Math.round(rows * cellH);
+  const baseH = cellW * (cols >= 3 ? 0.92 : 0.9);
+  // A row with a crowded category gets taller instead of stacking labels.
+  const rowH = Array.from({ length: rows }, (_, r) => {
+    const most = Math.max(0, ...cats.slice(r * cols, r * cols + cols).map((c) => skills.filter((s) => s.category === c).length));
+    return baseH * Math.max(1, Math.sqrt(most / 7));
+  });
+  const rowY = rowH.map((_, r) => rowH.slice(0, r).reduce((a, h) => a + h, 0));
+  const height = Math.round(rowH.reduce((a, h) => a + h, 0));
 
   const nodes: LaidNode[] = [];
   const clusters: LaidCluster[] = [];
@@ -80,7 +108,8 @@ export function layoutConstellation(skills: GapSkill[], cols: number, width = 10
     const col = ci % cols;
     const row = Math.floor(ci / cols);
     const x0 = col * cellW;
-    const y0 = row * cellH;
+    const y0 = rowY[row];
+    const cellH = rowH[row];
     const [ox, oy] = OFFSETS[ci % OFFSETS.length];
     const cx = x0 + cellW / 2 + ox * cellW;
     const cy = y0 + cellH / 2 + 14 + oy * cellH;

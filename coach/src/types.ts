@@ -48,6 +48,7 @@ export interface PortfolioProject {
   id: string; title: string; pitch: string; skillIds: string[]; brief: string;
   milestones: { title: string; week: number }[]; deliverables: string[]; reviewerSees: string;
   postingQuotes: { company: string; quote: string }[]; status: 'idea' | 'building' | 'shipped';
+  deliverablesDone?: string[]; // deliverable texts ticked off
 }
 export interface RubricScore { criterion: string; score: number; why: string; quote?: string } // 1-5
 export interface InterviewQuestion { id: string; kind: 'behavioural' | 'technical' | 'case'; text: string; skillIds: string[]; fromPosting?: string }
@@ -83,4 +84,10 @@ export interface AppState {
   model: { configured: boolean; name: string };
   profile?: Profile; goal?: Goal; counts: { postings: number; applications: number; interviews: number };
   has: { gap: boolean; plan: boolean; portfolio: boolean };
+}
+export interface Kit {
+  postingId: string; generatedAt: string; fit: number; headline: string;
+  bullets: { text: string; basedOn: string }[]; // basedOn is a verbatim line from the profile
+  coverNote: string; talkingPoints: string[];
+  gapsToAddress: { skill: string; howToFrame: string }[]; questionsToAsk: string[];
 }

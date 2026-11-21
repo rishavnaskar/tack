@@ -1,5 +1,5 @@
-import { useMemo, useRef, useState } from 'react';
-import { useNavigate } from 'react-router';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router';
 import { motion } from 'motion/react';
 import { actions, useAppState, useGap, usePlan, usePostings } from '../api/hooks';
 import type { GapMap, GapSkill, Level, Plan } from '../api/types';
@@ -38,7 +38,9 @@ export function Gap() {
   const { data: state } = useAppState();
   const narrow = useNarrow();
   const [view, setView] = useState<View | undefined>();
-  const [openId, setOpenId] = useState<string>();
+  const [params, setParams] = useSearchParams();
+  const linked = params.get('skill') ?? undefined;
+  const [openId, setOpenId] = useState<string | undefined>(linked);
   const [building, setBuilding] = useState(false);
   const toast = useToast();
   const shownView: View = view ?? (narrow ? 'list' : 'map');
@@ -50,6 +52,19 @@ export function Gap() {
   );
   const ranks = useMemo(() => new Map(top5.map((s, i) => [s.id, i + 1])), [top5]);
   const open = data?.skills.find((s) => s.id === openId);
+
+  // /gap?skill=<id>, from the Portfolio and Plan chips, opens that skill's evidence drawer.
+  useEffect(() => {
+    if (linked) setOpenId(linked);
+  }, [linked]);
+
+  const closeDrawer = () => {
+    setOpenId(undefined);
+    if (!linked) return;
+    const next = new URLSearchParams(params);
+    next.delete('skill');
+    setParams(next, { replace: true });
+  };
 
   const build = async () => {
     setBuilding(true);
@@ -156,12 +171,12 @@ export function Gap() {
           )}
 
           <p className="gap__foot t-micro">
-            Built {shortDate(data.generatedAt)} from {data.postingCount} postings. {data.market.salaryNote}
+            Built {shortDate(data.generatedAt)} from {data.postingCount} {state?.mode === 'live' ? 'live' : 'sample'} postings. {data.market.salaryNote}
           </p>
         </>
       )}
 
-      <EvidenceDrawer skill={open} rank={open ? ranks.get(open.id) : undefined} plan={plan.data ?? undefined} onClose={() => setOpenId(undefined)} />
+      <EvidenceDrawer skill={open} rank={open ? ranks.get(open.id) : undefined} plan={plan.data ?? undefined} onClose={closeDrawer} />
     </div>
   );
 }

@@ -34,15 +34,24 @@ function useNav(): NavItem[] {
 
 function RailStatus() {
   const { data } = useAppState();
-  const live = data?.mode === 'live';
+  const live = !MOCK && data?.mode === 'live';
+  const n = data?.counts.postings ?? 0;
+  const source = !data
+    ? 'Connecting'
+    : MOCK
+      ? 'Mock data'
+      : n
+        ? `${n} ${live ? 'live' : 'sample'} postings`
+        : data.engine.available
+          ? 'Job boards reachable'
+          : 'Engine off, sample data';
   return (
-    <div className="rail-status">
+    <div className="rail-status" title={data?.engine.note}>
       <span className={['rail-status__dot', live && 'is-live'].filter(Boolean).join(' ')} aria-hidden="true" />
       <div className="rail-status__text">
         <span className="t-label">{live ? 'Live mode' : 'Demo mode'}</span>
-        <span className="rail-status__line">{data ? (data.engine.available ? 'Engine attached' : 'Engine off') : 'Connecting'}</span>
-        {data && <span className="rail-status__line">{data.model.configured ? data.model.name : 'No model key'}</span>}
-        {MOCK && <span className="rail-status__line">Mock data</span>}
+        <span className="rail-status__line">{source}</span>
+        {data && <span className="rail-status__line" title={data.model.name}>{data.model.configured ? data.model.name : 'No model key'}</span>}
       </div>
     </div>
   );

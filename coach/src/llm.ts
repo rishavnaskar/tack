@@ -16,6 +16,9 @@ export interface JsonOpts {
   tier?: 'fast' | 'smart';
   pdfBase64?: string;
   filename?: string;
+  /** Per-call limits for callers that would rather have partial results than wait. */
+  timeoutMs?: number;
+  retries?: number;
 }
 
 export class LlmError extends Error {
@@ -69,16 +72,20 @@ export function modelName(): string {
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-// Sliding one-minute window shared by every call in the process.
+// Sliding one-minute window shared by every call in the process. A 429 pauses every caller,
+// not just the one that got it, so parallel batches do not keep hitting the limit.
 const stamps: number[] = [];
+let pausedUntil = 0;
 let queue: Promise<void> = Promise.resolve();
-function slot(): Promise<void> {
+function slot(task: string): Promise<void> {
   const next = queue.then(async () => {
     for (;;) {
       const now = Date.now();
       while (stamps.length && now - stamps[0] >= 60_000) stamps.shift();
-      if (stamps.length < cfg().rpm) { stamps.push(now); return; }
-      await sleep(60_000 - (now - stamps[0]) + 50);
+      const wait = Math.max(pausedUntil - now, stamps.length < cfg().rpm ? 0 : 60_000 - (now - stamps[0]) + 50);
+      if (wait <= 0) { stamps.push(now); return; }
+      if (wait > 1500) emit({ run: 'model', step: task, detail: `waiting ${Math.ceil(wait / 1000)} s for the model rate limit (${cfg().rpm} a minute)`, status: 'start' });
+      await sleep(wait);
     }
   });
   queue = next.catch(() => {});
@@ -104,23 +111,36 @@ function retryDelay(res: Response, body: string, attempt: number, base: number):
 type Part = { type: 'text'; text: string } | { type: 'file'; file: { filename: string; file_data: string } } | { type: 'image_url'; image_url: { url: string } };
 type Message = { role: 'system' | 'user' | 'assistant'; content: string | Part[] };
 
-async function post(body: object): Promise<string> {
+interface CallOpts { task: string; timeoutMs?: number; retries?: number }
+
+async function post(body: object, call: CallOpts): Promise<string> {
   const c = cfg();
+  const retries = call.retries ?? c.retries;
+  const timeoutMs = call.timeoutMs ?? c.timeoutMs;
+  const note = (detail: string) => emit({ run: 'model', step: call.task, detail, status: 'start' });
   for (let attempt = 0; ; attempt++) {
-    await slot();
+    await slot(call.task);
     let res: Response;
+    let text: string;
     try {
       res = await fetch(c.url, {
         method: 'POST',
         headers: { 'content-type': 'application/json', authorization: `Bearer ${c.key}` },
         body: JSON.stringify(body),
-        signal: AbortSignal.timeout(c.timeoutMs),
+        signal: AbortSignal.timeout(timeoutMs),
       });
+      text = await res.text();
     } catch (err) {
-      if (attempt < c.retries) { await sleep(c.backoffMs * 2 ** attempt); continue; }
-      throw new LlmError(0, `model endpoint unreachable: ${(err as Error).message}`);
+      const timedOut = (err as Error).name === 'TimeoutError';
+      const why = timedOut ? `no answer in ${Math.round(timeoutMs / 1000)} s` : `endpoint unreachable: ${(err as Error).message}`;
+      if (attempt < retries) {
+        const wait = c.backoffMs * 2 ** attempt;
+        note(`${why}; retry ${attempt + 1} of ${retries} in ${Math.ceil(wait / 1000)} s`);
+        await sleep(wait);
+        continue;
+      }
+      throw new LlmError(timedOut ? 504 : 0, `model ${why}`);
     }
-    const text = await res.text();
     if (res.ok) {
       let data: any;
       try { data = JSON.parse(text); } catch { throw new LlmError(502, 'model endpoint returned non-JSON'); }
@@ -129,8 +149,11 @@ async function post(body: object): Promise<string> {
       if (Array.isArray(content)) return content.map((p: any) => p?.text ?? '').join('');
       throw new LlmError(502, `model returned no content (finish: ${data?.choices?.[0]?.finish_reason ?? 'unknown'})`);
     }
-    if ((res.status === 429 || res.status >= 500) && attempt < c.retries) {
-      await sleep(retryDelay(res, text, attempt, c.backoffMs));
+    if ((res.status === 429 || res.status >= 500) && attempt < retries) {
+      const wait = retryDelay(res, text, attempt, c.backoffMs);
+      if (res.status === 429) pausedUntil = Math.max(pausedUntil, Date.now() + wait);
+      note(`${res.status === 429 ? 'rate limited' : `model error ${res.status}`}; retry ${attempt + 1} of ${retries} in ${Math.ceil(wait / 1000)} s`);
+      await sleep(wait);
       continue;
     }
     throw new LlmError(res.status, `model call failed (${res.status}): ${text.slice(0, 300)}`);
@@ -149,16 +172,16 @@ function formatName(task: string): string {
   return task.replace(/[^a-zA-Z0-9_-]+/g, '_').slice(0, 60) || 'result';
 }
 
-async function complete(messages: Message[], schema: object, model: string, task: string): Promise<string> {
-  const body = { model, messages, response_format: { type: 'json_schema', json_schema: { name: formatName(task), schema } } };
+async function complete(messages: Message[], schema: object, model: string, call: CallOpts): Promise<string> {
+  const body = { model, messages, response_format: { type: 'json_schema', json_schema: { name: formatName(call.task), schema } } };
   try {
-    return await post(body);
+    return await post(body, call);
   } catch (err) {
     // Some OpenAI-compatible servers reject json_schema; fall back to plain JSON mode with the schema in the prompt.
     if (err instanceof LlmError && err.status === 400 && /response_format|json_schema|schema/i.test(err.message)) {
       const [sys, ...rest] = messages;
       const withSchema: Message = { role: 'system', content: `${sys.content}\n\nReply with JSON only, matching this JSON schema:\n${JSON.stringify(schema)}` };
-      return post({ model, messages: [withSchema, ...rest], response_format: { type: 'json_object' } });
+      return post({ model, messages: [withSchema, ...rest], response_format: { type: 'json_object' } }, call);
     }
     throw err;
   }
@@ -183,20 +206,21 @@ export async function json<T>(opts: JsonOpts): Promise<T> {
   }
 
   const messages: Message[] = [{ role: 'system', content: opts.system }, { role: 'user', content: opts.prompt }];
+  const call: CallOpts = { task: opts.task, timeoutMs: opts.timeoutMs, retries: opts.retries };
   try {
     let raw: string;
     if (opts.pdfBase64) {
       const filename = opts.filename || 'resume.pdf';
       try {
         messages[1] = { role: 'user', content: pdfParts(opts.prompt, opts.pdfBase64, filename, 'file') };
-        raw = await complete(messages, opts.schema, model, opts.task);
+        raw = await complete(messages, opts.schema, model, call);
       } catch (err) {
         if (!(err instanceof LlmError) || err.status !== 400) throw err;
         messages[1] = { role: 'user', content: pdfParts(opts.prompt, opts.pdfBase64, filename, 'image_url') };
-        raw = await complete(messages, opts.schema, model, opts.task);
+        raw = await complete(messages, opts.schema, model, call);
       }
     } else {
-      raw = await complete(messages, opts.schema, model, opts.task);
+      raw = await complete(messages, opts.schema, model, call);
     }
 
     let { value, errors } = parseChecked(raw, opts.schema);
@@ -206,7 +230,7 @@ export async function json<T>(opts: JsonOpts): Promise<T> {
         role: 'user',
         content: `That reply did not match the required JSON schema: ${errors.slice(0, 6).join('; ')}. Reply again with corrected JSON only.`,
       }];
-      raw = await complete(retry, opts.schema, model, opts.task);
+      raw = await complete(retry, opts.schema, model, call);
       ({ value, errors } = parseChecked(raw, opts.schema));
       if (errors.length) throw new LlmError(502, `model output failed schema check: ${errors.slice(0, 3).join('; ')}`);
     }

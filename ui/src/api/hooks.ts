@@ -1,6 +1,6 @@
 import { api, ApiError, type Brief, type ResumeInput } from './client';
 import { tracked } from './events';
-import { clearCache, invalidate, setQueryData, useQuery } from './query';
+import { clearCache, fetchQuery, getQueryData, invalidate, setQueryData, useQuery } from './query';
 import type {
   AppState,
   AppStatus,
@@ -8,6 +8,7 @@ import type {
   GapMap,
   Goal,
   InterviewSession,
+  Kit,
   Plan,
   PortfolioProject,
   Posting,
@@ -29,6 +30,8 @@ export const keys = {
   brief: 'brief',
 } as const;
 
+export const kitKey = (postingId: string) => `kit:${postingId}`;
+
 /** A 404 on a GET means "not built yet"; surface it as null, not an error. */
 function orNull<T>(p: Promise<T>): Promise<T | null> {
   return p.catch((e: unknown) => {
@@ -39,14 +42,28 @@ function orNull<T>(p: Promise<T>): Promise<T | null> {
 
 export const useAppState = () => useQuery<AppState>(keys.state, api.state);
 export const usePostings = () => useQuery<Posting[]>(keys.postings, api.postings);
-export const useGap = () => useQuery<GapMap | null>(keys.gap, () => orNull(api.gap()));
-export const usePlan = () => useQuery<Plan | null>(keys.plan, () => orNull(api.plan()));
+/** Skips the request (and its 404 in the console) when the state already says it is not built. */
+async function ifBuilt<T>(what: 'gap' | 'plan', get: () => Promise<T>): Promise<T | null> {
+  const s = getQueryData<AppState>(keys.state) ?? (await fetchQuery<AppState>(keys.state, api.state).catch(() => undefined));
+  if (s && !s.has[what]) return null;
+  return orNull(get());
+}
+
+export const useGap = () => useQuery<GapMap | null>(keys.gap, () => ifBuilt('gap', api.gap));
+export const usePlan = () => useQuery<Plan | null>(keys.plan, () => ifBuilt('plan', api.plan));
 export const usePortfolio = () => useQuery<PortfolioProject[]>(keys.portfolio, api.portfolio);
 export const useInterviews = () => useQuery<InterviewSession[]>(keys.interviews, api.interviews);
 export const useApplications = () => useQuery<Application[]>(keys.applications, api.applications);
 export const useInsights = () => useQuery<TrackerInsights>(keys.insights, api.insights);
 export const useProgress = () => useQuery<Progress>(keys.progress, api.progress);
 export const useBrief = () => useQuery<Brief>(keys.brief, api.brief);
+/** Builds the kit on first open (or returns the server's cached one), through the trace rail. */
+export const useKit = (postingId?: string) =>
+  useQuery<Kit>(
+    kitKey(postingId ?? ''),
+    () => (postingId ? tracked('Preparing the application', () => api.buildKit(postingId)) : Promise.reject(new Error('No posting picked'))),
+    { enabled: !!postingId },
+  );
 
 function patchState(fn: (s: AppState) => AppState) {
   setQueryData<AppState>(keys.state, (s) => (s ? fn(s) : (s as unknown as AppState)));
@@ -95,7 +112,9 @@ export const actions = {
   async harvest(count = 40) {
     const res = await tracked('Reading postings', () => api.harvest(count));
     setQueryData(keys.postings, res.postings);
-    patchState((s) => ({ ...s, counts: { ...s.counts, postings: res.postings.length } }));
+    patchState((s) => ({ ...s, mode: res.live ? 'live' : s.mode, counts: { ...s.counts, postings: res.postings.length } }));
+    // Live postings can switch the mode (demo person, real market); the server has the final word.
+    invalidate(keys.state);
     return res;
   },
 
@@ -187,6 +206,18 @@ export const actions = {
     const res = await api.apply(postingId);
     if (res.started) invalidate(keys.applications, keys.insights);
     return res;
+  },
+
+  async rebuildKit(postingId: string) {
+    const kit = await tracked('Rewriting the application kit', () => api.buildKit(postingId, true));
+    setQueryData(kitKey(postingId), kit);
+    return kit;
+  },
+
+  async setDeliverables(id: string, deliverablesDone: string[]) {
+    const project = await api.setDeliverables(id, deliverablesDone);
+    setQueryData<PortfolioProject[]>(keys.portfolio, (all) => (all ?? []).map((p) => (p.id === id ? project : p)));
+    return project;
   },
 
   /** Harvest then gap build, as one run. */

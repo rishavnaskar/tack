@@ -171,7 +171,7 @@ export function lessons(apps: Application[], overall: TrackerInsights['overall']
   const ghosted = apps.filter((a) => a.status === 'ghosted').length;
   if (ghosted) out.push(`${ghosted} application${ghosted > 1 ? 's have' : ' has'} had no answer for more than ${GHOST_DAYS} days; follow up once, then let ${ghosted > 1 ? 'them' : 'it'} go.`);
   if (overall.sent < 12) out.push(`Only ${overall.sent} application${overall.sent > 1 ? 's' : ''} so far; these patterns firm up after about 12.`);
-  if (!top.length && !bottom.length) out.push(`Replies are even across the kinds of roles you have tried (${pct(overall.rate)} overall); keep the mix until a pattern shows.`);
+  if (!top.length && !bottom.length && overall.sent >= 5) out.push(`Replies are even across the kinds of roles you have tried (${pct(overall.rate)} overall); keep the mix until a pattern shows.`);
   return out;
 }
 
@@ -191,6 +191,8 @@ export function nextPostings(postings: Posting[], apps: Application[], segs: Seg
   const keys = appliedKeys(apps);
   const byKey = new Map(segs.map((s) => [`${s.dimension}|${s.value}`, s]));
   const mean = posteriorMean(overall.responses, overall.sent);
+  // With few applications the samples are mostly noise, so fit leads until there is data to learn from.
+  const learn = 0.6 * Math.min(1, overall.sent / 12);
   const scored = postings
     .filter((p) => !keys.ids.has(p.id) && !keys.urls.has(p.url) && !keys.names.has(`${p.company}|${p.title}`.toLowerCase()))
     .map((p) => {
@@ -212,7 +214,7 @@ export function nextPostings(postings: Posting[], apps: Application[], segs: Seg
       }
       sample /= DIMENSIONS.length;
       expected /= DIMENSIONS.length;
-      const score = 0.4 * (fit / 100) + 0.6 * Math.min(1, sample / Math.max(0.05, 2 * mean));
+      const score = (1 - learn) * (fit / 100) + learn * Math.min(1, sample / Math.max(0.05, 2 * mean));
       return { p, fit, score, expected, why: whyFor(fit, notes.map((n) => n.seg)) };
     })
     .sort((a, b) => b.score - a.score || b.fit - a.fit || a.p.id.localeCompare(b.p.id))

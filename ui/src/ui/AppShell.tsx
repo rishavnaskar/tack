@@ -33,6 +33,7 @@ export function AppShell({ nav, status, overlay, asideOpen, children }: AppShell
       <a href="#main" className="shell__skip">
         Skip to content
       </a>
+      <div className="shell__drag" aria-hidden="true" />
       <nav className="rail" aria-label="Sections">
         <NavLink to="/" className="rail__brand" aria-label="Tack, start">
           <span className="rail__wordmark">Tack</span>

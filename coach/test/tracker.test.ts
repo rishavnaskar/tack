@@ -128,3 +128,12 @@ test('engine events move an application forward, never back, and are not duplica
   assert.equal(a.status, 'offer');
   assert.equal(a.lastEventAt, '2026-11-21T00:00:00Z');
 });
+
+test('with no applications yet, fit decides the apply-next order', () => {
+  const postings = [posting('lo', 'growth', 'scaleup', 23), posting('hi', 'generalist', 'enterprise', 61), posting('mid', 'platform', 'startup', 40)];
+  const { overall, segments: segs } = segments([]);
+  for (let seed = 1; seed <= 20; seed++) {
+    const next = nextPostings(postings, [], segs, overall, { rng: mulberry32(seed) });
+    assert.deepEqual(next.map((n) => n.postingId), ['hi', 'mid', 'lo']);
+  }
+});

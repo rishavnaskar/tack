@@ -680,6 +680,7 @@ function MarketSection({ state }: { state: AppState }) {
   const [since, setSince] = useState(0);
   const latest = useLatestSince(since);
   const mounted = useRef(true);
+  const sectionRef = useRef<HTMLElement>(null);
   useEffect(() => {
     mounted.current = true;
     return () => {
@@ -696,6 +697,8 @@ function MarketSection({ state }: { state: AppState }) {
     setErr(undefined);
     setSince(Date.now());
     setPhase('harvest');
+    // The trace rail opens and the column reflows; keep the run card on screen.
+    window.setTimeout(() => sectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 750);
     try {
       const result = await tracked('Reading the market', async () => {
         await actions.harvest(40);
@@ -714,7 +717,7 @@ function MarketSection({ state }: { state: AppState }) {
   };
 
   return (
-    <section className={['section', !state.profile && 'is-locked'].filter(Boolean).join(' ')}>
+    <section ref={sectionRef} className={['section', !state.profile && 'is-locked'].filter(Boolean).join(' ')}>
       <SectionHead index="03" title="Read the market" />
       <Card pad="lg" className="runcard">
         <AnimatePresence mode="wait" initial={false}>
@@ -757,7 +760,7 @@ function MarketSection({ state }: { state: AppState }) {
                   ))}
                 </ol>
                 <p className="runcard__mode t-micro">
-                  {state.engine.available ? 'Live: postings are read through the browser engine.' : 'Demo: the engine is off, so Tack reads the bundled sample of 40 postings.'}
+                  {state.engine.available ? 'Live: open roles are read straight from public company job boards.' : 'Demo: the engine is off, so Tack reads the bundled sample of 40 postings.'}
                 </p>
               </div>
               <div className="runcard__actions">

@@ -48,6 +48,23 @@ export function countBy<T>(xs: T[], key: (x: T) => string | undefined) {
   return [...m.entries()].map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count);
 }
 
+const CITIES: [RegExp, string][] = [
+  [/\b(bengaluru|bangalore|blr)\b/i, 'Bengaluru'],
+  [/\b(gurugram|gurgaon)\b/i, 'Gurugram'],
+  [/\b(mumbai|bombay)\b/i, 'Mumbai'],
+  [/\b(new delhi|delhi)\b/i, 'Delhi'],
+  [/\b(chennai|madras)\b/i, 'Chennai'],
+  [/\b(kolkata|calcutta)\b/i, 'Kolkata'],
+];
+
+/** One name per place, so "Bangalore, Karnataka" and "Bengaluru" count together. */
+export function cityOf(location: string) {
+  if (/remote/i.test(location)) return 'Remote';
+  const known = CITIES.find(([re]) => re.test(location));
+  if (known) return known[1];
+  return location.replace(/^(hybrid|onsite|on-site|in office)\b( in)?\s*/i, '').split(/[,(/·|]| - /)[0].trim() || undefined;
+}
+
 export function median(xs: number[]) {
   if (!xs.length) return 0;
   const s = [...xs].sort((a, b) => a - b);

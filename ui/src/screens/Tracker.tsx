@@ -7,6 +7,7 @@ import { hostOf, pad2 } from '../lib/format';
 import { Button, Card, Chip, EmptyState, ErrorState, Icon, PageHeader, Skeleton, ease, useToast } from '../ui';
 import { AddApplication, AppDrawer, Pipeline, SectionHead } from './tracker/Pipeline';
 import { chance, groupSegments, isWinner, pctOf, segKey, segmentValue } from './tracker/model';
+import { KitSheet, type KitTarget } from './kit/KitSheet';
 import './Tracker.css';
 
 type SyncResult = Awaited<ReturnType<typeof api.syncApplications>> & { note?: string };
@@ -285,6 +286,7 @@ function ApplyNext({ insights, postings, engineOn }: { insights: TrackerInsights
   const [all, setAll] = useState(false);
   const [notes, setNotes] = useState<Record<string, ApplyNote>>({});
   const [busy, setBusy] = useState<string>();
+  const [kitFor, setKitFor] = useState<KitTarget>();
   const toast = useToast();
   const list = all ? insights.next : insights.next.slice(0, 5);
 
@@ -389,6 +391,9 @@ function ApplyNext({ insights, postings, engineOn }: { insights: TrackerInsights
                       Apply
                     </Button>
                   )}
+                  <Button variant="ghost" size="sm" iconLeft="file" onClick={() => setKitFor({ postingId: n.postingId, title: n.title, company: n.company, url: n.url })}>
+                    Prepare application
+                  </Button>
                   <Button variant="ghost" size="sm" iconLeft="check" onClick={() => mark(n)} loading={busy === `mark:${n.postingId}`} disabled={!!busy && busy !== `mark:${n.postingId}`}>
                     Mark applied
                   </Button>
@@ -403,6 +408,7 @@ function ApplyNext({ insights, postings, engineOn }: { insights: TrackerInsights
           {all ? 'Show the top five' : `Show all ${insights.next.length}`}
         </Button>
       )}
+      <KitSheet target={kitFor} onClose={() => setKitFor(undefined)} />
     </section>
   );
 }

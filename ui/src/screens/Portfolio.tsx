@@ -33,15 +33,8 @@ const STATUS_ITEMS: { id: Status; label: string }[] = [
   { id: 'shipped', label: 'Shipped' },
 ];
 
-const CHECKS_KEY = 'tack.portfolio.checks.v1';
-
-function readChecks(): Record<string, number[]> {
-  try {
-    return JSON.parse(localStorage.getItem(CHECKS_KEY) ?? '{}') as Record<string, number[]>;
-  } catch {
-    return {};
-  }
-}
+// Ticked deliverables live on the project; a shipped project with none recorded counts as all done.
+const doneOf = (p: PortfolioProject) => p.deliverablesDone ?? (p.status === 'shipped' ? p.deliverables : []);
 
 const openSkills = (gap: GapMap) =>
   gap.skills.filter((s) => s.level !== 'strong' && s.status !== 'closed').sort((a, b) => b.priority - a.priority);
@@ -54,7 +47,6 @@ export function Portfolio() {
   const [building, setBuilding] = useState(false);
   const [since, setSince] = useState(0);
   const [confirm, setConfirm] = useState(false);
-  const [checks, setChecks] = useState(readChecks);
   const name = useMemo(() => skillNamer(gap.data), [gap.data]);
   const list = projects.data ?? [];
 
@@ -64,12 +56,6 @@ export function Portfolio() {
     setBuilding(true);
     try {
       const out = await actions.buildPortfolio();
-      setChecks({});
-      try {
-        localStorage.removeItem(CHECKS_KEY);
-      } catch {
-        /* storage may be blocked */
-      }
       toast({ title: `${out.length} projects drafted`, body: 'Each one closes at least two open skills and sits in your plan weeks.', tone: 'success' });
     } catch (e) {
       toast({ title: 'Could not draft projects', body: (e as Error).message, tone: 'error' });
@@ -92,18 +78,20 @@ export function Portfolio() {
     }
   };
 
-  const toggle = (p: PortfolioProject, i: number) => {
-    setChecks((prev) => {
-      const base = prev[p.id] ?? (p.status === 'shipped' ? p.deliverables.map((_, j) => j) : []);
-      const nextIds = base.includes(i) ? base.filter((x) => x !== i) : [...base, i];
-      const next = { ...prev, [p.id]: nextIds };
-      try {
-        localStorage.setItem(CHECKS_KEY, JSON.stringify(next));
-      } catch {
-        /* storage may be blocked */
-      }
-      return next;
-    });
+  const toggle = async (p: PortfolioProject, i: number) => {
+    const was = p.deliverablesDone;
+    const base = doneOf(p);
+    const item = p.deliverables[i];
+    const next = p.deliverables.filter((d) => (d === item ? !base.includes(d) : base.includes(d)));
+    const put = (done: string[] | undefined) =>
+      setQueryData<PortfolioProject[]>(keys.portfolio, (all) => (all ?? []).map((x) => (x.id === p.id ? { ...x, deliverablesDone: done } : x)));
+    put(next);
+    try {
+      await actions.setDeliverables(p.id, next);
+    } catch (e) {
+      put(was);
+      toast({ title: 'Could not save the tick', body: (e as Error).message, tone: 'error' });
+    }
   };
 
   return (
@@ -145,8 +133,8 @@ export function Portfolio() {
                 gap={gap.data ?? undefined}
                 plan={plan.data ?? undefined}
                 name={name}
-                checked={checks[p.id] ?? (p.status === 'shipped' ? p.deliverables.map((_, j) => j) : [])}
-                onToggle={(j) => toggle(p, j)}
+                checked={p.deliverables.flatMap((d, j) => (doneOf(p).includes(d) ? [j] : []))}
+                onToggle={(j) => void toggle(p, j)}
                 onStatus={(s) => setStatus(p, s)}
               />
             ))}

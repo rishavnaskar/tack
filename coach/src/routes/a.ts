@@ -12,14 +12,17 @@ import { loadDemo, snapshotPostings } from '../demo/load.ts';
 export async function state(): Promise<AppState> {
   const eng = await engine.status();
   const stored = store.get<'demo' | 'live'>('single', 'mode');
+  // Mode says what the data on screen is: live postings make it live, the bundled sample does not.
+  const postings = store.list<Posting>('posting');
+  const fromData = postings.length ? (postings.some((p) => p.live) ? 'live' : 'demo') : undefined;
   return {
-    mode: stored ?? (eng.available ? 'live' : 'demo'),
+    mode: stored ?? fromData ?? (eng.available ? 'live' : 'demo'),
     engine: eng,
     model: { configured: configured(), name: modelName() },
     profile: store.get<Profile>('single', 'profile'),
     goal: store.get<Goal>('single', 'goal'),
     counts: {
-      postings: store.list('posting').length,
+      postings: postings.length,
       applications: store.list('application').length,
       interviews: store.list('interview').length,
     },
@@ -180,6 +183,7 @@ export function mount(r: Router): void {
     else {
       // A live market replaces the bundled snapshot rather than mixing with it.
       for (const old of store.list<Posting>('posting')) if (!old.live) store.del('posting', old.id);
+      store.del('single', 'mode');
     }
     const pace = Number(process.env.TACK_HARVEST_PACE_MS ?? 35);
     for (const p of postings) {
@@ -187,7 +191,7 @@ export function mount(r: Router): void {
       const next: Posting = { ...p, skills: p.skills ?? prev?.skills };
       if (profile && next.skills?.length) next.fit = postingFit(profile, next);
       store.put('posting', next.id, next);
-      t.step('read', `${next.id} ${next.company}: ${next.title}`);
+      t.step('read', `${next.company}: ${next.title}${next.fit != null ? `, fit ${next.fit}` : ''}`);
       if (pace > 0 && !live) await sleep(pace);
     }
     t.ok(`${postings.length} postings ${live ? 'harvested live' : 'from the snapshot'}`);
