@@ -28,6 +28,8 @@ export interface ApplyJob {
   attempts: number; maxAttempts: number; nextAt: string; createdAt: string; updatedAt: string;
   reason?: FailureReason; detail?: string; question?: string; answer?: string;
   runIds: string[]; applicationId?: string; dryRun?: boolean; fit?: number; why?: string;
+  /** Its Submit may have gone without a confirmation; a retry is the person's call alone. */
+  unconfirmed?: boolean;
 }
 
 export interface RememberedAnswer { id: string; question: string; answer: string; at: string; company?: string }
@@ -132,6 +134,8 @@ export function markRunning(id: string, runId: string, now = new Date()): ApplyJ
 export type Outcome =
   | { kind: 'submitted'; applicationId?: string; detail?: string }
   | { kind: 'dry-run'; detail: string }
+  /** Submit pressed on a live form and no confirmation seen: it may have gone, so it waits on the person and is never retried. */
+  | { kind: 'unconfirmed'; detail: string }
   | { kind: 'failed'; reason: FailureReason; detail: string; question?: string };
 
 /** Where a job goes after a run: done, tried again later, or waiting on the person. */
@@ -147,6 +151,11 @@ export function settle(id: string, out: Outcome, now = new Date()): ApplyJob | u
   } else if (out.kind === 'dry-run') {
     job.state = 'dry-run';
     job.detail = out.detail;
+  } else if (out.kind === 'unconfirmed') {
+    job.state = 'needs-you';
+    job.reason = 'site-error';
+    job.detail = out.detail;
+    job.unconfirmed = true;
   } else {
     job.reason = out.reason;
     job.detail = out.detail;

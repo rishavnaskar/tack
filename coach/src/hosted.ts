@@ -437,6 +437,7 @@ const BLOCKED: { prefix: string; what: string; capability: 'apply' | 'mail' | 'a
   { prefix: '/api/queue', what: 'The apply queue', capability: 'apply' },
   { prefix: '/api/answers', what: 'Remembering answers for forms', capability: 'apply', part: true },
   { prefix: '/api/consent', what: 'Standing consent to submit', capability: 'apply', part: true },
+  { prefix: '/api/details/import-fanfold', what: 'Importing your profile from Fanfold', capability: 'apply', part: true },
   { prefix: '/api/practice', what: 'The practice application form', capability: 'apply', part: true },
   { prefix: '/practice', what: 'The practice application form', capability: 'apply', part: true },
   { prefix: '/api/mail', what: 'Reading replies from your mail', capability: 'mail' },

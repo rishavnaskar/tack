@@ -134,6 +134,8 @@ export interface ApplyRun {
   jobId?: string;
   /** Filled for real and never submitted. */
   dryRun?: boolean;
+  /** The Submit may have been pressed and no confirmation was seen: never retried on its own. */
+  unconfirmed?: boolean;
   /** What the form held when the run ended, read from the engine's snapshot. */
   inspection?: FormInspection;
 }

@@ -23,6 +23,8 @@ export const MAX_PARALLEL = 8;
 const DETAILS = 'details';
 const RESUME = 'resume-file';
 const CONSENT = 'apply-consent';
+/** Facts imported from Fanfold that the engine takes beyond the details: GitHub, notice, salary and the like. */
+export const ENGINE_FACTS = 'engine-facts';
 
 export interface ResumeFile { filename: string; mime: string; base64?: string; text?: string; savedAt: string }
 
@@ -158,7 +160,7 @@ export async function syncEngineProfile(h: EngineHandle, step: (s: string, d: st
   const resume = getResume();
   if (!d || (!resume && !opts.identityOnly)) throw new Error('Add your details and résumé before applying.');
   const profile = store.get<Profile>('single', 'profile');
-  const fields = engineFields(d, profile);
+  const fields = { ...(store.get<Record<string, string>>('single', ENGINE_FACTS) ?? {}), ...engineFields(d, profile) };
   const want = { fields: hashOf(fields), resume: resume ? hashOf([resume.filename, resume.base64 ?? resume.text]) : '', standing: standingYes() };
   const key = `engine-sync:${h.stateDir}`;
   const had = store.get<typeof want>('single', key);
@@ -428,6 +430,51 @@ export function inspectSnapshot(snapshot: string): FormInspection {
     fields: fields.slice(0, 60).map(({ required: _r, ...f }) => f),
   };
 }
+
+/** Text boxes on the page with their labels and values, read from the engine's snapshot. */
+export function textValues(snapshot: string): { label: string; value: string; required: boolean }[] {
+  const out: { label: string; value: string; required: boolean }[] = [];
+  for (const line of unfence(snapshot).split('\n')) {
+    const m = line.match(NODE);
+    if (!m || !['textbox', 'combobox', 'searchbox'].includes(m[2]) || !/\[ref=e\d+\]/.test(m[4])) continue;
+    out.push({ label: (m[3] ?? '').replace(/\s*✱\s*/g, ' ').trim(), value: (m[4].match(/\]:\s*"([^"]*)"/)?.[1] ?? '').trim(), required: /\[required\]/.test(m[4]) });
+  }
+  return out;
+}
+
+const PLACEHOLDER = /^(?:n\/?a|none|null|undefined|test|tbd|todo|placeholder|lorem\b.*|x{2,}|-+|\.+|\?+|select\b.*|choose\b.*|type your response.*|your (?:name|email|answer)\b.*|\[.*\]|<.*>|\{.*\})$/i;
+const digits = (v: string) => v.replace(/\D/g, '');
+
+/**
+ * What is wrong with a filled live form, read just before its final Submit, or null when it may go:
+ * a required answer still blank, no résumé on it, a placeholder in a box, or a name, email or
+ * phone that is not the person's. Names no values, so it can be shown and logged.
+ */
+export function preSubmitProblem(seen: (FormInspection & { raw?: string }) | undefined, d: ApplicationDetails): string | null {
+  if (!seen) return 'the form could not be read before the Submit';
+  if (seen.requiredLeft?.length) return `required and still blank: ${seen.requiredLeft.slice(0, 6).join('; ')}`;
+  if (!seen.resume) return 'no résumé is attached';
+  const boxes = textValues(seen.raw ?? '');
+  const wrong: string[] = [];
+  const names = d.fullName.toLowerCase().split(/\s+/).filter(Boolean);
+  for (const b of boxes) {
+    if (!b.value) continue;
+    const label = b.label.toLowerCase();
+    const v = b.value.toLowerCase();
+    if (PLACEHOLDER.test(b.value)) { wrong.push(`${b.label || 'a box'} holds a placeholder`); continue; }
+    if (/e-?mail/.test(label)) { if (v !== d.email.toLowerCase()) wrong.push(`${b.label} is not your email`); continue; }
+    if (/phone|mobile/.test(label)) {
+      const want = digits(d.phone);
+      if (!want || !(digits(b.value).endsWith(want.slice(-10)) || want.endsWith(digits(b.value)) && digits(b.value).length >= 7)) wrong.push(`${b.label} is not your phone number`);
+      continue;
+    }
+    if (/^(?:first|given) name\b|^(?:last|family|sur) ?name\b/.test(label) && !names.includes(v)) { wrong.push(`${b.label} is not your name`); continue; }
+    if (/^(?:full |legal )?name\b/.test(label) && v !== names.join(' ')) wrong.push(`${b.label} is not your name`);
+  }
+  return wrong.length ? wrong.slice(0, 4).join('; ') : null;
+}
+
+export const UNCONFIRMED = 'The final Submit was pressed but no confirmation was seen, so it may have gone. It is not tried again: check your mail or the company\'s site, then dismiss or retry it.';
 
 // ---------------------------------------------------------------- batches
 
@@ -740,16 +787,22 @@ export function startBatch(postings: Posting[], deps: BatchDeps = {}, opts: Batc
         let res: { status: string; message: string };
         let shot: Buffer | undefined;
         let pressed = false;
-        let outcome: { kind: 'sent'; text: string } | { kind: 'dry'; text: string } | { kind: 'fail'; why: string; code: queue.FailureReason; question?: string } | null = null;
+        let outcome: { kind: 'sent'; text: string } | { kind: 'dry'; text: string } | { kind: 'unconfirmed'; text: string } | { kind: 'fail'; why: string; code: queue.FailureReason; question?: string } | null = null;
+        // A live form whose Submit may have been pressed, by Tack or by the engine on the standing yes: never sent twice.
+        // A Submit click the engine then held for approval went nowhere; one it let through may have.
+        const clicks = () => run.steps.filter((s) => s.kind === 'submit' && s.label === 'Reached the final Submit').length;
+        let heldClicks = 0;
+        const mayHaveGone = () => run.target === 'live' && !dry && (pressed || clicks() > heldClicks);
         try {
           res = await runner!.run(run.session, goal, progress);
           for (let turn = 0; turn < MAX_TURNS && !outcome; turn++) {
             if (submitted()) { outcome = { kind: 'sent', text: res.message }; break; }
             const hold = holdOf(res.status, res.message);
+            if (res.status === 'awaiting_approval') heldClicks = clicks();
             if (!hold) {
               if (dry) outcome = { kind: 'dry', text: res.message };
-              else if (run.target === 'live' && pressed) outcome = { kind: 'sent', text: res.message };
               else if (run.target === 'live' && CONFIRMED.test(res.message)) outcome = { kind: 'sent', text: res.message };
+              else if (mayHaveGone()) outcome = { kind: 'unconfirmed', text: res.message };
               else outcome = { kind: 'fail', why: res.message || 'The engine finished without sending the form.', code: run.target === 'practice' ? 'site-error' : queue.classifyFailure(res.message, res.status) };
               break;
             }
@@ -773,6 +826,16 @@ export function startBatch(postings: Posting[], deps: BatchDeps = {}, opts: Batc
             // At the final Submit, which the engine's gate holds for the person.
             if (dry) { outcome = { kind: 'dry', text: 'Filled and stopped at the final Submit, which was not pressed.' }; break; }
             if (!consent.on) { outcome = { kind: 'fail', why: 'Filled and stopped before the final Submit: you have not given standing consent to submit for you.', code: 'consent-needed' }; break; }
+            if (run.target === 'live') {
+              // Read back what the form holds; a Submit goes only on a form that is complete and the person's.
+              const problem = preSubmitProblem(await runner!.inspect(run.session).catch(() => undefined), details);
+              if (problem) {
+                const blank = /^required and still blank: (.*)$/.exec(problem)?.[1];
+                outcome = { kind: 'fail', why: `Not submitted after checking the form: ${problem}.`, code: blank ? 'answer-missing' : 'site-error', ...(blank ? { question: blank.split('; ')[0] } : {}) };
+                break;
+              }
+              run.steps.push({ at: new Date().toISOString(), kind: 'note', label: 'Checked the form before Submit: name, email, phone and résumé are yours, nothing required is blank' });
+            }
             run.steps.push({ at: new Date().toISOString(), kind: 'submit', label: 'Pressing Submit on your standing consent' });
             save(run);
             const s = await runner!.submit(run.session);
@@ -788,6 +851,7 @@ export function startBatch(postings: Posting[], deps: BatchDeps = {}, opts: Batc
             outcome = { kind: 'fail', why: `The engine held the Submit: ${s.held ?? 'no reason given'}.`, code: queue.classifyFailure(s.held ?? '') };
           }
           if (!outcome) outcome = submitted() ? { kind: 'sent', text: res.message } : { kind: 'fail', why: `Stopped after ${MAX_TURNS} turns without a confirmation: ${res.message}`, code: 'timeout' };
+          if (outcome.kind === 'fail' && mayHaveGone() && !['captcha', 'login-required', 'answer-missing'].includes(outcome.code)) outcome = { kind: 'unconfirmed', text: outcome.why };
           if (dry || run.target === 'live') {
             const seen = await runner!.inspect(run.session).catch(() => undefined);
             if (seen) {
@@ -813,6 +877,17 @@ export function startBatch(postings: Posting[], deps: BatchDeps = {}, opts: Batc
         if (shot) { saveShot(run.id, shot); run.shot = true; }
         if (!outcome) return fail(run, 'The run ended without an outcome.', 'site-error');
         if (outcome.kind === 'fail') return fail(run, outcome.why, outcome.code, outcome.question);
+        if (outcome.kind === 'unconfirmed') {
+          run.status = 'failed';
+          run.unconfirmed = true;
+          run.reasonCode = 'site-error';
+          run.reason = `${UNCONFIRMED} The page said: ${cut(outcome.text || 'nothing', 240)}`;
+          run.steps.push({ at: run.endedAt, kind: 'error', label: 'Unconfirmed: Submit pressed, no confirmation seen; not retried' });
+          save(run);
+          if (run.jobId) queue.settle(run.jobId, { kind: 'unconfirmed', detail: run.reason });
+          line(tag, 'unconfirmed', cut(run.reason, 200), 'fail');
+          return;
+        }
         if (outcome.kind === 'dry') {
           run.status = 'dry-run';
           const f = run.inspection;

@@ -9,6 +9,8 @@ import {
 import { acceptSubmission, renderConfirmation, renderForm, renderMissing, SubmissionError, submissions, summary, SUBMISSION_KIND, type PracticeSubmission } from '../practice.ts';
 import { insights, mulberry32, isResponse } from '../tracker.ts';
 import { postingFit } from '../gap.ts';
+import { defaultFanfoldDir, importFanfold, ImportError } from '../fanfold-import.ts';
+import { isHosted } from '../hosted.ts';
 
 function detailsView() {
   const resume = getResume();
@@ -64,6 +66,19 @@ export function mount(r: Router): void {
     const draft = saveDetails(body);
     const problems = detailProblems(draft);
     return { ...detailsView(), problems };
+  });
+
+  // Fills the profile, details, résumé and saved answers from the person's own Fanfold, read-only.
+  r.post('/details/import-fanfold', async ({ body }) => {
+    if (isHosted()) throw new HttpError(404, 'Importing from Fanfold works in the desktop app only.');
+    const dir = typeof body?.dir === 'string' && body.dir.trim() ? body.dir.trim() : defaultFanfoldDir();
+    try {
+      const summary = await importFanfold(dir, { resumeText: async (bytes, mime) => { const t = await engine.resumeText(bytes, mime); return t.ok ? t.text : ''; } });
+      return { ...detailsView(), imported: summary };
+    } catch (e) {
+      if (e instanceof ImportError) throw new HttpError(404, e.message);
+      throw e;
+    }
   });
 
   // ---- applying ----
