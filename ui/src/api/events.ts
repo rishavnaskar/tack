@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from 'react';
 import { api, MOCK } from './client';
+import { fetchQuery } from './query';
 import type { TraceEvent } from './types';
 
 /*
@@ -75,15 +76,20 @@ function connect() {
     return;
   }
   if (typeof EventSource === 'undefined') return;
-  const source = new EventSource(api.eventsUrl());
-  const onMessage = (ev: MessageEvent<string>) => {
-    const e = parse(ev.data);
-    if (e) push(e);
+  // The stream opens once the server has answered the state request ('state' is the hooks' key),
+  // so on the web preview it carries the session cookie that answer set.
+  const open = () => {
+    const source = new EventSource(api.eventsUrl());
+    const onMessage = (ev: MessageEvent<string>) => {
+      const e = parse(ev.data);
+      if (e) push(e);
+    };
+    source.onopen = () => set({ connected: true });
+    source.onerror = () => set({ connected: false });
+    source.onmessage = onMessage;
+    source.addEventListener('trace', onMessage as EventListener);
   };
-  source.onopen = () => set({ connected: true });
-  source.onerror = () => set({ connected: false });
-  source.onmessage = onMessage;
-  source.addEventListener('trace', onMessage as EventListener);
+  fetchQuery('state', api.state).catch(() => undefined).finally(open);
 }
 
 const wide = () => typeof window !== 'undefined' && window.matchMedia('(min-width: 720px)').matches;
