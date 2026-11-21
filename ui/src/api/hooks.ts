@@ -197,16 +197,11 @@ export const actions = {
   },
 
   async syncApplications() {
-    const res = await tracked('Syncing applications', api.syncApplications);
-    invalidate(keys.applications, keys.insights);
+    const res = await tracked('Checking replies', api.syncApplications);
+    invalidate(keys.applications, keys.insights, keys.brief, keys.progress);
     return res;
   },
 
-  async apply(postingId: string) {
-    const res = await api.apply(postingId);
-    if (res.started) invalidate(keys.applications, keys.insights);
-    return res;
-  },
 
   async rebuildKit(postingId: string) {
     const kit = await tracked('Rewriting the application kit', () => api.buildKit(postingId, true));

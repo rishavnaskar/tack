@@ -439,15 +439,23 @@ on('POST', '/applications/sync', async () => {
     ['sync', 'engine records and mail replies', 0],
     ['engine', 'Engine not attached; nothing to pull', 500],
   ]);
-  return { added: 0, updated: 0 };
+  return { added: 0, updated: 0, note: 'Mail is not connected in the mock.', source: 'none', searched: 0, messages: 0, classified: {}, by: 'none', changes: [], ms: 0 };
 });
+
+on('GET', '/mail/status', () => ({ source: 'none', connected: false, label: 'Mail off', note: 'The mock has no mail.', canConnect: false, engine: 'off' }));
+
+on('GET', '/details', () => ({
+  details: { fullName: '', email: '', phone: '', city: '', linkedin: '', workAuthorisation: '', noticePeriod: '' },
+  resume: null, readiness: { ready: false, missing: ['full name', 'email', 'résumé'], reason: 'Applying needs the coach server.', target: 'practice' },
+}));
+
+on('GET', '/apply/readiness', () => ({ ready: false, missing: [], reason: 'Applying needs the coach server.', target: 'practice' }));
 
 on('GET', '/tracker/insights', () => computeInsights(db.applications, db.postings));
 
-on('POST', '/apply', () => ({
-  started: false,
-  note: 'Applying needs the engine. Start Tack in live mode to hand postings to the browser.',
-}));
+on('POST', '/apply', () => {
+  throw new ApiError(409, 'Applying needs the coach server and its engine.', '/apply');
+});
 
 on('GET', '/progress', () => computeProgress(db.plan, db.gap, db.interviews));
 

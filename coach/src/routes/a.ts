@@ -8,6 +8,7 @@ import { InputError, parseResume, suggestRoles } from '../intake.ts';
 import { buildGap, postingFit, recompute } from '../gap.ts';
 import { canonical, skillId } from '../skills.ts';
 import { loadDemo, snapshotPostings } from '../demo/load.ts';
+import { saveResume } from '../apply.ts';
 
 export async function state(): Promise<AppState> {
   const eng = await engine.status();
@@ -137,6 +138,10 @@ export function mount(r: Router): void {
       throw err;
     }
     store.put('single', 'profile', profile);
+    // The file itself is kept for applying: it is what gets uploaded to a form.
+    saveResume(hasPdf
+      ? { filename: typeof body.filename === 'string' && body.filename.trim() ? body.filename.trim() : 'resume.pdf', mime: 'application/pdf', base64: body.pdfBase64.replace(/^data:[^,]*,/, '') }
+      : { filename: 'resume.txt', mime: 'text/plain', text: body.text });
     // A real résumé replaces the demo person; mode now follows the engine.
     store.del('single', 'mode');
     refreshGapIfAny();
@@ -226,16 +231,5 @@ export function mount(r: Router): void {
     for (const ev of recent()) if (!since || ev.id > since) send(ev, ev.id);
     off = subscribe((ev) => send(ev, ev.id));
     return undefined;
-  });
-
-  r.post('/apply', async ({ body }) => {
-    const id = text(body?.postingId, 'postingId', true);
-    const posting = store.get<Posting>('posting', id);
-    if (!posting) throw new HttpError(404, `no posting ${id}`);
-    const t = run('apply');
-    const res = await engine.apply(posting.url);
-    if (res.started) t.ok(`${posting.company}: ${posting.title}`);
-    else t.fail(res.note);
-    return res;
   });
 }

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useSearchParams } from 'react-router';
 import { motion } from 'motion/react';
 import { actions, useAppState, usePostings } from '../api/hooks';
+import { applying as applyStore } from '../api/applying';
 import type { Posting } from '../api/types';
 import { ago, agoShort, cityOf, countBy, hostOf, median, sizeLabel } from '../lib/format';
 import { Bar, Button, Card, Chip, Drawer, EmptyState, ErrorState, Icon, Meter, PageHeader, Skeleton, Stat, Tabs, ease, useToast } from '../ui';
@@ -460,7 +461,7 @@ function EmptyMarket({ canRun, onRun }: { canRun: boolean; onRun: () => void }) 
 
 /* drawer */
 
-function PostingDrawer({ posting, onClose, engineOn, onPrepare }: { posting?: Posting; onClose: () => void; engineOn: boolean; onPrepare: (p: Posting) => void }) {
+function PostingDrawer({ posting, onClose, onPrepare }: { posting?: Posting; onClose: () => void; engineOn: boolean; onPrepare: (p: Posting) => void }) {
   const [focus, setFocus] = useState<string>();
   const [applying, setApplying] = useState(false);
   const toast = useToast();
@@ -474,8 +475,8 @@ function PostingDrawer({ posting, onClose, engineOn, onPrepare }: { posting?: Po
     if (!p) return;
     setApplying(true);
     try {
-      const res = await actions.apply(p.id);
-      toast({ title: res.started ? 'Handed to the engine' : 'Not sent', body: res.note, tone: res.started ? 'success' : 'default' });
+      const res = await applyStore.start([p.id]);
+      toast({ title: res.note, body: 'Follow it under Apply next in the Tracker, or in the trace.', tone: 'success' });
     } catch (e) {
       toast({ title: 'Could not start the application', body: (e as Error).message, tone: 'error' });
     } finally {
@@ -503,7 +504,7 @@ function PostingDrawer({ posting, onClose, engineOn, onPrepare }: { posting?: Po
       footer={
         p ? (
           <div className="pd-foot">
-            {!engineOn && <span className="drawer-note">Applying needs live mode.</span>}
+            {!p.live && <span className="drawer-note">Sample posting: applies to Tack's practice form.</span>}
             <Button variant="ghost" className="pd-foot__close" onClick={onClose}>
               Close
             </Button>

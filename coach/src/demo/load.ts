@@ -4,6 +4,7 @@ import type { Goal, Posting, Profile } from '../types.ts';
 import * as store from '../store.ts';
 import { recompute } from '../gap.ts';
 import { run } from '../trace.ts';
+import { demoDetails, demoResume, saveResume } from '../apply.ts';
 
 // Dates in the snapshot are relative to this moment and get shifted to "now" on load.
 const SNAPSHOT_AT = Date.parse('2026-11-21T04:30:00.000Z');
@@ -57,6 +58,8 @@ export async function loadDemo(): Promise<void> {
   store.put('single', 'mode', 'demo');
   store.put('single', 'profile', demoProfile());
   store.put('single', 'goal', demoGoal());
+  store.put('single', 'details', demoDetails());
+  saveResume(demoResume());
   const postings = snapshotPostings();
   for (const p of postings) store.put('posting', p.id, p);
   t.step('snapshot', `Avery Quinn, ${postings.length} postings`);

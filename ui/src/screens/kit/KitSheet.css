@@ -265,3 +265,12 @@
     grid-template-columns: 26px minmax(0, 1fr);
   }
 }
+
+.kit__run {
+  margin-bottom: var(--s-5);
+}
+
+.kit__blocked {
+  margin: 0;
+  font-size: 14px;
+}

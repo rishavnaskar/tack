@@ -2,6 +2,10 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { motion } from 'motion/react';
 import { useLatestTrace } from '../../api/events';
 import { actions, useApplications, useGap, useKit, usePostings } from '../../api/hooks';
+import { applying, isActive, useRunFor } from '../../api/applying';
+import { api } from '../../api/client';
+import { useQuery } from '../../api/query';
+import { RunCard } from '../tracker/ApplyRuns';
 import type { GapSkill, Kit } from '../../api/types';
 import { hostOf, pad2 } from '../../lib/format';
 import { BlueprintLoader, Button, Drawer, ErrorState, LevelGlyph, Meter, ease, useToast } from '../../ui';
@@ -114,6 +118,23 @@ export function KitSheet({ target, onClose }: { target?: KitTarget; onClose: () 
 
   const applied = !!t && (apps.data ?? []).some((a) => a.postingId === t.postingId);
   const data = kit.data;
+  const run = useRunFor(t?.postingId);
+  const ready = useQuery(`apply-readiness:${t?.postingId ?? ''}`, () => api.readiness(t?.postingId), { enabled: !!t });
+  const [starting, setStarting] = useState(false);
+
+  const apply = async () => {
+    if (!t) return;
+    setStarting(true);
+    try {
+      const res = await applying.start([t.postingId]);
+      toast({ title: res.note, body: ready.data?.target === 'practice' ? 'It opens in a Chrome window and goes to Tack\'s practice form, never to the company.' : 'It opens in a Chrome window and is submitted without a review step.' });
+    } catch (e) {
+      toast({ title: 'Could not start applying', body: (e as Error).message, tone: 'error' });
+    } finally {
+      setStarting(false);
+    }
+  };
+  const blocked = ready.data && !ready.data.ready ? ready.data.reason : undefined;
 
   const mark = async () => {
     if (!t) return;
@@ -183,13 +204,28 @@ export function KitSheet({ target, onClose }: { target?: KitTarget; onClose: () 
             <Button variant="ghost" icon="arrow-up-right" href={t.url} target="_blank">
               Open posting
             </Button>
-            <Button variant="primary" iconLeft="check" onClick={mark} loading={marking} disabled={applied}>
+            <Button variant="ghost" iconLeft="check" onClick={mark} loading={marking} disabled={applied}>
               {applied ? 'Applied' : 'Mark applied'}
+            </Button>
+            <Button
+              variant="primary"
+              icon="arrow-right"
+              onClick={apply}
+              loading={starting || (!!run && isActive(run))}
+              disabled={applied || run?.status === 'applied' || !!blocked}
+              title={blocked}
+            >
+              {ready.data?.target === 'practice' ? 'Apply (practice)' : 'Apply'}
             </Button>
           </div>
         ) : undefined
       }
     >
+      {t && (run || blocked) && (
+        <div className="kit__run">
+          {run ? <RunCard run={run} /> : <p className="kit__blocked t-mute">{blocked}</p>}
+        </div>
+      )}
       {t &&
         (busy ? (
           <KitLoading since={Math.max(opened.current.at, rewroteAt)} />

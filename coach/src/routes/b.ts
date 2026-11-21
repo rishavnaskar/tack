@@ -14,7 +14,7 @@ import {
 } from '../plan.ts';
 import { buildPortfolio } from '../portfolio.ts';
 import { judge, latestFinishedScore, makeQuestions, recordTurn, skillEffects, type SessionKind } from '../interview.ts';
-import { applyEvent, insights, isResponse, markGhosted, mulberry32, statusFrom } from '../tracker.ts';
+import { insights, isResponse, markGhosted, mulberry32 } from '../tracker.ts';
 import { brief, computeProgress } from '../progress.ts';
 import { buildKit, cachedKit, KitError } from '../kit.ts';
 
@@ -334,56 +334,43 @@ export function mount(r: Router): void {
 
   r.post('/applications/sync', async () => {
     const eng = await engine();
-    if (!eng || !(await eng.available().catch(() => false))) {
-      return { added: 0, updated: 0, note: 'The browser engine is not attached, so there is nothing to sync. Log applications by hand or attach the engine.' };
-    }
+    if (!eng) return { added: 0, updated: 0, note: 'The engine module could not load.', source: 'none', searched: 0, messages: 0, classified: {}, by: 'none', changes: [], ms: 0 };
     const t = trace.run('sync');
-    const apps = store.list<Application>('application');
-    const postings = store.list<Posting>('posting');
-    const profile = store.get<Profile>(SINGLE, 'profile');
-    let added = 0, updated = 0;
-    t.step('applications', 'reading applications the engine submitted');
-    for (const rec of await eng.applications().catch(() => [] as Partial<Application>[])) {
-      if (!rec?.company || !rec?.title) continue;
-      const at = rec.appliedAt && !Number.isNaN(Date.parse(rec.appliedAt)) ? new Date(rec.appliedAt).toISOString() : new Date().toISOString();
-      const existing = apps.find((a) => (rec.url && a.url === rec.url) || (rec.postingId && a.postingId === rec.postingId)
-        || (a.company.toLowerCase() === rec.company!.toLowerCase() && a.title.toLowerCase() === rec.title!.toLowerCase()));
-      if (existing) {
-        if (rec.status && rec.status !== existing.status && applyEvent(existing, { at: rec.lastEventAt ?? at, kind: rec.status, note: 'Synced from the engine' }, rec.status)) {
-          store.put('application', existing.id, existing);
-          updated++;
-        }
-        continue;
-      }
-      const posting = postings.find((p) => (rec.postingId && p.id === rec.postingId) || (rec.url && p.url === rec.url));
-      const app: Application = {
-        id: newId('app'), title: rec.title, company: rec.company, ...(posting ? { postingId: posting.id } : {}),
-        url: rec.url ?? posting?.url ?? '', roleFamily: rec.roleFamily ?? posting?.roleFamily ?? 'unknown',
-        seniority: rec.seniority ?? posting?.seniority ?? 'unknown', companySize: rec.companySize ?? posting?.companySize ?? 'unknown',
-        source: rec.source ?? posting?.source ?? 'fanfold', fit: Math.round(rec.fit ?? (posting ? fitOf(profile)(posting) : 50)),
-        appliedAt: at, status: rec.status && APP_STATUSES.includes(rec.status) ? rec.status : 'applied', lastEventAt: rec.lastEventAt ?? at,
-        events: rec.events?.length ? rec.events : [{ at, kind: 'applied', note: 'Submitted through the engine' }], origin: 'fanfold',
-      };
-      apps.push(app);
-      store.put('application', app.id, app);
-      added++;
-    }
-    const open = apps.filter((a) => !['offer', 'rejected'].includes(a.status));
-    t.step('mail', `checking mail for replies from ${new Set(open.map((a) => a.company)).size} companies`);
-    const replies = await eng.mailReplies([...new Set(open.map((a) => a.company))]).catch(() => []);
-    for (const m of replies) {
-      const app = open
-        .filter((a) => a.company.toLowerCase() === String(m.company).toLowerCase() && a.appliedAt <= m.at)
-        .sort((a, b) => b.appliedAt.localeCompare(a.appliedAt))[0];
-      if (!app) continue;
-      const status: AppStatus | undefined = m.kind === 'interview' ? 'interview' : m.kind === 'rejection' ? 'rejected' : m.kind === 'reply' ? 'reply' : statusFrom(m.subject);
-      if (applyEvent(app, { at: m.at, kind: m.kind === 'other' ? 'mail' : m.kind, note: m.subject }, status)) {
+    let added = 0;
+    // Applications a real Fanfold sent, read-only, when TACK_FANFOLD_DB points at one.
+    if (process.env.TACK_FANFOLD_DB) {
+      const apps = store.list<Application>('application');
+      const postings = store.list<Posting>('posting');
+      const profile = store.get<Profile>(SINGLE, 'profile');
+      t.step('applications', 'reading applications Fanfold submitted');
+      for (const rec of await eng.applications().catch(() => [] as Partial<Application>[])) {
+        if (!rec?.company || !rec?.title) continue;
+        const at = rec.appliedAt && !Number.isNaN(Date.parse(rec.appliedAt)) ? new Date(rec.appliedAt).toISOString() : new Date().toISOString();
+        const known = apps.some((a) => (rec.url && a.url === rec.url) || (rec.postingId && a.postingId === rec.postingId)
+          || (a.company.toLowerCase() === rec.company!.toLowerCase() && a.title.toLowerCase() === rec.title!.toLowerCase()));
+        if (known) continue;
+        const posting = postings.find((p) => (rec.postingId && p.id === rec.postingId) || (rec.url && p.url === rec.url));
+        const app: Application = {
+          id: newId('app'), title: rec.title, company: rec.company, ...(posting ? { postingId: posting.id } : {}),
+          url: rec.url ?? posting?.url ?? '', roleFamily: rec.roleFamily ?? posting?.roleFamily ?? 'unknown',
+          seniority: rec.seniority ?? posting?.seniority ?? 'unknown', companySize: rec.companySize ?? posting?.companySize ?? 'unknown',
+          source: rec.source ?? posting?.source ?? 'fanfold', fit: Math.round(rec.fit ?? (posting ? fitOf(profile)(posting) : 50)),
+          appliedAt: at, status: rec.status && APP_STATUSES.includes(rec.status) ? rec.status : 'applied', lastEventAt: rec.lastEventAt ?? at,
+          events: rec.events?.length ? rec.events : [{ at, kind: 'applied', note: 'Submitted through Fanfold' }], origin: 'fanfold',
+        };
+        apps.push(app);
         store.put('application', app.id, app);
-        updated++;
+        added++;
       }
     }
-    t.ok(`${added} added, ${updated} updated`);
-    return { added, updated };
+    try {
+      const res = await eng.checkMail((step, detail) => t.step(step, detail));
+      t.ok(`${res.source === 'sample' ? 'sample mailbox: ' : ''}${res.note}`);
+      return { ...res, added };
+    } catch (e) {
+      t.fail((e as Error).message);
+      throw e;
+    }
   });
 
   r.get('/tracker/insights', () => trackerInsights());

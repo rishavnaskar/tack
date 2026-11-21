@@ -1,0 +1,196 @@
+.batch {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  margin-top: var(--s-5);
+}
+
+.batch__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-2) var(--s-4);
+}
+
+.batch__line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 12px;
+  margin: 0;
+}
+
+.batch__note {
+  flex-basis: 100%;
+  order: 3;
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
+.batch__runs {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: var(--s-3);
+}
+
+.run {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  padding: var(--s-4);
+  border-radius: var(--r-3);
+  background: var(--glass);
+  backdrop-filter: blur(var(--glass-blur));
+  box-shadow: inset 0 0 0 1px var(--line-faint);
+  transition: box-shadow var(--t-med) var(--ease);
+}
+
+.run.is-running {
+  box-shadow: inset 0 0 0 1px var(--line-soft);
+}
+
+.run.is-applied {
+  box-shadow: inset 0 0 0 1px rgba(138, 154, 108, 0.45);
+}
+
+.run.is-failed {
+  box-shadow: inset 0 0 0 1px var(--accent-line);
+}
+
+.run__head {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.run__who {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+}
+
+.run__company {
+  font-weight: 540;
+  color: var(--paper);
+}
+
+.run__title {
+  overflow: hidden;
+  font-size: 13px;
+  color: var(--mute);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.run__target {
+  flex: none;
+  padding: 3px 8px;
+  border-radius: var(--r-pill);
+  color: var(--mute);
+  box-shadow: inset 0 0 0 1px var(--line-faint);
+}
+
+.run__target.is-practice {
+  color: var(--cream);
+}
+
+.run__status {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.run__state.is-running,
+.run__state.is-queued {
+  color: var(--paper);
+}
+
+.run__state.is-applied {
+  color: #c9d3b4;
+}
+
+.run__state.is-failed {
+  color: var(--accent-hi);
+}
+
+.run__steps {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 13.5px;
+  line-height: 1.35;
+}
+
+.run__step {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  color: var(--mute);
+}
+
+.run__step.is-current,
+.run__step.is-done {
+  color: var(--paper);
+}
+
+.run__step.is-bad {
+  color: var(--accent-hi);
+}
+
+.run__mark {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 14px;
+  height: 18px;
+}
+
+.run__step.is-done .run__mark {
+  color: #c9d3b4;
+}
+
+.run__wait {
+  margin: 0;
+  font-size: 13.5px;
+}
+
+.run__foot {
+  margin: 2px 0 0;
+  padding-top: 10px;
+  border-top: 1px solid var(--line-faint);
+  font-size: 13px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.run__foot.is-ok {
+  color: #c9d3b4;
+}
+
+.run__foot.is-bad {
+  color: var(--mute);
+}
+
+.run__shot {
+  display: block;
+  overflow: hidden;
+  max-height: 150px;
+  border-radius: var(--r-2);
+  box-shadow: inset 0 0 0 1px var(--line-faint);
+}
+
+.run__shot img {
+  display: block;
+  width: 100%;
+  height: auto;
+  opacity: 0.92;
+}

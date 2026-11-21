@@ -2,15 +2,17 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'motion/react';
 import { api } from '../api/client';
 import { actions, useAppState, useApplications, useInsights, usePostings } from '../api/hooks';
-import type { Posting, Segment, TrackerInsights } from '../api/types';
+import { applying, isActive, useBatches, useRunFor } from '../api/applying';
+import { useQuery } from '../api/query';
+import type { Posting, Segment, SyncResult, TrackerInsights } from '../api/types';
 import { hostOf, pad2 } from '../lib/format';
 import { Button, Card, Chip, EmptyState, ErrorState, Icon, Modal, PageHeader, Skeleton, ease, useToast } from '../ui';
 import { AddApplication, AppDrawer, Pipeline, SectionHead } from './tracker/Pipeline';
 import { chance, groupSegments, isWinner, pctOf, segKey, segmentValue } from './tracker/model';
 import { KitSheet, type KitTarget } from './kit/KitSheet';
+import { BatchPanel } from './tracker/ApplyRuns';
+import { MailStrip, WhatChanged } from './tracker/Mail';
 import './Tracker.css';
-
-type SyncResult = Awaited<ReturnType<typeof api.syncApplications>> & { note?: string };
 
 export function Tracker() {
   const apps = useApplications();
@@ -19,7 +21,7 @@ export function Tracker() {
   const { data: state } = useAppState();
   const [adding, setAdding] = useState(false);
   const [openId, setOpenId] = useState<string>();
-  const [syncing, setSyncing] = useState(false);
+  const [changed, setChanged] = useState<SyncResult>();
   const [demoAsk, setDemoAsk] = useState(false);
   const [demoBusy, setDemoBusy] = useState(false);
   const toast = useToast();
@@ -40,23 +42,6 @@ export function Tracker() {
   const all = apps.data ?? [];
   const open = all.find((a) => a.id === openId);
 
-  const sync = async () => {
-    setSyncing(true);
-    try {
-      const res = (await actions.syncApplications()) as SyncResult;
-      const moved = res.added + res.updated;
-      toast({
-        title: moved ? `${res.added} added, ${res.updated} updated` : 'Nothing new to sync',
-        body: res.note ?? (moved ? 'The pipeline and the numbers above are up to date.' : 'No new applications or replies since the last sync.'),
-        tone: moved ? 'success' : 'default',
-      });
-    } catch (e) {
-      toast({ title: 'Sync failed', body: (e as Error).message, tone: 'error' });
-    } finally {
-      setSyncing(false);
-    }
-  };
-
   return (
     <div className="tr">
       <PageHeader
@@ -66,14 +51,9 @@ export function Tracker() {
         purpose="Every application, where it stands, and what the replies say about where to aim next. Move a card and the numbers relearn."
         actions={
           apps.data ? (
-            <>
-              <Button variant="ghost" iconLeft="refresh" onClick={sync} loading={syncing}>
-                Sync
-              </Button>
-              <Button variant="primary" iconLeft="plus" onClick={() => setAdding(true)}>
-                Add application
-              </Button>
-            </>
+            <Button variant="primary" iconLeft="plus" onClick={() => setAdding(true)}>
+              Add application
+            </Button>
           ) : undefined
         }
       />
@@ -117,6 +97,8 @@ export function Tracker() {
         </>
       ) : (
         <>
+          <MailStrip onResult={setChanged} />
+          {changed && <WhatChanged result={changed} onClose={() => setChanged(undefined)} />}
           {insights.error && !insights.data ? (
             <section className="section">
               <SectionHead index="01" title="What gets replies" />
@@ -329,44 +311,47 @@ export function Confidence({ level }: { level: Segment['confidence'] }) {
 
 /* apply next */
 
-type ApplyNote = { started: boolean; note: string };
-
 function ApplyNext({ insights, postings, engineOn }: { insights: TrackerInsights; postings?: Posting[]; engineOn: boolean }) {
   const [all, setAll] = useState(false);
-  const [notes, setNotes] = useState<Record<string, ApplyNote>>({});
   const [busy, setBusy] = useState<string>();
+  const [n, setN] = useState(3);
   const [kitFor, setKitFor] = useState<KitTarget>();
   const toast = useToast();
+  const batches = useBatches();
+  const ready = useQuery('apply-readiness', () => api.readiness());
+  const running = batches.some((b) => b.runs.some(isActive));
   const list = all ? insights.next : insights.next.slice(0, 5);
+  const blocked = ready.data && !ready.data.ready ? ready.data.reason : undefined;
+  const practice = ready.data?.target === 'practice';
 
-  const apply = async (postingId: string) => {
-    setBusy(`apply:${postingId}`);
+  const start = async (label: string, work: () => Promise<{ note: string }>) => {
+    setBusy(label);
     try {
-      const res = await actions.apply(postingId);
-      setNotes((n) => ({ ...n, [postingId]: res }));
+      const res = await work();
+      toast({ title: res.note, body: practice ? 'Each one opens in its own Chrome window. Practice applications go to Tack\'s form, never to the company.' : 'Each one opens in its own Chrome window and is submitted without a review step.' });
     } catch (e) {
-      setNotes((n) => ({ ...n, [postingId]: { started: false, note: (e as Error).message } }));
+      toast({ title: 'Could not start applying', body: (e as Error).message, tone: 'error' });
     } finally {
       setBusy(undefined);
     }
   };
 
-  const mark = async (n: TrackerInsights['next'][number]) => {
-    setBusy(`mark:${n.postingId}`);
-    const p = postings?.find((x) => x.id === n.postingId);
+  const mark = async (x: TrackerInsights['next'][number]) => {
+    setBusy(`mark:${x.postingId}`);
+    const p = postings?.find((y) => y.id === x.postingId);
     try {
       await actions.addApplication({
-        postingId: n.postingId,
-        title: n.title,
-        company: n.company,
-        url: n.url,
-        fit: n.fit,
+        postingId: x.postingId,
+        title: x.title,
+        company: x.company,
+        url: x.url,
+        fit: x.fit,
         ...(p?.roleFamily ? { roleFamily: p.roleFamily } : {}),
         ...(p?.seniority ? { seniority: p.seniority } : {}),
         ...(p?.companySize ? { companySize: p.companySize } : {}),
         ...(p?.source ? { source: p.source } : {}),
       });
-      toast({ title: `${n.company} is in Applied`, body: 'The ranking below and the numbers above now count it.', tone: 'success' });
+      toast({ title: `${x.company} is in Applied`, body: 'The ranking below and the numbers above now count it.', tone: 'success' });
     } catch (e) {
       toast({ title: 'Could not log it', body: (e as Error).message, tone: 'error' });
     } finally {
@@ -382,74 +367,54 @@ function ApplyNext({ insights, postings, engineOn }: { insights: TrackerInsights
         text="Postings you have not applied to, ranked by fit and by how often that kind of role has replied to you so far."
         aside={
           <Chip size="sm" mono tone={engineOn ? 'olive' : 'mute'}>
-            {engineOn ? 'Engine attached' : 'Engine off'}
+            {practice ? 'Practice applications' : engineOn ? 'Engine attached' : 'Engine off'}
           </Chip>
         }
       />
+      {insights.next.length > 0 && (
+        <div className="topn">
+          <div className="topn__pick" role="group" aria-label="How many to apply to">
+            <button type="button" className="topn__btn" onClick={() => setN((v) => Math.max(1, v - 1))} disabled={n <= 1} aria-label="One fewer">
+              <Icon name="minus" size={14} />
+            </button>
+            <span className="topn__n t-num" aria-live="polite">{n}</span>
+            <button type="button" className="topn__btn" onClick={() => setN((v) => Math.min(8, Math.min(insights.next.length, v + 1)))} disabled={n >= Math.min(8, insights.next.length)} aria-label="One more">
+              <Icon name="plus" size={14} />
+            </button>
+          </div>
+          <Button variant="primary" icon="arrow-right" onClick={() => start('top', () => applying.top(n))} loading={busy === 'top'} disabled={!!blocked || running || (!!busy && busy !== 'top')}>
+            Apply to top {n}
+          </Button>
+          <p className="topn__note">
+            {blocked ? (
+              <>
+                <Icon name="warning" size={14} /> {blocked}
+              </>
+            ) : (
+              `${n === 1 ? 'One Chrome window' : `${n} Chrome windows working at the same time`}, each filled and submitted by the engine. ${practice ? 'The demo person applies to Tack\'s practice form, never to a company.' : 'Live postings are submitted for real, with no review step.'}`
+            )}
+          </p>
+        </div>
+      )}
+      {batches.map((b) => (
+        <BatchPanel key={b.id} batch={b} />
+      ))}
       {insights.next.length === 0 ? (
         <EmptyState compact eyebrow="Nothing ranked" title="No postings left to rank" body="Every posting Tack read is already in the pipeline. Read the market again for fresh ones." />
       ) : (
         <ol className="next">
-          {list.map((n, i) => {
-            const note = notes[n.postingId];
-            const c = chance(n.responseChance);
-            return (
-              <motion.li
-                key={n.postingId}
-                className="nx"
-                layout
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.7, ease, delay: Math.min(i, 8) * 0.04 }}
-              >
-                <span className="nx__rank t-num">{pad2(i + 1)}</span>
-                <div className="nx__main">
-                  <span className="nx__title">{n.title}</span>
-                  <span className="nx__company">
-                    {n.company}
-                    {n.url && <span className="t-faint"> · {hostOf(n.url)}</span>}
-                  </span>
-                  <p className="nx__why">{n.why}</p>
-                  {note && (
-                    <p className={['nx__note', note.started ? 'is-started' : 'is-back'].filter(Boolean).join(' ')} role="status">
-                      <Icon name={note.started ? 'check' : 'arrow-left'} size={14} />
-                      <span>
-                        <b>{note.started ? 'Handed to the engine.' : 'Back to you.'}</b> {note.note}
-                      </span>
-                    </p>
-                  )}
-                </div>
-                <div className="nx__figs">
-                  <span className="nx__fig">
-                    <span className="t-label">Fit</span>
-                    <span className="t-num nx__v">{n.fit}</span>
-                  </span>
-                  <span className="nx__fig">
-                    <span className="t-label">Reply chance</span>
-                    <span className={['t-num nx__v', c >= 0.45 && 'is-hi'].filter(Boolean).join(' ')}>{pctOf(c)}</span>
-                  </span>
-                </div>
-                <div className="nx__acts">
-                  {note && !note.started && n.url ? (
-                    <Button variant="ghost" size="sm" icon="arrow-up-right" href={n.url} target="_blank">
-                      Open posting
-                    </Button>
-                  ) : (
-                    <Button variant="primary" size="sm" icon="arrow-right" onClick={() => apply(n.postingId)} loading={busy === `apply:${n.postingId}`} disabled={!!busy && busy !== `apply:${n.postingId}`}>
-                      Apply
-                    </Button>
-                  )}
-                  <Button variant="ghost" size="sm" iconLeft="file" onClick={() => setKitFor({ postingId: n.postingId, title: n.title, company: n.company, url: n.url })}>
-                    Prepare application
-                  </Button>
-                  <Button variant="ghost" size="sm" iconLeft="check" onClick={() => mark(n)} loading={busy === `mark:${n.postingId}`} disabled={!!busy && busy !== `mark:${n.postingId}`}>
-                    Mark applied
-                  </Button>
-                </div>
-              </motion.li>
-            );
-          })}
+          {list.map((x, i) => (
+            <NextRow
+              key={x.postingId}
+              x={x}
+              i={i}
+              busy={busy}
+              blocked={blocked}
+              onApply={() => start(`apply:${x.postingId}`, () => applying.start([x.postingId]))}
+              onKit={() => setKitFor({ postingId: x.postingId, title: x.title, company: x.company, url: x.url })}
+              onMark={() => mark(x)}
+            />
+          ))}
         </ol>
       )}
       {insights.next.length > 5 && (
@@ -459,6 +424,73 @@ function ApplyNext({ insights, postings, engineOn }: { insights: TrackerInsights
       )}
       <KitSheet target={kitFor} onClose={() => setKitFor(undefined)} />
     </section>
+  );
+}
+
+function NextRow({ x, i, busy, blocked, onApply, onKit, onMark }: {
+  x: TrackerInsights['next'][number]; i: number; busy?: string; blocked?: string;
+  onApply: () => void; onKit: () => void; onMark: () => void;
+}) {
+  const run = useRunFor(x.postingId);
+  const c = chance(x.responseChance);
+  const live = run && isActive(run);
+  return (
+    <motion.li
+      className="nx"
+      layout
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.7, ease, delay: Math.min(i, 8) * 0.04 }}
+    >
+      <span className="nx__rank t-num">{pad2(i + 1)}</span>
+      <div className="nx__main">
+        <span className="nx__title">{x.title}</span>
+        <span className="nx__company">
+          {x.company}
+          {x.url && <span className="t-faint"> · {hostOf(x.url)}</span>}
+        </span>
+        <p className="nx__why">{x.why}</p>
+        {run && (
+          <p className={['nx__note', run.status === 'failed' ? 'is-back' : 'is-started'].join(' ')} role="status">
+            <Icon name={run.status === 'failed' ? 'warning' : 'check'} size={14} />
+            <span>
+              <b>{run.status === 'applied' ? 'Submitted.' : run.status === 'failed' ? 'Not sent.' : 'Applying now.'}</b>{' '}
+              {run.status === 'applied' ? run.confirmation : run.status === 'failed' ? run.reason : run.steps.at(-1)?.label ?? 'Opening a browser window'}
+            </span>
+          </p>
+        )}
+      </div>
+      <div className="nx__figs">
+        <span className="nx__fig">
+          <span className="t-label">Fit</span>
+          <span className="t-num nx__v">{x.fit}</span>
+        </span>
+        <span className="nx__fig">
+          <span className="t-label">Reply chance</span>
+          <span className={['t-num nx__v', c >= 0.45 && 'is-hi'].filter(Boolean).join(' ')}>{pctOf(c)}</span>
+        </span>
+      </div>
+      <div className="nx__acts">
+        <Button
+          variant="primary"
+          size="sm"
+          icon="arrow-right"
+          onClick={onApply}
+          loading={busy === `apply:${x.postingId}` || live}
+          disabled={!!blocked || run?.status === 'applied' || (!!busy && busy !== `apply:${x.postingId}`)}
+          title={blocked}
+        >
+          {run?.status === 'applied' ? 'Applied' : 'Apply'}
+        </Button>
+        <Button variant="ghost" size="sm" iconLeft="file" onClick={onKit}>
+          Prepare application
+        </Button>
+        <Button variant="ghost" size="sm" iconLeft="check" onClick={onMark} loading={busy === `mark:${x.postingId}`} disabled={!!busy && busy !== `mark:${x.postingId}`}>
+          Mark applied
+        </Button>
+      </div>
+    </motion.li>
   );
 }
 

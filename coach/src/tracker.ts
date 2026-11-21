@@ -76,7 +76,8 @@ export function markGhosted(apps: Application[], now: Date): Application[] {
   const cutoff = now.getTime() - GHOST_DAYS * DAY;
   for (const a of apps) {
     if (a.status !== 'applied') continue;
-    const heard = a.events.some((e) => e.kind !== 'applied');
+    // An automatic acknowledgement is not hearing back.
+    const heard = a.events.some((e) => e.kind !== 'applied' && e.kind !== 'auto-ack' && e.kind !== 'mail');
     if (heard || Date.parse(a.appliedAt) > cutoff) continue;
     const at = new Date(Date.parse(a.appliedAt) + GHOST_DAYS * DAY).toISOString();
     a.status = 'ghosted';

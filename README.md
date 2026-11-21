@@ -20,7 +20,10 @@ Tack is a career pivot coach. It reads live job postings, maps them against your
 - Application kit generator (`coach/src/kit.ts`, `POST /api/kit/:postingId`): Generates a role headline, tailored résumé bullet points mapped directly to original résumé lines (`guardBullets` drops bullets that cannot be traced back), a cover letter, talking points, honest talking points for open skill gaps, and questions to ask the interviewer.
 - MCP server integration (`coach/bin/mcp.ts`, `docs/MCP.md`): Exposes eight tools (state, gap, plan week, complete task, next applications, prepare application, interview question, and interview answer) over stdio against the exact same data store as the web app.
 - Native desktop wrapper (`desktop/`): Electron shell that manages the coach process, provides an API key configuration screen, and includes a crash monitor.
-- Optional external integrations: Read-only import of existing job applications from a Fanfold database (`TACK_FANFOLD_DB`) and recruiter email updates from Gmail (`TACK_GMAIL=1`).
+- Automated applying (`coach/src/apply.ts`, `POST /api/apply`, `POST /api/apply/top`): Tack starts its own copy of the browser engine (`coach/src/engine-proc.ts`) and hands it each posting. Every posting gets its own engine session in its own Chrome window, and a batch ("Apply to top N", up to 8) runs them side by side; one failure does not stop the others. The engine fills the form from the Application details on Start, the résumé file and the kit's answers, then submits it. Each run streams its steps into the trace and ends confirmed or failed with the reason, plus a picture of the page it ended on.
+- Practice form (`coach/src/practice.ts`, `/practice/apply/:postingId`): a three-step application form Tack serves itself, with a résumé upload, screening questions from the posting, a consent box, a review step and a reference number. The demo person and sample postings always apply here, never to a company. Submissions are kept under `practice-submission`.
+- Replies from mail (`coach/src/replies.ts`, `POST /api/applications/sync`): searches mail for every company with an open application, four at a time, sorts each message (interview, reply, rejected, offer, automatic acknowledgement, unrelated) in one model call with a keyword fallback, and moves statuses; acknowledgements never count as a reply. The demo person reads a bundled 12-message sample mailbox. Real Gmail goes through the engine's read-only search; only sender, subject and snippet are kept, in local state.
+- Read-only import of existing job applications from a Fanfold database (`TACK_FANFOLD_DB`).
 - Full offline support: Includes a bundled profile (Avery Quinn), 40 sample job postings, a 24-application history, and programmatic fallbacks for all eight model tasks.
 - Responsive layout: Every view includes dedicated loading, empty, and error states, scaling cleanly from 1440 px down to 390 px.
 
@@ -47,7 +50,7 @@ Tack is a career pivot coach. It reads live job postings, maps them against your
 - Plan generation and updates: Initial plan generation took 8.6 s cold (producing 55 to 60 tasks). Replanning runs entirely in code and is instantaneous.
 - Plan updates: Passing the week 1 checkpoint increased readiness from 36 to 38 during the recorded session. Marking the checkpoint as "not yet" and replanning added a review block, removed one low-priority task that could no longer fit, and delayed 12 tasks.
 - Mock interview evaluation: A 79-word candidate answer received an overall score of 80/100 under the rubric.
-- Test coverage and packaging: 112 automated tests passing (`cd coach && npm test`), clean UI type checks and builds, and desktop builds (`npm run dist`) producing `.dmg` and `.zip` installers of roughly 120 MB each. The packaged desktop application starts the coach server in about 0.7 s.
+- Test coverage and packaging: 134 automated tests passing (`cd coach && npm test`), clean UI type checks and builds, and desktop builds (`npm run dist`) producing `.dmg` and `.zip` installers of roughly 120 MB each. The packaged desktop application starts the coach server in about 0.7 s.
 - Demo recording: 2:46 runtime at 1920x1080 (H.264, 24 MB), recorded in a single continuous take using Chromium at 1440x900. Job boards were queried live; model calls were served from the local disk cache populated during warm-up runs to remove waiting delays. Only the 11.0 s harvest step was sped up (1.6x, labeled in video).
 
 ## Architecture
@@ -76,6 +79,21 @@ node --no-warnings coach/bin/serve.ts
 ```
 
 Open http://127.0.0.1:4400 in your browser. Click "Load the demo person" on the Start screen to populate all screens without needing to upload a résumé.
+
+### The browser engine
+
+Mail and applying start Tack's own engine the first time they are used: `engine/bin/serve.ts` as a child process with its state in `<state>/engine`, sign-in off, Tack's model, and no scheduler. It stops when the coach stops. Settings, all optional:
+
+| Variable | What it does |
+| --- | --- |
+| `TACK_APPROVALS` | Passed to the engine as `BROWSER_AGENT_APPROVALS`. Default `none`: fully automated. |
+| `TACK_ENGINE_MODEL` | The model the engine's agent uses. Default `TACK_MODEL_SMART`, then `TACK_MODEL_FAST`. |
+| `TACK_CHROME_PATH` | The Chrome executable the engine drives (Chrome for Testing works well). Default: the engine's own choice. |
+| `TACK_ENGINE_HEADLESS=1` | No visible windows. |
+| `TACK_FANFOLD_STATE` | Use a Fanfold that is already running from this state folder instead of starting one (its tools only). |
+| `TACK_MAIL=sample` | Read the bundled sample mailbox even for a real person. |
+| `TACK_EXTENSION_PORT`, `TACK_ENGINE_PORT` | The engine's extension bridge and HTTP ports. |
+| `TACK_ENGINE=off` | No engine at all. |
 
 ### Desktop
 
@@ -124,8 +142,9 @@ node submission/video/render.mjs final
 ## Limits
 
 - The macOS desktop binary uses ad-hoc code signing; Gatekeeper will require approval on first launch (right-click the app and choose Open).
-- Gmail integration for reading recruiter responses requires Google API credentials and setting `TACK_GMAIL=1`; it is disabled by default, so demo replies are updated manually or read from sample data.
-- Tack prepares application materials rather than submitting them directly to job sites; completed materials are copied by the user (or handled via Fanfold, where users review and confirm each answer).
+- Gmail needs `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`, and the person connects it once with "Connect Gmail" on the Tracker (Google's consent window). With `TACK_FANFOLD_STATE`, the running Fanfold's own connection is used, and that Fanfold must be signed in.
+- For live postings and a real person, applications are submitted for real with no review step unless `TACK_APPROVALS` says otherwise. The engine may still stop at a question it cannot answer (a consent box on an unknown form, a CAPTCHA, a sign-in); the run then ends as not sent, with what it asked.
+- Several applications at once share one model key. On Gemini's free tier a burst of parallel form steps can hit the per-minute limit, and the engine then waits about a minute before carrying on.
 - Application trends in the demo are calculated from sample records (the bundled profile's 24 applications, labeled as "sample" in the cards and the "What gets replies" panel).
 - Using the free Gemini API tier (15 requests per minute) causes an initial uncached gap calculation to take roughly one minute; subsequent runs pull from the local disk cache.
 - Board harvesting searches a fixed directory of 60 company boards; target roles with few listings across those specific companies will return fewer than 40 postings.

@@ -12,6 +12,8 @@ export interface Router {
   put(path: string, h: Handler): void;
   patch(path: string, h: Handler): void;
   delete(path: string, h: Handler): void;
+  /** A GET page outside /api, answered before the UI's static files. */
+  page?(path: string, h: Handler): void;
 }
 
 export class HttpError extends Error {
@@ -116,15 +118,19 @@ function serveStatic(req: IncomingMessage, res: ServerResponse, pathname: string
 
 export function createApp(): { router: Router; server: Server; listen(port: number, host?: string): Promise<void>; close(): Promise<void> } {
   const routes: Route[] = [];
+  const pages: Route[] = [];
   const add = (method: string) => (path: string, handler: Handler) => {
     routes.push({ method, parts: split(apiPath(path)), handler });
   };
-  const router: Router = { get: add('GET'), post: add('POST'), put: add('PUT'), patch: add('PATCH'), delete: add('DELETE') };
+  const router: Router = {
+    get: add('GET'), post: add('POST'), put: add('PUT'), patch: add('PATCH'), delete: add('DELETE'),
+    page: (path, handler) => { pages.push({ method: 'GET', parts: split(path), handler }); },
+  };
 
-  function match(method: string, path: string): { route?: Route; params: Record<string, string>; allowed: boolean } {
+  function match(method: string, path: string, table = routes): { route?: Route; params: Record<string, string>; allowed: boolean } {
     const parts = split(path);
     let allowed = false;
-    for (const route of routes) {
+    for (const route of table) {
       if (route.parts.length !== parts.length) continue;
       const params: Record<string, string> = {};
       let ok = true;
@@ -154,6 +160,22 @@ export function createApp(): { router: Router; server: Server; listen(port: numb
 
     if (!url.pathname.startsWith('/api/') && url.pathname !== '/api') {
       if (method !== 'GET' && method !== 'HEAD') return sendJson(res, 405, { error: 'method not allowed' });
+      const page = match(method, url.pathname, pages);
+      if (page.route) {
+        try {
+          const out = await page.route.handler({ req, res, params: page.params, query: url.searchParams, body: {} });
+          if (!res.headersSent && !res.writableEnded) {
+            const html = String(out ?? '');
+            res.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', 'content-length': Buffer.byteLength(html) });
+            res.end(method === 'HEAD' ? undefined : html);
+          }
+        } catch (err) {
+          const status = err instanceof HttpError ? err.status : 500;
+          if (status >= 500) console.error(`${method} ${url.pathname}:`, err);
+          if (!res.headersSent) { res.writeHead(status, { 'content-type': 'text/plain; charset=utf-8' }); res.end((err as Error).message); }
+        }
+        return;
+      }
       return serveStatic(req, res, url.pathname);
     }
 

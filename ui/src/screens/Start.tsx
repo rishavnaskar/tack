@@ -5,7 +5,7 @@ import { api, ApiError, fileToBase64 } from '../api/client';
 import { tracked, useTrace } from '../api/events';
 import { actions, useAppState, useGap } from '../api/hooks';
 import { useQuery } from '../api/query';
-import type { AppState, Goal, Profile, ProfileSkill } from '../api/types';
+import type { AppState, ApplicationDetails, Goal, Profile, ProfileSkill } from '../api/types';
 import {
   BlueprintLoader,
   Button,
@@ -105,6 +105,7 @@ export function Start() {
           <ResumeSection state={state} onDemo={loadDemo} demoBusy={demoBusy} />
           <TargetSection state={state} />
           <MarketSection state={state} />
+          <DetailsSection state={state} />
         </>
       )}
 
@@ -661,6 +662,123 @@ function TargetSection({ state }: { state: AppState }) {
           <span className="t-paper">{goal.hoursPerWeek} h</span> a week <span className="t-faint">×</span> <span className="t-paper">{goal.weeks}</span> weeks{' '}
           <span className="t-faint">=</span> <span className="t-accent">{total} hours</span>, starting {fmtDate(goal.startDate)}
         </p>
+      </Card>
+    </section>
+  );
+}
+
+/* 04 application details */
+
+const DETAIL_FIELDS: { key: keyof ApplicationDetails; label: string; placeholder: string; hint?: string; type?: string; autoComplete?: string }[] = [
+  { key: 'fullName', label: 'Full name', placeholder: 'Your name as on the résumé', autoComplete: 'name' },
+  { key: 'email', label: 'Email', placeholder: 'you@example.com', type: 'email', autoComplete: 'email' },
+  { key: 'phone', label: 'Phone', placeholder: '+91 98450 00000', type: 'tel', autoComplete: 'tel' },
+  { key: 'city', label: 'City', placeholder: 'Bengaluru', autoComplete: 'address-level2' },
+  { key: 'linkedin', label: 'LinkedIn URL', placeholder: 'https://www.linkedin.com/in/…', type: 'url' },
+  { key: 'workAuthorisation', label: 'Work authorisation', placeholder: 'India: Citizen', hint: 'Country and status, like India: Citizen' },
+  { key: 'noticePeriod', label: 'Notice period', placeholder: '30 days', hint: 'A number and a unit, or Immediately' },
+];
+
+function DetailsSection({ state }: { state: AppState }) {
+  const view = useQuery('details', api.details);
+  const [draft, setDraft] = useState<ApplicationDetails>();
+  const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [problems, setProblems] = useState<Record<string, string>>({});
+  const timer = useRef<number>(undefined);
+  const touched = useRef(false);
+
+  useEffect(() => {
+    if (view.data && !touched.current) setDraft(view.data.details);
+  }, [view.data]);
+
+  // The demo person, a new résumé or a reset change what is stored: read it again.
+  useEffect(() => {
+    touched.current = false;
+    void view.refetch().catch(() => undefined);
+  }, [state.profile?.name, state.mode]);
+
+  const set = (patch: Partial<ApplicationDetails>) => {
+    touched.current = true;
+    setDraft((d) => ({ ...(d ?? view.data!.details), ...patch }));
+  };
+
+  useEffect(() => {
+    if (!touched.current || !draft) return;
+    window.clearTimeout(timer.current);
+    timer.current = window.setTimeout(async () => {
+      setSaveState('saving');
+      try {
+        const next = await api.saveDetails(draft);
+        setProblems(next.problems ?? {});
+        setSaveState('saved');
+        void view.refetch().catch(() => undefined);
+      } catch {
+        setSaveState('error');
+      }
+    }, 700);
+    return () => window.clearTimeout(timer.current);
+  }, [draft]);
+
+  const d = draft ?? view.data?.details;
+  const ready = view.data?.readiness;
+  const resume = view.data?.resume;
+
+  return (
+    <section className="section">
+      <SectionHead
+        index="04"
+        title="Application details"
+        text="What forms ask for. Tack gives these and your résumé to the browser engine, which fills and submits applications for you."
+        aside={
+          <span className={`savestate t-micro is-${saveState}`} aria-live="polite">
+            {saveState === 'saving' ? 'Saving' : saveState === 'saved' ? 'Saved' : saveState === 'error' ? 'Not saved' : ''}
+          </span>
+        }
+      />
+      <Card pad="lg" className="details">
+        {!d ? (
+          view.error ? (
+            <ErrorState compact title="Could not load the details" message={view.error.message} onRetry={() => view.refetch().catch(() => undefined)} />
+          ) : (
+            <Skeleton height={180} radius={12} />
+          )
+        ) : (
+          <>
+            <div className="details__grid">
+              {DETAIL_FIELDS.map((f) => (
+                <TextField
+                  key={f.key}
+                  label={f.label}
+                  placeholder={f.placeholder}
+                  type={f.type ?? 'text'}
+                  autoComplete={f.autoComplete}
+                  value={d[f.key] ?? ''}
+                  hint={f.hint}
+                  error={problems[f.key]}
+                  onChange={(e) => set({ [f.key]: e.target.value } as Partial<ApplicationDetails>)}
+                />
+              ))}
+            </div>
+            <div className="details__foot">
+              <p className="details__resume">
+                <Icon name="file" size={16} />
+                {resume ? (
+                  <span>
+                    Résumé file: <span className="t-paper">{resume.filename}</span>
+                  </span>
+                ) : (
+                  <span className="t-mute">No résumé file yet. Add one in 01 above; it is what gets uploaded to forms.</span>
+                )}
+              </p>
+              {ready && (
+                <p className={['details__ready', ready.ready ? 'is-ready' : 'is-missing'].join(' ')} role="status">
+                  <Icon name={ready.ready ? 'check' : 'warning'} size={16} />
+                  <span>{ready.reason}</span>
+                </p>
+              )}
+            </div>
+          </>
+        )}
       </Card>
     </section>
   );

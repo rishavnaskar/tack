@@ -91,3 +91,35 @@ export interface Kit {
   coverNote: string; talkingPoints: string[];
   gapsToAddress: { skill: string; howToFrame: string }[]; questionsToAsk: string[];
 }
+
+export type MailKind = 'interview' | 'reply' | 'rejected' | 'offer' | 'auto-ack' | 'unrelated';
+export interface MailMessage { id: string; company: string; at: string; from: string; subject: string; snippet: string }
+export interface MailChange {
+  company: string; title: string; applicationId: string; from: AppStatus; to: AppStatus;
+  subject: string; sender: string; at: string; kind: MailKind;
+}
+export interface SyncResult {
+  added: number; updated: number; note: string; source: 'sample' | 'gmail' | 'none';
+  searched: number; messages: number; classified: Partial<Record<MailKind, number>>; by: 'model' | 'rules' | 'none';
+  changes: MailChange[]; ms: number;
+}
+export interface MailStatus {
+  source: 'sample' | 'gmail' | 'none'; connected: boolean; label: string; note: string;
+  canConnect: boolean; engine: 'own' | 'attach' | 'off';
+}
+export interface ApplicationDetails {
+  fullName: string; email: string; phone: string; city: string; linkedin: string;
+  workAuthorisation: string; noticePeriod: string; updatedAt?: string;
+}
+export interface ApplyStep { at: string; kind: 'open' | 'form' | 'fill' | 'upload' | 'next' | 'submit' | 'confirm' | 'note' | 'error'; label: string }
+export interface ApplyRun {
+  id: string; batchId: string; postingId: string; company: string; title: string;
+  target: 'practice' | 'live'; url: string; session: string;
+  status: 'queued' | 'running' | 'applied' | 'failed';
+  steps: ApplyStep[]; fields: number; confirmation?: string; reference?: string; reason?: string;
+  applicationId?: string; startedAt: string; endedAt?: string; ms?: number;
+  /** A picture of the engine's page when the run ended. */
+  shot?: boolean;
+}
+export interface ApplyBatch { id: string; startedAt: string; endedAt?: string; ms?: number; runs: ApplyRun[]; note?: string }
+export interface ApplyReadiness { ready: boolean; missing: string[]; reason: string; target: 'practice' | 'live' }

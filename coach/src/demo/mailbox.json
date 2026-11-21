@@ -1,0 +1,86 @@
+[
+  {
+    "id": "m01",
+    "daysAgo": 2, "hour": 11, "minute": 24,
+    "from": "Neha Varghese <neha.varghese@cobaltmetrics.example>",
+    "subject": "Cobalt Metrics: interview for Product Manager, AI Insights",
+    "snippet": "Hi Avery, thanks for applying. We'd like to set up a 45-minute interview with our Head of Product next week. Could you share two or three slots that work for you?"
+  },
+  {
+    "id": "m02",
+    "daysAgo": 6, "hour": 9, "minute": 2,
+    "from": "Fernhill Learning Careers <no-reply@fernhill.example>",
+    "subject": "We received your application to Fernhill Learning",
+    "snippet": "Thank you for applying for Product Manager, AI Tutor. This is an automated message to confirm we have received your application. Our team will review it shortly."
+  },
+  {
+    "id": "m03",
+    "daysAgo": 1, "hour": 16, "minute": 40,
+    "from": "Fernhill Learning Talent Team <talent@fernhill.example>",
+    "subject": "Your application for Product Manager, AI Tutor",
+    "snippet": "Hi Avery, thank you for your interest in Fernhill Learning. Unfortunately we have decided to move forward with candidates whose experience more closely matches the role."
+  },
+  {
+    "id": "m04",
+    "daysAgo": 3, "hour": 14, "minute": 15,
+    "from": "Rohan Iyer <rohan.iyer@vistaarbank.example>",
+    "subject": "Re: Product Manager – Conversational Banking (GenAI) at Vistaar Bank Digital",
+    "snippet": "Hi Avery, I'm the recruiter for this role. Before I share your profile with the hiring manager, could you confirm your notice period and current location?"
+  },
+  {
+    "id": "m05",
+    "daysAgo": 4, "hour": 10, "minute": 5,
+    "from": "Banyan Cloud Services Recruiting <careers@banyancloud.example>",
+    "subject": "Update on your Banyan Cloud Services application",
+    "snippet": "Thank you for your time and interest in the Senior Product Manager, AI Infrastructure role. After careful review, we will not be progressing your application at this stage."
+  },
+  {
+    "id": "m06",
+    "daysAgo": 1, "hour": 12, "minute": 50,
+    "from": "Ishaan Mehra <ishaan@lumenfreight.example>",
+    "subject": "Lumen Freight: next steps – platform team interview",
+    "snippet": "Thanks for the call on Tuesday. The platform team would like to invite you to a technical product interview. Please book a time that suits you using the link below."
+  },
+  {
+    "id": "m07",
+    "daysAgo": 3, "hour": 18, "minute": 30,
+    "from": "Quarry Labs People Team <people@quarrylabs.example>",
+    "subject": "Offer: Product Manager, Developer Platform at Quarry Labs",
+    "snippet": "Avery, we're delighted to extend you an offer to join Quarry Labs as Product Manager, Developer Platform. Your offer letter is attached; please review it and let us know by Friday."
+  },
+  {
+    "id": "m08",
+    "daysAgo": 5, "hour": 13, "minute": 10,
+    "from": "Tanvi Rao <tanvi.rao@hearthfinance.example>",
+    "subject": "Your application at Hearth Home Finance",
+    "snippet": "Hi Avery, apologies for the slow reply. Your payments background caught our eye for the Digital Lending AI role. Are you still exploring opportunities?"
+  },
+  {
+    "id": "m09",
+    "daysAgo": 8, "hour": 9, "minute": 45,
+    "from": "Helix Retail Group Talent Acquisition <talent@helixretail.example>",
+    "subject": "Helix Retail Group – application status",
+    "snippet": "Dear Avery, we regret to inform you that the Product Manager, AI Merchandising position has been filled. We will keep your details on file for future openings."
+  },
+  {
+    "id": "m10",
+    "daysAgo": 4, "hour": 8, "minute": 20,
+    "from": "Riverstone Payments <jobs-noreply@riverstonepay.example>",
+    "subject": "Thanks for applying to Riverstone Payments",
+    "snippet": "We have received your application for Senior Product Manager, Risk Intelligence. Please do not reply to this email; we'll be in touch if your profile matches."
+  },
+  {
+    "id": "m11",
+    "daysAgo": 2, "hour": 7, "minute": 0,
+    "from": "Product Weekly <digest@productweekly.example>",
+    "subject": "This week in product: 12 AI PM roles hiring now",
+    "snippet": "Lumen Freight, Cobalt Metrics and Kestrel Ledger are hiring AI product managers. Plus: how to prepare for a product sense interview. Unsubscribe any time."
+  },
+  {
+    "id": "m12",
+    "daysAgo": 16, "hour": 15, "minute": 35,
+    "from": "Sundial Logistics Careers <careers-noreply@sundiallogistics.example>",
+    "subject": "Application received: Product Manager, AI Operations",
+    "snippet": "Thank you for your interest in Sundial Logistics. Your application has been received and is now with our recruitment team."
+  }
+]
