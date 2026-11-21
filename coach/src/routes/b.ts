@@ -173,6 +173,7 @@ export function mount(r: Router): void {
   });
 
   r.post('/plan/replan', ({ body }) => {
+    if (body?.reason !== undefined && (typeof body.reason !== 'string' || body.reason.length > 300)) throw new HttpError(400, 'reason must be text of 300 characters at most');
     const current = getPlan();
     const goal = must<Goal>(SINGLE, 'goal', 'Set a goal before replanning.');
     const since = current.changes[current.changes.length - 1]?.at ?? current.createdAt;
@@ -293,11 +294,27 @@ export function mount(r: Router): void {
   r.get('/applications', () => applications());
 
   r.post('/applications', ({ body }) => {
-    const b = (body ?? {}) as Partial<Application>;
+    const raw = (body ?? {}) as Record<string, unknown>;
+    if (raw.url !== undefined && raw.url !== '' && (typeof raw.url !== 'string' || !/^https?:\/\/[^\s]+$/i.test(raw.url.trim()))) {
+      throw new HttpError(400, 'url must be an http or https address');
+    }
+    const short = (k: string, max: number) => {
+      const v = raw[k];
+      if (v === undefined) return undefined;
+      if (typeof v !== 'string') throw new HttpError(400, `${k} must be a string`);
+      if (v.length > max) throw new HttpError(400, `${k} is too long (${max} characters at most)`);
+      return v.trim();
+    };
+    const b = {
+      ...(raw as Partial<Application>),
+      postingId: short('postingId', 120), title: short('title', 200), company: short('company', 160), url: short('url', 2000),
+      roleFamily: short('roleFamily', 60), seniority: short('seniority', 60), companySize: short('companySize', 60), source: short('source', 60),
+      appliedAt: short('appliedAt', 40),
+    } as Partial<Application>;
     const posting = b.postingId ? store.get<Posting>('posting', b.postingId) : undefined;
     if (b.postingId && !posting) throw new HttpError(404, `No posting ${b.postingId}`);
-    const title = b.title ?? posting?.title;
-    const company = b.company ?? posting?.company;
+    const title = b.title || posting?.title;
+    const company = b.company || posting?.company;
     if (!title || !company) throw new HttpError(400, 'title and company are required (or a postingId)');
     const status = b.status && APP_STATUSES.includes(b.status) ? b.status : 'applied';
     const appliedAt = b.appliedAt && !Number.isNaN(Date.parse(b.appliedAt)) ? new Date(b.appliedAt).toISOString() : new Date().toISOString();
@@ -324,6 +341,7 @@ export function mount(r: Router): void {
     const app = must<Application>('application', params.id, `No application ${params.id}`, 404);
     const status = body?.status as AppStatus;
     if (!APP_STATUSES.includes(status)) throw new HttpError(400, `status must be one of ${APP_STATUSES.join(', ')}`);
+    if (body?.note !== undefined && (typeof body.note !== 'string' || body.note.length > 500)) throw new HttpError(400, 'note must be text of 500 characters at most');
     const at = new Date().toISOString();
     app.status = status;
     app.lastEventAt = at;
