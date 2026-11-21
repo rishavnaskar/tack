@@ -4,7 +4,7 @@ import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { stateDir } from './store.ts';
 import { emit } from './trace.ts';
-import { chargeModelCall, isHosted } from './hosted.ts';
+import { chargeModelCall, currentVisitor, isHosted } from './hosted.ts';
 import { MAX_PAUSE_MS, modelRpm, sharedBudget } from './limiter.ts';
 
 const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';
@@ -76,10 +76,18 @@ export function modelName(): string {
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+// The provider's own deadline from its last 429, uncapped. The shared budget pauses for at most
+// MAX_PAUSE_MS; hosted mode answers within maxWaitMs, so while this is further off a call fails now.
+let refusedUntil = 0;
+
 // One budget for every call in the process and for the engine's model traffic (limiter.ts).
-// A 429 pauses every caller, not just the one that got it.
+// A 429 pauses every caller, not just the one that got it. In hosted mode each visitor is a lane of
+// its own, so one person's gap build takes turns with everyone else's calls.
 async function slot(task: string): Promise<void> {
-  const waited = await sharedBudget().acquire('tack');
+  const left = refusedUntil - Date.now();
+  if (left > cfg().maxWaitMs) throw new LlmError(429, `model rate limited for another ${Math.ceil(left / 1000)} s`);
+  const v = currentVisitor();
+  const waited = await sharedBudget().acquire(v ? `visitor-${v.key.slice(0, 12)}` : 'tack');
   if (waited > 1500) emit({ run: 'model', step: task, detail: `waited ${Math.ceil(waited / 1000)} s for the shared model budget (${modelRpm()} a minute)`, status: 'start' });
 }
 
@@ -91,12 +99,12 @@ function sha(s: string): string {
   return createHash('sha256').update(s).digest('hex');
 }
 
-// A per-day quota can ask for hours; a call gives up on its retries sooner than that.
+// What the endpoint asks for, which a per-day quota can put at hours.
 function retryDelay(res: Response, body: string, attempt: number, base: number): number {
   const header = Number(res.headers.get('retry-after'));
-  if (header > 0) return Math.min(MAX_PAUSE_MS, header * 1000);
+  if (header > 0) return header * 1000;
   const m = body.match(/"retryDelay"\s*:\s*"(\d+(?:\.\d+)?)s"/);
-  if (m) return Math.min(MAX_PAUSE_MS, Math.ceil(Number(m[1]) * 1000) + 250);
+  if (m) return Math.ceil(Number(m[1]) * 1000) + 250;
   return base * 2 ** attempt + Math.floor(Math.random() * base * 0.25);
 }
 
@@ -141,13 +149,20 @@ async function post(body: object, call: CallOpts): Promise<string> {
       if (Array.isArray(content)) return content.map((p: any) => p?.text ?? '').join('');
       throw new LlmError(502, `model returned no content (finish: ${data?.choices?.[0]?.finish_reason ?? 'unknown'})`);
     }
-    if ((res.status === 429 || res.status >= 500) && attempt < retries) {
-      const wait = retryDelay(res, text, attempt, c.backoffMs);
-      if (res.status === 429) sharedBudget().pause(wait);
-      if (wait > c.maxWaitMs) throw new LlmError(res.status, `model ${res.status === 429 ? 'rate limited' : `error ${res.status}`}; it asks to wait ${Math.ceil(wait / 1000)} s`);
-      note(`${res.status === 429 ? 'rate limited' : `model error ${res.status}`}; retry ${attempt + 1} of ${retries} in ${Math.ceil(wait / 1000)} s`);
-      await sleep(wait);
-      continue;
+    if (res.status === 429 || res.status >= 500) {
+      const asked = retryDelay(res, text, attempt, c.backoffMs);
+      // Retries wait at most a minute however long the endpoint asks; the asked time decides fail-fast.
+      const wait = Math.min(MAX_PAUSE_MS, asked);
+      if (res.status === 429) {
+        sharedBudget().pause(wait);
+        refusedUntil = Math.max(refusedUntil, Date.now() + asked);
+      }
+      if (attempt < retries) {
+        if (asked > c.maxWaitMs) throw new LlmError(res.status, `model ${res.status === 429 ? 'rate limited' : `error ${res.status}`}; it asks to wait ${Math.ceil(asked / 1000)} s`);
+        note(`${res.status === 429 ? 'rate limited' : `model error ${res.status}`}; retry ${attempt + 1} of ${retries} in ${Math.ceil(wait / 1000)} s`);
+        await sleep(wait);
+        continue;
+      }
     }
     throw new LlmError(res.status, `model call failed (${res.status}): ${text.slice(0, 300)}`);
   }

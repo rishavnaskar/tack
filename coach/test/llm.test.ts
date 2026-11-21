@@ -106,3 +106,18 @@ test('PDF input is sent as a file part, then as a data URL if the first form is 
   assert.equal(calls[0].body.messages[1].content[1].type, 'file');
   assert.equal(calls[1].body.messages[1].content[1].type, 'image_url');
 });
+
+// Last in this file: the refusal below leaves the shared budget paused for a minute.
+test('with a wait cap, a long refusal fails at once, and later calls fail before queueing', async () => {
+  process.env.TACK_MODEL_MAX_WAIT_MS = '5000';
+  try {
+    const t0 = Date.now();
+    replies.push(reply('{"error": "quota"}', 429, { 'retry-after': '3600' }));
+    await assert.rejects(json({ task: 't', system: 's', prompt: 'quota one', schema }), (err: unknown) => err instanceof LlmError && err.status === 429 && /asks to wait 3600 s/.test(err.message));
+    await assert.rejects(json({ task: 't', system: 's', prompt: 'quota two', schema }), (err: unknown) => err instanceof LlmError && err.status === 429 && /rate limited for another 3\d{3} s/.test(err.message));
+    assert.equal(calls.length, 1);
+    assert.ok(Date.now() - t0 < 2000);
+  } finally {
+    delete process.env.TACK_MODEL_MAX_WAIT_MS;
+  }
+});
