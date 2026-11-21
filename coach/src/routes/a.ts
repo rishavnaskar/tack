@@ -46,14 +46,14 @@ function text(v: unknown, field: string, required = false): string {
     if (required) throw new HttpError(400, `${field} is required`);
     return '';
   }
-  if (typeof v !== 'string') throw new HttpError(400, `${field} must be a string`);
+  if (typeof v !== 'string') throw new HttpError(400, `${field} must be text.`);
   return v.trim();
 }
 
 function num(v: unknown, field: string, min: number, max: number, fallback: number): number {
   if (v === undefined || v === null || v === '') return fallback;
   const n = Number(v);
-  if (!Number.isFinite(n) || n < min || n > max) throw new HttpError(400, `${field} must be a number from ${min} to ${max}`);
+  if (!Number.isFinite(n) || n < min || n > max) throw new HttpError(400, `${field} must be a number from ${min} to ${max}.`);
   return n;
 }
 
@@ -67,7 +67,7 @@ function cleanProfile(body: any): Profile {
   if (!body || typeof body !== 'object') throw new HttpError(400, 'profile must be an object');
   const strs = (v: unknown, field: string) => {
     if (v === undefined) return [];
-    if (!Array.isArray(v)) throw new HttpError(400, `${field} must be an array`);
+    if (!Array.isArray(v)) throw new HttpError(400, `${field} must be a list.`);
     return v.map((x) => String(x).trim()).filter(Boolean);
   };
   if (body.skills !== undefined && !Array.isArray(body.skills)) throw new HttpError(400, 'skills must be an array');
@@ -190,8 +190,8 @@ export function mount(r: Router): void {
     if (!live && !isDemo() && !isHosted()) {
       t.fail('no live postings could be read');
       throw new HttpError(503, (await engine.status()).available
-        ? `No open roles fit "${role}" on the job boards right now. Try a broader target role.`
-        : 'The public job boards are not reachable right now. Check the connection and try again.');
+        ? `No jobs match "${role}" right now. Try a broader role.`
+        : 'Cannot reach job boards right now. Check your connection and try again.');
     }
     if (!live) postings = snapshotPostings().slice(0, count);
     else {

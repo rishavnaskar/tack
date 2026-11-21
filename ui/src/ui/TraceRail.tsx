@@ -102,7 +102,7 @@ export function TraceRail({ events, open, onOpenChange, active, activeLabel, con
           {events.length === 0 ? (
             <div className="trace__empty">
               <span className="t-label">Nothing yet</span>
-              <p>Steps from reading postings, building the gap map and planning show up here as they happen.</p>
+              <p>Updates will appear here as we review postings, build the gap map, and plan.</p>
             </div>
           ) : (
             <ol>

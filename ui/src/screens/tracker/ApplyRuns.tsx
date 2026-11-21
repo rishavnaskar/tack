@@ -72,11 +72,11 @@ export function RunCard({ run, compact }: { run: ApplyRun; compact?: boolean }) 
           ))}
         </ol>
       ) : (
-        <p className="run__wait t-faint">{run.status === 'queued' ? 'Starting the engine and preparing answers' : 'Opening a browser window'}</p>
+        <p className="run__wait t-faint">{run.status === 'queued' ? 'Starting up and preparing answers' : 'Opening a browser window'}</p>
       )}
       {run.shot && !active && (
-        <a className="run__shot" href={`/api/apply/runs/${encodeURIComponent(run.id)}/shot`} target="_blank" rel="noreferrer" title="The engine's page when it finished">
-          <img src={`/api/apply/runs/${encodeURIComponent(run.id)}/shot`} alt={`The page at ${run.company} when the engine finished`} loading="lazy" />
+        <a className="run__shot" href={`/api/apply/runs/${encodeURIComponent(run.id)}/shot`} target="_blank" rel="noreferrer" title="Final page when finished">
+          <img src={`/api/apply/runs/${encodeURIComponent(run.id)}/shot`} alt={`Page at ${run.company} when finished`} loading="lazy" />
         </a>
       )}
       {run.status === 'applied' && run.confirmation && <p className="run__foot is-ok">{run.confirmation}</p>}
@@ -104,13 +104,13 @@ export function BatchPanel({ batch }: { batch: ApplyBatch }) {
       <div className="batch__head">
         <p className="batch__line">
           {batch.dryRun && <span className="run__target t-micro is-dry">DRY RUN</span>}
-          <span className="t-label">{batch.runs.length === 1 ? 'One application' : `${batch.runs.length} applications in parallel`}</span>
+          <span className="t-label">{batch.runs.length === 1 ? 'One application' : `${batch.runs.length} applications at once`}</span>
           <span className="t-mono t-faint">
             {active ? `${ok + failed + dry} of ${batch.runs.length} done · ${secs(ms)}` : batch.dryRun ? `${dry} of ${batch.runs.length} filled, none submitted, in ${secs(ms)}` : `${ok} of ${batch.runs.length} submitted in ${secs(ms)}`}
           </span>
         </p>
         {batch.dryRun && <p className="batch__note t-faint">Dry run: every form is filled for real and left unsent. Nothing here is an application.</p>}
-        {practice && !batch.dryRun && <p className="batch__note t-faint">Practice applications: each one opens in its own Chrome window and is sent to Tack's practice form, never to the company.</p>}
+        {practice && !batch.dryRun && <p className="batch__note t-faint">Practice mode: each opens in Chrome and sends to Tack's practice form, never the company.</p>}
         {!active && (
           <Button variant="quiet" size="sm" iconLeft="close" onClick={() => applying.dismiss(batch.id)}>
             Dismiss

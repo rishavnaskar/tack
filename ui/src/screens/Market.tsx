@@ -79,9 +79,9 @@ export function Market() {
     try {
       const res = await actions.harvest(40);
       setHarvestKey((k) => k + 1);
-      toast({ title: `${res.postings.length} postings read`, body: res.live ? 'Read live through the engine.' : 'From the bundled sample; the engine is off.', tone: 'success' });
+      toast({ title: `${res.postings.length} postings read`, body: res.live ? 'Checked live by the engine.' : 'From sample data; the engine is off.', tone: 'success' });
     } catch (e) {
-      toast({ title: 'Could not read postings', body: (e as Error).message, tone: 'error' });
+      toast({ title: 'Could not load job posts', body: (e as Error).message, tone: 'error' });
     } finally {
       setHarvesting(false);
     }
@@ -97,15 +97,15 @@ export function Market() {
   const goal = state?.goal;
   const anyLive = all.some((p) => p.live);
   const purpose = goal
-    ? `Every posting Tack read for ${goal.targetRole}${goal.location ? ` in ${goal.location}` : ''}, with the skills each one asks for and how well you fit.`
-    : 'Every posting Tack read, with the skills each one asks for and how well you fit.';
+    ? `Every job Tack found for ${goal.targetRole}${goal.location ? ` in ${goal.location}` : ''}, with the skills needed and how well you match.`
+    : 'Every job Tack found, with the skills needed and how well you match.';
 
   return (
     <div className="market">
       <PageHeader
         index="01"
         section="Market"
-        title="The market, read closely"
+        title="A closer look at the market"
         purpose={purpose}
         actions={
           all.length > 0 ? (
@@ -122,7 +122,7 @@ export function Market() {
       />
 
       {postings.error && !postings.data ? (
-        <ErrorState title="Could not load postings" message={postings.error.message} onRetry={() => postings.refetch().catch(() => undefined)} />
+        <ErrorState title="Could not load job posts" message={postings.error.message} onRetry={() => postings.refetch().catch(() => undefined)} />
       ) : postings.loading || harvesting ? (
         <MarketLoading harvesting={harvesting} />
       ) : all.length === 0 ? (
@@ -174,8 +174,8 @@ export function Market() {
             <EmptyState
               compact
               eyebrow="No matches"
-              title="No postings match these filters"
-              body="Loosen one of the filters above to see more."
+              title="No jobs match these filters"
+              body="Adjust a filter above to see more."
               action={
                 <Button variant="ghost" size="sm" onClick={clear}>
                   Clear filters
@@ -262,7 +262,7 @@ function MarketStrip({ postings }: { postings: Posting[] }) {
       </span>
     </>
   ) : (
-    'No posting lists pay'
+    'No jobs list pay'
   );
   // when every company appears once, a size split says more than a top list
   const spread = (companies[0]?.count ?? 0) <= 1;
@@ -274,7 +274,7 @@ function MarketStrip({ postings }: { postings: Posting[] }) {
     <div className="strip">
       <Card pad="md" className="strip__stats" settle>
         <Stat label="Postings" value={postings.length} note={`from ${companyCount} companies`} />
-        <Stat label="Median fit" value={fits.length ? median(fits) : '–'} unit="/100" note={`${strong} at 70 or above`} />
+        <Stat label="Median fit" value={fits.length ? median(fits) : '–'} unit="/100" note={`${strong} at 70 or higher`} />
       </Card>
       <Card pad="md" label={spread ? 'Company size' : 'Top companies'} settle={0.06}>
         <div className="strip__bars">
@@ -401,7 +401,7 @@ function MarketLoading({ harvesting }: { harvesting: boolean }) {
       </div>
       {harvesting && (
         <p className="market__reading t-mono">
-          <span className="pulse-dot" /> Reading postings. Each window fills in as its skills are pulled out.
+          <span className="pulse-dot" /> Reading job posts. Each window fills in as skills are found.
         </p>
       )}
       <div className="wall">
@@ -440,11 +440,11 @@ function MarketLoading({ harvesting }: { harvesting: boolean }) {
 function EmptyMarket({ canRun, onRun }: { canRun: boolean; onRun: () => void }) {
   return (
     <EmptyState
-      eyebrow="No postings yet"
-      title="Nothing read yet"
+      eyebrow="No jobs yet"
+      title="Nothing scanned yet"
       body={
         canRun
-          ? 'Tack will collect about 40 postings for your target role and pull out the skills each one asks for.'
+          ? 'Tack will find about 40 jobs for your target role and list the skills each one needs.'
           : 'Add a résumé and a target role on the start screen, then read the market.'
       }
       action={
@@ -480,7 +480,7 @@ function PostingDrawer({ posting, onClose, onPrepare }: { posting?: Posting; onC
     setApplying(true);
     try {
       const res = await applyStore.start([p.id]);
-      toast({ title: res.note, body: 'Follow it under Apply next in the Tracker, or in the trace.', tone: 'success' });
+      toast({ title: res.note, body: 'Track it under Apply next in the Tracker, or in the trace.', tone: 'success' });
     } catch (e) {
       toast({ title: 'Could not start the application', body: (e as Error).message, tone: 'error' });
     } finally {
@@ -508,7 +508,7 @@ function PostingDrawer({ posting, onClose, onPrepare }: { posting?: Posting; onC
       footer={
         p ? (
           <div className="pd-foot">
-            {!p.live && <span className="drawer-note">{canApply ? 'Sample posting: applies to Tack\'s practice form.' : 'Sample posting from the bundled market.'}</span>}
+            {!p.live && <span className="drawer-note">{canApply ? "Sample job: submits to Tack's practice form." : 'Sample job from the demo market.'}</span>}
             <Button variant="ghost" className="pd-foot__close" onClick={onClose}>
               Close
             </Button>
@@ -517,7 +517,7 @@ function PostingDrawer({ posting, onClose, onPrepare }: { posting?: Posting; onC
             </Button>
             {canApply && (
               <Button variant="primary" className="pd-foot__apply" icon="arrow-right" onClick={apply} loading={applying}>
-                Apply through the engine
+                Apply using the engine
               </Button>
             )}
           </div>
@@ -567,7 +567,7 @@ function PostingDrawer({ posting, onClose, onPrepare }: { posting?: Posting; onC
                   </div>
                 </div>
               )}
-              <p className="pd__hint t-micro">Highlighted lines are where each skill was found. Pick a skill to jump to it.</p>
+              <p className="pd__hint t-micro">Highlighted lines show where skills were found. Pick a skill to jump to it.</p>
             </div>
           )}
 

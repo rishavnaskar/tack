@@ -124,7 +124,7 @@ export function mount(r: Router): void {
   // ---- plan ----
   r.post('/plan/build', async () => {
     const gap = must<GapMap>(SINGLE, 'gap', 'Build the gap map before the plan.');
-    const goal = must<Goal>(SINGLE, 'goal', 'Set a goal before building the plan.');
+    const goal = must<Goal>(SINGLE, 'goal', 'Set a goal before making the plan.');
     const profile = store.get<Profile>(SINGLE, 'profile');
     const t = trace.run('plan');
     try {
@@ -175,7 +175,7 @@ export function mount(r: Router): void {
   r.post('/plan/replan', ({ body }) => {
     if (body?.reason !== undefined && (typeof body.reason !== 'string' || body.reason.length > 300)) throw new HttpError(400, 'reason must be text of 300 characters at most');
     const current = getPlan();
-    const goal = must<Goal>(SINGLE, 'goal', 'Set a goal before replanning.');
+    const goal = must<Goal>(SINGLE, 'goal', 'Set a goal before you replan.');
     const since = current.changes[current.changes.length - 1]?.at ?? current.createdAt;
     const recent = sessions().filter((s) => s.finishedAt && s.finishedAt > since);
     const t = trace.run('replan');
@@ -301,8 +301,8 @@ export function mount(r: Router): void {
     const short = (k: string, max: number) => {
       const v = raw[k];
       if (v === undefined) return undefined;
-      if (typeof v !== 'string') throw new HttpError(400, `${k} must be a string`);
-      if (v.length > max) throw new HttpError(400, `${k} is too long (${max} characters at most)`);
+      if (typeof v !== 'string') throw new HttpError(400, `${k} must be text.`);
+      if (v.length > max) throw new HttpError(400, `${k} is too long (up to ${max} characters).`);
       return v.trim();
     };
     const b = {
@@ -418,7 +418,7 @@ export function mount(r: Router): void {
 
   r.get('/kit/:postingId', ({ params }) => {
     const kit = cachedKit(params.postingId);
-    if (!kit) throw new HttpError(404, `No application kit for ${params.postingId} yet`);
+    if (!kit) throw new HttpError(404, `No application kit for ${params.postingId} yet.`);
     return kit;
   });
 }

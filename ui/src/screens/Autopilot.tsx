@@ -53,8 +53,8 @@ export function Autopilot() {
       <PageHeader
         index="08"
         section="Autopilot"
-        title="It runs while you get on with things"
-        purpose="Every few hours Tack reads the market, rebuilds the gap, picks the best postings, applies to them in parallel, reads the replies and replans. Nothing waits on a click."
+        title="Runs in the background while you work"
+        purpose="Every few hours, Tack scans the market, updates gaps, picks top jobs, applies to them, checks replies, and updates plans. No clicks needed."
       />
       {can === undefined ? (
         <div className="ap__skel" aria-busy="true">
@@ -64,7 +64,7 @@ export function Autopilot() {
         <AutopilotBody />
       ) : (
         <DesktopOnly
-          title="The autopilot runs in the desktop app"
+          title="Autopilot runs in the desktop app"
           body="It keeps a browser and a schedule going on your own machine between visits, which a web preview cannot. Here you can read the market, build the gap map and plan, practise interviews and keep the tracker by hand."
         />
       )}
@@ -90,7 +90,7 @@ function AutopilotBody() {
           {s.dryRun && (
             <div className="ap__dry" role="alert">
               <span className="ap__dry-tag t-mono">DRY RUN</span>
-              <span>Forms are filled for real and never submitted. Nothing in this mode is an application, and none is recorded as one.</span>
+              <span>Forms are filled out but never sent. Nothing here counts or gets saved as an application.</span>
             </div>
           )}
           {!s.readiness.ready && <Missing s={s} />}
@@ -137,7 +137,7 @@ function StatusCard({ s, onChange }: { s: AutopilotStatus; onChange: () => void 
     try {
       await api.saveAutopilot({ on });
       onChange();
-      toast(on ? { title: 'Autopilot is on', body: 'The first run starts in a couple of minutes, then every few hours by itself.', tone: 'success' } : { title: 'Autopilot is off' });
+      toast(on ? { title: 'Autopilot is on', body: 'The first run starts in a few minutes, then repeats on its own every few hours.', tone: 'success' } : { title: 'Autopilot is off' });
     } catch (e) {
       toast({ title: 'Could not switch it', body: (e as Error).message, tone: 'error' });
     } finally {
@@ -150,9 +150,9 @@ function StatusCard({ s, onChange }: { s: AutopilotStatus; onChange: () => void 
     try {
       await api.runAutopilot();
       onChange();
-      toast({ title: 'Running now', body: 'Follow it below; the trace on the right shows every step.' });
+      toast({ title: 'Running now', body: 'Follow along below. The panel on the right shows each step.' });
     } catch (e) {
-      toast({ title: 'Could not start a run', body: (e as Error).message, tone: 'error' });
+      toast({ title: 'Could not start the run', body: (e as Error).message, tone: 'error' });
     } finally {
       setBusy(undefined);
     }
@@ -160,7 +160,7 @@ function StatusCard({ s, onChange }: { s: AutopilotStatus; onChange: () => void 
 
   const line = s.running
     ? `Running now: ${s.running.steps.find((x) => x.status === 'running')?.label ?? 'starting'}`
-    : !set.on ? 'Off. Switch it on and it runs by itself.'
+    : !set.on ? 'Off. Turn it on to let it run by itself.'
       : s.nextRunAt ? `Next run ${when(s.nextRunAt)}${set.quietHours ? `, never between ${set.quietHours.from} and ${set.quietHours.to}` : ''}` : 'Waiting';
 
   return (
@@ -261,7 +261,7 @@ function LiveRun({ run }: { run: AutopilotRunBrief }) {
                 {e.detail ? `: ${e.detail}` : ''}
               </motion.li>
             ))}
-            {!lines.length && <li className="t-faint">Waiting for the first step</li>}
+            {!lines.length && <li className="t-faint">Waiting to start</li>}
           </ol>
         </Card>
       </div>
@@ -312,12 +312,12 @@ function JobRow({ j, onChange }: { j: ApplyJob; onChange: () => void }) {
           className="ap__answer"
           onSubmit={(e) => {
             e.preventDefault();
-            if (answer.trim()) void act('answer', () => api.answerJob(j.id, answer), 'Answered. It is remembered and the form goes again.');
+            if (answer.trim()) void act('answer', () => api.answerJob(j.id, answer), 'Answer saved. We will remember it and try the form again.');
           }}
         >
           <TextField label="Your answer" value={answer} onChange={(e) => setAnswer(e.target.value)} placeholder="Answer once; later forms reuse it" />
           <Button variant="primary" size="sm" type="submit" loading={busy === 'answer'} disabled={!answer.trim()}>
-            Answer and retry
+            Answer and try again
           </Button>
         </form>
       )}
@@ -328,7 +328,7 @@ function JobRow({ j, onChange }: { j: ApplyJob; onChange: () => void }) {
           </Button>
         ) : (
           !asks && (
-            <Button variant="ghost" size="sm" iconLeft="refresh" onClick={() => act('retry', () => api.retryJob(j.id), 'Back in the queue.')} loading={busy === 'retry'}>
+            <Button variant="ghost" size="sm" iconLeft="refresh" onClick={() => act('retry', () => api.retryJob(j.id), 'Back in line.')} loading={busy === 'retry'}>
               {j.reason === 'captcha' || j.reason === 'login-required' ? 'I have done it, retry' : 'Retry'}
             </Button>
           )
@@ -350,7 +350,7 @@ function NeedsYou({ s, onChange }: { s: AutopilotStatus; onChange: () => void })
   if (!s.needsYou.length) return null;
   return (
     <section className="section">
-      <SectionHead index="02" title="Needs you" text="What only you can settle. Answer a question once and every later form reuses it; Tack never solves a CAPTCHA, signs in or creates an account for you." />
+      <SectionHead index="02" title="Needs you" text="Things only you can handle. Answer once and later forms will reuse it. Tack will not solve a CAPTCHA, sign in, or create accounts for you." />
       <ul className="ap__jobs">
         {s.needsYou.map((j) => <JobRow key={j.id} j={j} onChange={onChange} />)}
       </ul>
@@ -405,8 +405,8 @@ function Settings({ s, onSaved }: { s: AutopilotStatus; onSaved: () => void }) {
           <Stepper label="Read replies every" unit="hours" value={d.mailEveryHours} min={0} max={168} onChange={(v) => setD({ ...d, mailEveryHours: v })} hint="0 reads them only during runs." />
         </div>
         <div className="ap__grid ap__grid--2">
-          <TextArea label="Never apply to these roles" hint="One per line; a title containing any of them is left out." value={roles} onChange={(e) => setRoles(e.target.value)} rows={3} />
-          <TextArea label="Never apply to these companies" hint="One per line." value={companies} onChange={(e) => setCompanies(e.target.value)} rows={3} />
+          <TextArea label="Skip these roles" hint="One per line. Any title matching these will be skipped." value={roles} onChange={(e) => setRoles(e.target.value)} rows={3} />
+          <TextArea label="Skip these companies" hint="One per line." value={companies} onChange={(e) => setCompanies(e.target.value)} rows={3} />
         </div>
         <div className="ap__quiet">
           <TextField label="Quiet hours from" type="time" value={quiet.from} onChange={(e) => setQuiet({ ...quiet, from: e.target.value })} />
@@ -420,8 +420,8 @@ function Settings({ s, onSaved }: { s: AutopilotStatus; onSaved: () => void }) {
         <Toggle
           checked={d.needsApproval}
           onChange={(v) => setD({ ...d, needsApproval: v })}
-          label="Applications need my approval"
-          hint={d.needsApproval ? 'Each pick waits under Needs you until you press Apply.' : 'Off: fully automated. Picks are applied to as soon as they are chosen.'}
+          label="Ask for approval before applying"
+          hint={d.needsApproval ? 'Selected jobs wait under Needs you until you press Apply.' : 'Off: fully automatic. Jobs are applied to as soon as they are picked.'}
         />
         {err && (
           <p className="ap__err" role="alert">
@@ -443,9 +443,9 @@ function History({ s }: { s: AutopilotStatus }) {
   const past = s.runs.filter((r) => r.id !== s.running?.id);
   return (
     <section className="section">
-      <SectionHead index="04" title="Run history" text="Every run, with what it read, what changed in the market, what it applied to and why, what came back and what the plan changed." />
+      <SectionHead index="04" title="Run history" text="History of each run: market updates, applications sent, reasons, replies, and plan changes." />
       {!past.length ? (
-        <EmptyState compact eyebrow="No runs yet" title="Nothing has run yet" body={s.readiness.ready ? 'Press Run now, or switch the autopilot on and the first run starts by itself.' : 'Fill in what is missing above, then run it.'} />
+        <EmptyState compact eyebrow="No runs yet" title="Nothing has run yet" body={s.readiness.ready ? 'Press Run now, or turn on autopilot to start automatically.' : 'Fill in the missing items above, then run.'} />
       ) : (
         <ol className="ap__history">
           {past.map((r) => (
@@ -496,7 +496,7 @@ function RunReport({ id }: { id: string }) {
         </div>
         <div>
           <h4 className="t-label">Plan</h4>
-          <p>{rep?.plan ? (rep.plan.changed ? rep.plan.summary : 'On track; unchanged.') : 'No plan yet.'}</p>
+          <p>{rep?.plan ? (rep.plan.changed ? rep.plan.summary : 'On track, no changes.') : 'No plan yet.'}</p>
         </div>
       </div>
       {rep && rep.applied.length > 0 && (
@@ -529,7 +529,7 @@ function RunReport({ id }: { id: string }) {
 function Remembered({ s, onChange }: { s: AutopilotStatus; onChange: () => void }) {
   return (
     <section className="section">
-      <SectionHead index="05" title="Answers you gave" text="Reused on every later form that asks the same thing." />
+      <SectionHead index="05" title="Your saved answers" text="Used again whenever a form asks the same thing." />
       <ul className="ap__remembered">
         {s.remembered.map((a) => (
           <li key={a.id}>
@@ -556,7 +556,7 @@ export function AutopilotBlock() {
           <span className="ap-block__dot" aria-hidden="true" />
           <span className="ap-block__state">Runs in the desktop app</span>
         </div>
-        <p className="ap-block__line t-faint">Scheduled reading, applying and reply checks need the desktop app. Progress here counts what you log by hand.</p>
+        <p className="ap-block__line t-faint">Scheduled searches, applications, and reply checks require the desktop app. What you see here only includes manual updates.</p>
       </Card>
     );
   }
@@ -579,7 +579,7 @@ function LiveAutopilotBlock() {
           {s.queue.today}/{s.settings.dailyCap} today · {s.queue.submitted} sent{s.needsYou.length ? ` · ${s.needsYou.length} need you` : ''}
         </span>
       </div>
-      {s.dryRun && <p className="ap-block__line"><span className="ap__dry-tag t-mono">DRY RUN</span> nothing is submitted</p>}
+      {s.dryRun && <p className="ap-block__line"><span className="ap__dry-tag t-mono">DRY RUN</span> nothing will be sent</p>}
       {s.lastRun?.summary && <p className="ap-block__line">{s.lastRun.summary}</p>}
       {!s.readiness.ready && <p className="ap-block__line t-faint">Needs: {s.readiness.missing.map((m) => m.label.toLowerCase()).join('; ')}.</p>}
     </Card>

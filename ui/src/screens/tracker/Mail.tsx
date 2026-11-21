@@ -29,7 +29,7 @@ export function MailStrip({ onResult }: { onResult: (r: SyncResult) => void }) {
           <span className="mail__dot" aria-hidden="true" />
           Runs in the desktop app
         </span>
-        <span className="mail__note">Reading replies from your mail needs the desktop app. Here, move a card when a company writes back.</span>
+        <span className="mail__note">Checking email replies needs the desktop app. Here, move a card when a company replies.</span>
       </div>
     );
   }
@@ -59,7 +59,7 @@ function LiveMailStrip({ onResult }: { onResult: (r: SyncResult) => void }) {
           setConnecting('idle');
           setLink(undefined);
           await status.refetch().catch(() => undefined);
-          toast({ title: 'Gmail is connected', body: 'Replies are read on their own every few hours, read-only.', tone: 'success' });
+          toast({ title: 'Gmail is connected', body: 'Checks for replies automatically every few hours, read-only.', tone: 'success' });
           return;
         }
       } catch (e) {
@@ -67,7 +67,7 @@ function LiveMailStrip({ onResult }: { onResult: (r: SyncResult) => void }) {
       }
       if (Date.now() > until) {
         setConnecting('idle');
-        setError('Google did not finish within five minutes. Connect again when you are ready.');
+        setError('Google did not finish within five minutes. Try connecting again when you are ready.');
         return;
       }
       window.setTimeout(look, POLL_MS);
@@ -81,7 +81,7 @@ function LiveMailStrip({ onResult }: { onResult: (r: SyncResult) => void }) {
     try {
       onResult(await actions.syncApplications());
     } catch (e) {
-      toast({ title: 'Could not check replies', body: (e as Error).message, tone: 'error' });
+      toast({ title: 'Could not check for replies', body: (e as Error).message, tone: 'error' });
     } finally {
       setChecking(false);
     }
@@ -117,14 +117,14 @@ function LiveMailStrip({ onResult }: { onResult: (r: SyncResult) => void }) {
   };
 
   const tone = !s ? 'is-loading' : s.source === 'sample' ? 'is-sample' : s.connected ? 'is-on' : 'is-off';
-  const note = connecting === 'waiting' ? 'Finish in the Google window that opened. This page notices by itself when it is done.' : s?.note ?? status.error?.message ?? '';
+  const note = connecting === 'waiting' ? 'Finish in the Google window that opened. This page will update automatically when done.' : s?.note ?? status.error?.message ?? '';
 
   return (
     <div className={['mail', tone].join(' ')} role="region" aria-label="Mail">
       <span className="t-label mail__label">Mail</span>
       <span className="mail__state">
         {connecting === 'waiting' ? <span className="pulse-dot" aria-hidden="true" /> : <span className="mail__dot" aria-hidden="true" />}
-        {connecting === 'waiting' ? 'Waiting for Google' : s ? s.label : status.error ? 'Mail status unavailable' : 'Checking mail'}
+        {connecting === 'waiting' ? 'Waiting for Google' : s ? s.label : status.error ? 'Email status unavailable' : 'Checking mail'}
       </span>
       <span className="mail__note">
         {note}
@@ -189,7 +189,7 @@ export function WhatChanged({ result, onClose }: { result: SyncResult; onClose: 
           </p>
         )}
         {result.changes.length === 0 ? (
-          <p className="t-mute">No application changed status. Automatic acknowledgements never count as a reply.</p>
+          <p className="t-mute">No applications changed status. Automated receipt emails do not count as replies.</p>
         ) : (
           <ol className="changed__list">
             {result.changes.map((c, i) => (

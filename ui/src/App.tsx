@@ -48,8 +48,8 @@ function RailStatus() {
       : n
         ? `${n} ${live ? 'live' : 'sample'} postings`
         : data.engine.available
-          ? 'Job boards reachable'
-          : real ? 'Job boards unreachable' : 'Engine off, sample data';
+          ? 'Job boards connected'
+          : real ? "Can't reach job boards" : 'Engine off, sample data';
   return (
     <div className="rail-status" title={data?.engine.note}>
       <span className={['rail-status__dot', live && 'is-live'].filter(Boolean).join(' ')} aria-hidden="true" />

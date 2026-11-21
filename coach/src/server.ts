@@ -129,10 +129,10 @@ function serveStatic(req: IncomingMessage, res: ServerResponse, pathname: string
 }
 
 const GENERIC: Record<number, string> = {
-  500: 'Something went wrong on our side. Try again in a minute.',
-  502: 'The model service did not give a usable answer. Try again in a minute.',
-  503: 'The model service is not available right now. Try again later.',
-  504: 'The model service took too long to answer. Try again in a minute.',
+  500: 'Something went wrong on our end. Try again in a minute.',
+  502: 'The model did not give a clear answer. Try again in a minute.',
+  503: 'The model is not available right now. Try again later.',
+  504: 'The model took too long to answer. Try again in a minute.',
 };
 
 export interface App {
@@ -206,10 +206,10 @@ export function createApp(): App {
     const status = err instanceof HttpError ? err.status : err instanceof LlmError ? (err.status === 503 ? 503 : 502) : 500;
     if (!isHosted || status < 500) return { status, body: { error: (err as Error).message || 'internal error' } };
     if (err instanceof LlmError && err.status === 429) {
-      return { status: 503, body: { error: 'The model service is at its rate limit right now. Try again later.', requestId: rid }, retryAfter: 60 };
+      return { status: 503, body: { error: 'The model is too busy right now. Try again later.', requestId: rid }, retryAfter: 60 };
     }
     const noKey = err instanceof LlmError && err.status === 503 && /no model key/.test(err.message);
-    return { status, body: { error: noKey ? 'The model is not configured on this server.' : GENERIC[status] ?? GENERIC[500], requestId: rid } };
+    return { status, body: { error: noKey ? 'The model is not set up on this server.' : GENERIC[status] ?? GENERIC[500], requestId: rid } };
   }
 
   function refuse(res: ServerResponse, r: hosted.Refusal): void {
@@ -319,7 +319,7 @@ export function createApp(): App {
     const stream = route.pattern === EVENTS;
     try {
       if (WRITES.has(method)) {
-        if (!hosted.sameOrigin(req)) throw new hosted.Refusal(403, 'origin', 'Requests from other sites are not accepted.');
+        if (!hosted.sameOrigin(req)) throw new hosted.Refusal(403, 'origin', 'Requests from other sites are not allowed.');
         const length = Number(req.headers['content-length'] ?? 0);
         const chunked = /chunked/i.test(String(req.headers['transfer-encoding'] ?? ''));
         const type = String(req.headers['content-type'] ?? '').split(';')[0].trim().toLowerCase();

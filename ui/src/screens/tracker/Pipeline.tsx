@@ -52,7 +52,7 @@ export function Pipeline({ apps, onOpen }: { apps: Application[]; onOpen: (id: s
       <SectionHead
         index="03"
         title="Pipeline"
-        text={narrow ? 'Pick a status to see its cards. Use the menu on a card to move it.' : 'Drag a card to another column, or use its menu. Every move feeds the numbers at the top.'}
+        text={narrow ? 'Pick a status to see its cards. Use the card menu to move it.' : 'Drag a card or use its menu to move it. Every move updates your stats above.'}
         aside={
           <span className="t-micro">
             {apps.length} sent · {responded} responded
@@ -167,7 +167,7 @@ function Origin({ origin }: { origin: Application['origin'] }) {
   return (
     <span
       className={`origin origin--${origin}`}
-      title={origin === 'fanfold' ? 'Sent through the engine' : origin === 'manual' ? 'Logged by hand' : 'Sample application that comes with the demo person'}
+      title={origin === 'fanfold' ? 'Sent automatically' : origin === 'manual' ? 'Added manually' : 'Sample application from the demo person'}
     >
       {origin === 'demo' ? 'sample' : origin}
     </span>
@@ -413,7 +413,7 @@ export function AppDrawer({ app, onClose }: { app?: Application; onClose: () => 
                 </Chip>
               ))}
             </div>
-            <p className="t-micro ad__hint">{STATUS_HINT[a.status]}. Moving it updates the insights.</p>
+            <p className="t-micro ad__hint">{STATUS_HINT[a.status]}. Moving this updates your insights.</p>
           </div>
 
           <div className="ad__stats">
@@ -444,9 +444,9 @@ export function AppDrawer({ app, onClose }: { app?: Application; onClose: () => 
           </div>
 
           <div className="ad__note">
-            <TextArea label="Add a note" placeholder="Who you spoke to, what they asked, when to follow up." value={note} onChange={(e) => setNote(e.target.value)} rows={3} />
+            <TextArea label="Add a note" placeholder="Who you spoke to, what they asked, and when to follow up." value={note} onChange={(e) => setNote(e.target.value)} rows={3} />
             <div className="ad__note-foot">
-              <span className="t-micro">Saved to the timeline under the current status</span>
+              <span className="t-micro">Saved to your timeline under the current status</span>
               <Button variant="ghost" size="sm" onClick={addNote} loading={saving} disabled={!note.trim()}>
                 Add to timeline
               </Button>
@@ -535,7 +535,7 @@ export function AddApplication({ open, onClose, postings }: { open: boolean; onC
         source: d.source.trim() || 'manual',
       };
       const created = await actions.addApplication(body);
-      toast({ title: `${created.company} added`, body: `In ${STATUS_LABEL[created.status].toLowerCase()}. The insights now count it.`, tone: 'success' });
+      toast({ title: `${created.company} added`, body: `In ${STATUS_LABEL[created.status].toLowerCase()}. Your insights now include it.`, tone: 'success' });
       onClose();
     } catch (e) {
       toast({ title: 'Could not add it', body: (e as Error).message, tone: 'error' });
@@ -549,7 +549,7 @@ export function AddApplication({ open, onClose, postings }: { open: boolean; onC
       open={open}
       onClose={onClose}
       width={620}
-      eyebrow="Log by hand"
+      eyebrow="Add manually"
       title="Add an application"
       footer={
         <>
@@ -566,11 +566,11 @@ export function AddApplication({ open, onClose, postings }: { open: boolean; onC
         {postings.length > 0 && (
           <div className="add__pick">
             <TextField
-              label="From a posting Tack read"
-              placeholder="Search by company or title"
+              label="From a job Tack found"
+              placeholder="Search by company or job title"
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              hint={d.postingId ? `Linked to the posting. Details filled in from it.` : 'Optional. Picking one fills in the details below.'}
+              hint={d.postingId ? `Linked to the job post. Details filled in automatically.` : 'Optional. Pick one to fill in the details below.'}
             />
             {hits.length > 0 && (
               <ul className="add__hits">

@@ -61,7 +61,7 @@ export const useBrief = () => useQuery<Brief>(keys.brief, api.brief);
 export const useKit = (postingId?: string) =>
   useQuery<Kit>(
     kitKey(postingId ?? ''),
-    () => (postingId ? tracked('Preparing the application', () => api.buildKit(postingId)) : Promise.reject(new Error('No posting picked'))),
+    () => (postingId ? tracked('Preparing the application', () => api.buildKit(postingId)) : Promise.reject(new Error('No job selected'))),
     { enabled: !!postingId },
   );
 
@@ -90,7 +90,7 @@ export const actions = {
   },
 
   async uploadResume(input: ResumeInput) {
-    const profile = await tracked('Reading the résumé', () => api.uploadResume(input));
+    const profile = await tracked('Reading your résumé', () => api.uploadResume(input));
     patchState((s) => ({ ...s, profile }));
     return profile;
   },
@@ -119,7 +119,7 @@ export const actions = {
   },
 
   async buildGap() {
-    const gap = await tracked('Building the gap map', api.buildGap);
+    const gap = await tracked('Building your gap map', api.buildGap);
     setQueryData(keys.gap, gap);
     patchState((s) => ({ ...s, has: { ...s.has, gap: true } }));
     invalidate(keys.postings, keys.progress, keys.brief);
@@ -127,7 +127,7 @@ export const actions = {
   },
 
   async buildPlan() {
-    const plan = await tracked('Planning the weeks', api.buildPlan);
+    const plan = await tracked('Planning your weeks', api.buildPlan);
     setQueryData(keys.plan, plan);
     patchState((s) => ({ ...s, has: { ...s.has, plan: true } }));
     invalidate(keys.progress, keys.brief);
@@ -176,7 +176,7 @@ export const actions = {
   },
 
   async answer(sessionId: string, questionId: string, answer: string) {
-    const res = await tracked('Scoring the answer', () => api.answer(sessionId, questionId, answer));
+    const res = await tracked('Scoring your answer', () => api.answer(sessionId, questionId, answer));
     setQueryData<InterviewSession[]>(keys.interviews, (all) => (all ?? []).map((s) => (s.id === sessionId ? res.session : s)));
     invalidate(keys.progress);
     return res;
@@ -204,7 +204,7 @@ export const actions = {
 
 
   async rebuildKit(postingId: string) {
-    const kit = await tracked('Rewriting the application kit', () => api.buildKit(postingId, true));
+    const kit = await tracked('Updating your application kit', () => api.buildKit(postingId, true));
     setQueryData(kitKey(postingId), kit);
     return kit;
   },

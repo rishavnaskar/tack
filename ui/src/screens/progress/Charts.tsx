@@ -61,7 +61,7 @@ export function ReadinessChart({ points, target, height = 248 }: ReadinessChartP
   if (!pts.length) {
     return (
       <div className="chart chart--empty" ref={ref} style={{ height }}>
-        <p className="chart__none">Readiness is recorded each time the gap map changes. Build the gap map to start the line.</p>
+        <p className="chart__none">Readiness updates with your gap map. Create a gap map to start the line.</p>
       </div>
     );
   }
@@ -104,7 +104,7 @@ export function ReadinessChart({ points, target, height = 248 }: ReadinessChartP
   return (
     <div className="chart" ref={ref} style={{ height }}>
       {W > 0 && (
-        <svg width={W} height={height} role="img" aria-label={`Readiness from ${pts[0].v} to ${last.v}; target ${target}`}>
+        <svg width={W} height={height} role="img" aria-label={`Readiness from ${pts[0].v} to ${last.v}; target is ${target}`}>
           <defs>
             <linearGradient id="ready-fill" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0" stopColor="#f7f6f4" stopOpacity="0.09" />

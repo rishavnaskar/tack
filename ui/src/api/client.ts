@@ -49,8 +49,8 @@ const onThisMachine = () => typeof location === 'undefined' || /^(localhost|127\
 
 function unreachable(): string {
   return onThisMachine()
-    ? 'Could not reach the coach server. Check that it is running on port 4400.'
-    : 'Could not reach Tack. Check your connection and try again.';
+    ? "Can't reach the coach server. Make sure it is running on port 4400."
+    : "Can't reach Tack. Check your connection and try again.";
 }
 
 // The first request goes out alone. On the web preview its answer sets the session cookie, and
@@ -87,11 +87,11 @@ const http: Transport = async (method, path, body) => {
       data && typeof data === 'object' && 'error' in data && typeof (data as { error: unknown }).error === 'string'
         ? (data as { error: string }).error
         : res.status === 429
-          ? 'Tack is busy right now. Wait a minute and try again.'
+          ? 'Tack is busy right now. Try again in a minute.'
           : res.status === 413
             ? path === '/profile/resume'
-              ? 'That résumé file is too large to upload. Try a smaller PDF, or paste the text.'
-              : 'That request is too large to send.'
+              ? 'That résumé is too big. Try a smaller PDF, or paste the text.'
+              : 'That request is too big to send.'
             : `Request failed with ${res.status}`;
     throw new ApiError(res.status, msg, path);
   }
@@ -220,7 +220,7 @@ export function fileToBase64(file: File): Promise<string> {
       const s = String(reader.result ?? '');
       resolve(s.slice(s.indexOf(',') + 1));
     };
-    reader.onerror = () => reject(reader.error ?? new Error('Could not read the file'));
+    reader.onerror = () => reject(reader.error ?? new Error("Couldn't read the file"));
     reader.readAsDataURL(file);
   });
 }

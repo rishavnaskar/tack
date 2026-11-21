@@ -34,8 +34,8 @@ export function Tracker() {
       <PageHeader
         index="06"
         section="Tracker"
-        title="Who replies, and why"
-        purpose="Every application, where it stands, and what the replies say about where to aim next. Move a card and the numbers relearn."
+        title="Who replies and why"
+        purpose="See every application, where it stands, and where to apply next. Move a card to update your numbers."
         actions={
           apps.data ? (
             <Button variant="primary" iconLeft="plus" onClick={() => setAdding(true)}>
@@ -58,8 +58,8 @@ export function Tracker() {
               !state?.profile
                 ? 'Add a résumé and read the market first, or load the demo person to see the tracker with 24 applications.'
                 : autopilot
-                  ? 'Switch the autopilot on and Tack applies to the best-ranked postings by itself, or apply to one below. After about a dozen, the tracker starts to show which kinds of roles reply.'
-                  : 'Prepare an application for one of the postings below, send it on the company\'s site and mark it applied. After about a dozen, the tracker starts to show which kinds of roles reply.'
+                  ? 'Turn on autopilot to let Tack apply for you, or apply below. After about a dozen, the tracker shows which roles reply.'
+                  : 'Pick a job below, apply on the company site, and mark it applied. After about a dozen, the tracker shows which roles reply.'
             }
             action={
               state?.profile ? (
@@ -158,9 +158,9 @@ function Replies({ insights, fetching, sample }: { insights: TrackerInsights; fe
                 <span className="pulse-dot" /> Relearning
               </>
             ) : changed.keys.size > 0 ? (
-              `Relearned · ${changed.keys.size} segment${changed.keys.size === 1 ? '' : 's'} moved`
+              `Updated · ${changed.keys.size} segment${changed.keys.size === 1 ? '' : 's'} moved`
             ) : (
-              `Learned from ${overall.sent}${sample ? ' sample' : ''} application${overall.sent === 1 ? '' : 's'}`
+              `Based on ${overall.sent}${sample ? ' sample' : ''} application${overall.sent === 1 ? '' : 's'}`
             )}
           </span>
         }
@@ -171,7 +171,7 @@ function Replies({ insights, fetching, sample }: { insights: TrackerInsights; fe
           <p className="replies__sample">
             <span className="origin origin--demo">sample</span>
             {sample === overall.sent
-              ? `Learning from sample data: these ${sample} applications come with the demo person, so the patterns below are illustrative, not yours.`
+              ? `Using sample data: these ${sample} applications come from the demo person, so these patterns are just examples.`
               : `${sample} of these ${overall.sent} applications are sample data that came with the demo person; the patterns lean on them until yours outnumber them.`}
           </p>
         )}
@@ -205,7 +205,7 @@ function Replies({ insights, fetching, sample }: { insights: TrackerInsights; fe
           </div>
         </div>
         <div className="replies__lessons">
-          <span className="t-label">What the replies say</span>
+          <span className="t-label">What your replies show</span>
           <ol className="lessons">
             {shownLessons.map((l, i) => (
               <motion.li key={l} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.9, ease, delay: 0.2 + i * 0.08 }}>
@@ -256,7 +256,7 @@ function SegmentRow({ s, overall, max, changed }: { s: Segment; overall: number;
         <span className="seg__n t-num" title={`${s.responses} responses from ${s.sent} sent`}>
           {s.responses}/{s.sent}
         </span>
-        <span className="seg__lift t-num" title="Lift against your overall rate">
+        <span className="seg__lift t-num" title="Compared to your average rate">
           {s.lift.toFixed(1)}×
         </span>
       </div>
@@ -300,10 +300,10 @@ function ApplyNext({ insights, postings, engineOn, canApply }: { insights: Track
       const res = await work();
       toast({
         title: res.note,
-        body: practice ? 'Each one opens in its own Chrome window. Practice applications go to Tack\'s form, never to the company.'
-          : ready.data?.dryRun ? 'Each one opens in its own Chrome window and is filled, never submitted.'
-            : ready.data?.consent ? 'Each one opens in its own Chrome window and is submitted on your standing consent.'
-              : 'Each one opens in its own Chrome window and stops before Submit: you have not given standing consent.',
+        body: practice ? "Each opens in its own Chrome window. Practice applications go to Tack's form, never the company."
+          : ready.data?.dryRun ? 'Each opens in its own Chrome window and is filled out, but never submitted.'
+            : ready.data?.consent ? 'Each opens in its own Chrome window and is submitted with your permission.'
+              : 'Each opens in its own Chrome window and stops before submit because you have not given permission.',
       });
     } catch (e) {
       toast({ title: 'Could not start applying', body: (e as Error).message, tone: 'error' });
@@ -327,9 +327,9 @@ function ApplyNext({ insights, postings, engineOn, canApply }: { insights: Track
         ...(p?.companySize ? { companySize: p.companySize } : {}),
         ...(p?.source ? { source: p.source } : {}),
       });
-      toast({ title: `${x.company} is in Applied`, body: 'The ranking below and the numbers above now count it.', tone: 'success' });
+      toast({ title: `${x.company} is in Applied`, body: 'Your rankings and stats now include it.', tone: 'success' });
     } catch (e) {
-      toast({ title: 'Could not log it', body: (e as Error).message, tone: 'error' });
+      toast({ title: 'Could not save it', body: (e as Error).message, tone: 'error' });
     } finally {
       setBusy(undefined);
     }
@@ -340,7 +340,7 @@ function ApplyNext({ insights, postings, engineOn, canApply }: { insights: Track
       <SectionHead
         index="02"
         title="Apply next"
-        text="Postings you have not applied to, ranked by fit and by how often that kind of role has replied to you so far."
+        text="Jobs you have not applied to yet, ranked by match and past reply rates."
         aside={
           <Chip size="sm" mono tone={engineOn && canApply !== false ? 'olive' : 'mute'}>
             {canApply === false ? 'Desktop app' : practice ? 'Practice applications' : engineOn ? 'Engine attached' : 'Engine off'}
@@ -349,7 +349,7 @@ function ApplyNext({ insights, postings, engineOn, canApply }: { insights: Track
       />
       {insights.next.length > 0 && canApply === false && (
         <p className="topn__note topn__note--desktop">
-          Applying for you runs in the desktop app, where each form opens in its own Chrome window. Here, prepare an application, send it on the company's site and mark it applied.
+          Auto-apply runs in the desktop app, opening each form in Chrome. Here, prepare your kit, apply on the company site, and mark it applied.
         </p>
       )}
       {insights.next.length > 0 && canApply !== false && (
@@ -372,7 +372,7 @@ function ApplyNext({ insights, postings, engineOn, canApply }: { insights: Track
                 <Icon name="warning" size={14} /> {blocked}
               </>
             ) : (
-              `${n === 1 ? 'One Chrome window' : `${n} Chrome windows working at the same time`}, each filled by the engine. ${practice ? 'The demo person applies to Tack\'s practice form, never to a company.'
+              `${n === 1 ? 'One Chrome window' : `${n} Chrome windows working at the same time`}, each filled out automatically. ${practice ? 'The demo person applies to Tack\'s practice form, never to a company.'
                 : ready.data?.dryRun ? 'Dry run: forms are filled for real and never submitted.'
                   : ready.data?.consent ? 'Each is submitted on your standing consent, with no review step.' : 'Each stops before Submit until you give standing consent under Application details on Start.'}`
             )}
@@ -383,7 +383,7 @@ function ApplyNext({ insights, postings, engineOn, canApply }: { insights: Track
         <BatchPanel key={b.id} batch={b} />
       ))}
       {insights.next.length === 0 ? (
-        <EmptyState compact eyebrow="Nothing ranked" title="No postings left to rank" body="Every posting Tack read is already in the pipeline. Read the market again for fresh ones." />
+        <EmptyState compact eyebrow="Nothing ranked" title="No jobs left to rank" body="Every posting Tack read is already in the pipeline. Read the market again for fresh ones." />
       ) : (
         <ol className="next">
           {list.map((x, i) => (

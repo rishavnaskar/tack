@@ -113,11 +113,11 @@ test('the model budget counts per session and for the whole preview', () => {
   hosted.runAs(one, () => {
     hosted.chargeModelCall(now);
     hosted.chargeModelCall(now + 1);
-    assert.throws(() => hosted.chargeModelCall(now + 2), (e: any) => e instanceof hosted.BudgetError && e.scope === 'session' && /for the hour/.test(e.message));
+    assert.throws(() => hosted.chargeModelCall(now + 2), (e: any) => e instanceof hosted.BudgetError && e.scope === 'session' && /hourly limit/.test(e.message));
     assert.ok(hosted.budgetHit());
     // An hour later the hourly allowance is back, then the daily one runs out.
     hosted.chargeModelCall(now + 3_600_001);
-    assert.throws(() => hosted.chargeModelCall(now + 3_600_002), /for the day/);
+    assert.throws(() => hosted.chargeModelCall(now + 3_600_002), /daily limit/);
   });
   hosted.resetForTests();
   // Five calls an hour for the whole preview, two per visitor: the third visitor's second call is refused.
@@ -127,7 +127,7 @@ test('the model budget counts per session and for the whole preview', () => {
   hosted.runAs(y, () => { hosted.chargeModelCall(later + 2); hosted.chargeModelCall(later + 3); });
   hosted.runAs(z, () => {
     hosted.chargeModelCall(later + 4);
-    assert.throws(() => hosted.chargeModelCall(later + 5), (e: any) => e.scope === 'preview' && /shared model allowance/.test(e.message));
+    assert.throws(() => hosted.chargeModelCall(later + 5), (e: any) => e.scope === 'preview' && /has reached its (hourly|daily) limit/.test(e.message));
   });
   void two;
 });

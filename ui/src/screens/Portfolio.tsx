@@ -58,7 +58,7 @@ export function Portfolio() {
       const out = await actions.buildPortfolio();
       toast({ title: `${out.length} projects drafted`, body: 'Each one closes at least two open skills and sits in your plan weeks.', tone: 'success' });
     } catch (e) {
-      toast({ title: 'Could not draft projects', body: (e as Error).message, tone: 'error' });
+      toast({ title: "Couldn't create projects", body: (e as Error).message, tone: 'error' });
     } finally {
       setBuilding(false);
     }
@@ -71,10 +71,10 @@ export function Portfolio() {
     put(status);
     try {
       await actions.setProjectStatus(p.id, status);
-      if (status === 'shipped') toast({ title: `${p.title} shipped`, body: 'Link it from your résumé and the case study.', tone: 'success' });
+      if (status === 'shipped') toast({ title: `${p.title} shipped`, body: 'Link it from your résumé and case study.', tone: 'success' });
     } catch (e) {
       put(was);
-      toast({ title: 'Could not change the status', body: (e as Error).message, tone: 'error' });
+      toast({ title: "Couldn't update the status", body: (e as Error).message, tone: 'error' });
     }
   };
 
@@ -90,7 +90,7 @@ export function Portfolio() {
       await actions.setDeliverables(p.id, next);
     } catch (e) {
       put(was);
-      toast({ title: 'Could not save the tick', body: (e as Error).message, tone: 'error' });
+      toast({ title: "Couldn't save the checkmark", body: (e as Error).message, tone: 'error' });
     }
   };
 
@@ -99,8 +99,8 @@ export function Portfolio() {
       <PageHeader
         index="04"
         section="Portfolio"
-        title="Proof you can show"
-        purpose="Three projects that each close at least two open gaps, tied to plan weeks and to lines from real postings."
+        title="Work you can show"
+        purpose="Three projects that each cover at least two gaps, tied to your weekly plan and real job posts."
         actions={
           list.length && !building ? (
             <Button variant="quiet" iconLeft="refresh" onClick={() => setConfirm(true)}>
@@ -115,7 +115,7 @@ export function Portfolio() {
           <BuildLoader since={since} />
         </Card>
       ) : projects.error && !projects.data ? (
-        <ErrorState title="Could not load the portfolio" message={projects.error.message} onRetry={() => projects.refetch().catch(() => undefined)} />
+        <ErrorState title="Couldn't load the portfolio" message={projects.error.message} onRetry={() => projects.refetch().catch(() => undefined)} />
       ) : projects.loading ? (
         <FolioSkeleton />
       ) : !list.length ? (
@@ -146,19 +146,19 @@ export function Portfolio() {
         open={confirm}
         onClose={() => setConfirm(false)}
         eyebrow="Suggest again"
-        title="Replace the three projects?"
+        title="Replace these three projects?"
         footer={
           <>
             <Button variant="quiet" onClick={() => setConfirm(false)}>
               Keep these
             </Button>
             <Button variant="primary" onClick={build}>
-              Draft new projects
+              Create new projects
             </Button>
           </>
         }
       >
-        <p className="t-mute">Tack drafts three new projects from the skills still open. Status and ticked deliverables on the current ones are cleared.</p>
+        <p className="t-mute">Tack creates three new projects from your open skills. Current progress and checked items will reset.</p>
       </Modal>
     </div>
   );
@@ -189,10 +189,10 @@ function Coverage({ projects, gap, name }: { projects: PortfolioProject[]; gap: 
     <Card pad="md" className="cover" settle>
       <div className="cover__stat">
         <Stat label="Coverage" value={covered.length} unit={`of ${open.length}`} note="open gap skills these projects close" />
-        <span className="t-micro cover__weight">{Math.round((coveredWeight / weight) * 100)}% of the priority weight</span>
+        <span className="t-micro cover__weight">{Math.round((coveredWeight / weight) * 100)}% of total priority</span>
       </div>
       <div className="cover__main">
-        <div className="cover__bar" role="img" aria-label={`${covered.length} of ${open.length} open skills covered`}>
+        <div className="cover__bar" role="img" aria-label={`${covered.length} of ${open.length} missing skills covered`}>
           {open.map((s, i) => (
             <motion.span
               key={s.id}
@@ -228,7 +228,7 @@ function Coverage({ projects, gap, name }: { projects: PortfolioProject[]; gap: 
                 ))}
               </div>
             ) : (
-              <p className="cover__none">Every open skill has a project.</p>
+              <p className="cover__none">Every missing skill has a project.</p>
             )}
           </div>
         </div>
@@ -300,7 +300,7 @@ function ProjectCard({
           </div>
 
           <div className="project__reviewer">
-            <span className="t-label">What a reviewer will see</span>
+            <span className="t-label">What reviewers will see</span>
             <p>{p.reviewerSees}</p>
           </div>
         </div>
@@ -314,7 +314,7 @@ function ProjectCard({
       {p.postingQuotes.length > 0 && (
         <footer className="project__quotes">
           <span className="t-label">
-            Why it counts <span className="t-num t-faint">{p.postingQuotes.length}</span>
+            Why this matters <span className="t-num t-faint">{p.postingQuotes.length}</span>
           </span>
           <div className="project__quote-row">
             {p.postingQuotes.map((q, i) => (
@@ -347,7 +347,7 @@ function Milestones({ project, plan }: { project: PortfolioProject; plan?: Plan 
     <div className="mtl">
       <div className="mtl__head">
         <span className="t-label">Milestones</span>
-        <span className="t-micro">On the plan weeks</span>
+        <span className="t-micro">In your weekly plan</span>
       </div>
       <div className="mtl__chart" aria-hidden="true">
         <div className="mtl__track">
@@ -439,9 +439,9 @@ function BuildLoader({ since }: { since: number }) {
   const stage = /link|quote|week/i.test(text) ? 2 : /llm|word|brief/i.test(text) ? 1 : 0;
   return (
     <BlueprintLoader
-      label="Drafting portfolio projects"
-      detail={latest ? `${latest.step} · ${latest.detail}` : 'Grouping open skills into projects a reviewer can open'}
-      stages={['Pick the open skills', 'Write the briefs', 'Tie to weeks and postings']}
+      label="Creating portfolio projects"
+      detail={latest ? `${latest.step} · ${latest.detail}` : 'Grouping missing skills into projects reviewers can see'}
+      stages={['Pick the open skills', 'Write the briefs', 'Match to weeks and job posts']}
       stage={stage}
       height={260}
     />
@@ -454,7 +454,7 @@ function EmptyFolio({ gap, onBuild }: { gap?: GapMap; onBuild: () => void }) {
       <EmptyState
         eyebrow="No projects yet"
         title="Map the gap first"
-        body="Projects are drawn from the skills the postings ask for and your résumé does not show yet."
+        body="Projects come from skills in job posts that aren't on your résumé yet."
         action={
           <Button variant="primary" icon="arrow-right" to="/gap">
             Open the gap map
@@ -467,8 +467,8 @@ function EmptyFolio({ gap, onBuild }: { gap?: GapMap; onBuild: () => void }) {
   return (
     <EmptyState
       eyebrow="No projects yet"
-      title="Three projects that prove the gaps closed"
-      body={`Tack groups the ${n} open skills into three projects, each closing at least two, with a brief, milestones on your plan weeks and the posting lines that justify it.`}
+      title="Three projects that show your gaps are closed"
+      body={`Tack groups the ${n} open skills into three projects, each covering at least two, with a brief, weekly milestones, and matching job posts.`}
       action={
         <Button variant="primary" icon="arrow-right" onClick={onBuild}>
           Suggest projects

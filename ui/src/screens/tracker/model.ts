@@ -13,13 +13,13 @@ export const STATUS_LABEL: Record<AppStatus, string> = {
 };
 
 export const STATUS_HINT: Record<AppStatus, string> = {
-  applied: 'Sent, nothing back yet',
-  viewed: 'Opened by someone',
-  reply: 'A person wrote back',
-  interview: 'In the loop',
-  offer: 'Offer in hand',
-  rejected: 'A clear no',
-  ghosted: 'Silent past 14 days',
+  applied: 'Sent, waiting to hear back',
+  viewed: 'Viewed by someone',
+  reply: 'A person replied',
+  interview: 'Interviewing',
+  offer: 'Got an offer',
+  rejected: 'Not selected',
+  ghosted: 'No reply for 14 days',
 };
 
 export const isResponse = (s: AppStatus) => s === 'reply' || s === 'interview' || s === 'offer';

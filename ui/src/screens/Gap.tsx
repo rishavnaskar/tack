@@ -70,9 +70,9 @@ export function Gap() {
     setBuilding(true);
     try {
       const g = await actions.buildGap();
-      toast({ title: 'Gap map rebuilt', body: `Readiness ${g.readiness} of 100.`, tone: 'success' });
+      toast({ title: 'Gap map updated', body: `Readiness ${g.readiness} of 100.`, tone: 'success' });
     } catch (e) {
-      toast({ title: 'Could not build the gap map', body: (e as Error).message, tone: 'error' });
+      toast({ title: "Couldn't build the gap map", body: (e as Error).message, tone: 'error' });
     } finally {
       setBuilding(false);
     }
@@ -88,8 +88,8 @@ export function Gap() {
         title="Where you stand"
         purpose={
           target
-            ? `Every skill the ${target} postings ask for. Size is how often it comes up; fill is how much of it your résumé shows.`
-            : 'Every skill the postings ask for. Size is how often it comes up; fill is how much of it your résumé shows.'
+            ? `Every skill in ${target} jobs. Size shows demand; fill shows what is on your résumé.`
+            : 'Every skill in the jobs. Size shows demand; fill shows what is on your résumé.'
         }
         actions={
           data ? (
@@ -105,7 +105,7 @@ export function Gap() {
           <BuildingLoader />
         </Card>
       ) : gap.error && !data ? (
-        <ErrorState title="Could not load the gap map" message={gap.error.message} onRetry={() => gap.refetch().catch(() => undefined)} />
+        <ErrorState title="Couldn't load the gap map" message={gap.error.message} onRetry={() => gap.refetch().catch(() => undefined)} />
       ) : gap.loading ? (
         <GapSkeleton />
       ) : !data ? (
@@ -114,13 +114,13 @@ export function Gap() {
           title="Read the market first"
           body={
             postings.data?.length
-              ? `There are ${postings.data.length} postings ready. Building the map compares each one with your résumé.`
-              : 'Tack compares about 40 postings with your résumé and draws the map here.'
+              ? `${postings.data.length} jobs ready. Building your map compares each one with your résumé.`
+              : 'Tack compares about 40 jobs with your résumé and draws the map here.'
           }
           action={
             postings.data?.length ? (
               <Button variant="primary" icon="arrow-right" onClick={build}>
-                Build the gap map
+                Build your gap map
               </Button>
             ) : (
               <Button variant="primary" icon="arrow-right" to="/">
@@ -171,7 +171,7 @@ export function Gap() {
           )}
 
           <p className="gap__foot t-micro">
-            Built {shortDate(data.generatedAt)} from {data.postingCount} {state?.mode === 'live' || (state?.profile && state.profile.source !== 'demo' && !state.hosted) ? 'live' : 'sample'} postings. {data.market.salaryNote}
+            Built {shortDate(data.generatedAt)} from {data.postingCount} {state?.mode === 'live' || (state?.profile && state.profile.source !== 'demo' && !state.hosted) ? 'live' : 'sample'} jobs. {data.market.salaryNote}
           </p>
         </>
       )}
@@ -183,7 +183,7 @@ export function Gap() {
 
 function BuildingLoader() {
   return (
-    <BlueprintLoader label="Rebuilding the gap map" detail="Extracting skills from each posting, then scoring them against your résumé" stages={['Extract skills', 'Normalise', 'Score']} stage={0} height={260} />
+    <BlueprintLoader label="Updating your gap map" detail="Pulling skills from each job, then matching them to your résumé" stages={['Extract skills', 'Normalise', 'Score']} stage={0} height={260} />
   );
 }
 
@@ -465,12 +465,12 @@ function EvidenceDrawer({ skill, rank, plan, onClose }: { skill?: GapSkill; rank
               {s.evidence.resume.length ? (
                 s.evidence.resume.map((q, i) => <QuoteBlock key={i} quote={q} source="Résumé" size="sm" />)
               ) : (
-                <p className="ev__none">No line in the résumé shows this yet. That is what makes it a gap.</p>
+                <p className="ev__none">Your résumé doesn't mention this yet, which makes it a gap.</p>
               )}
             </div>
             <div className="ev__col">
               <span className="t-label ev__col-head">
-                From the postings <span className="t-num t-faint">{s.evidence.postings.length}</span>
+                From the jobs <span className="t-num t-faint">{s.evidence.postings.length}</span>
               </span>
               {s.evidence.postings.map((q, i) => (
                 <QuoteBlock
@@ -489,7 +489,7 @@ function EvidenceDrawer({ skill, rank, plan, onClose }: { skill?: GapSkill; rank
           <div className="ev__plan">
             <span className="t-label">In the plan</span>
             {!plan ? (
-              <p className="ev__none">No plan yet. The plan places each open skill into a week.</p>
+              <p className="ev__none">No plan yet. The plan puts each open skill into a week.</p>
             ) : weeks.length ? (
               <ul>
                 {weeks.map((w) => (
@@ -501,7 +501,7 @@ function EvidenceDrawer({ skill, rank, plan, onClose }: { skill?: GapSkill; rank
                 ))}
               </ul>
             ) : (
-              <p className="ev__none">{s.level === 'strong' ? 'Already strong, so it has no week of its own.' : 'Not scheduled yet. A replan will pick it up.'}</p>
+              <p className="ev__none">{s.level === 'strong' ? 'Already strong, so it has no week of its own.' : 'Not scheduled yet. Re-planning will pick it up.'}</p>
             )}
             {plan && (
               <Button variant="quiet" size="sm" icon="arrow-right" to="/plan">

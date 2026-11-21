@@ -68,9 +68,9 @@ export function Start() {
       await actions.loadDemo();
       toast({
         title: 'Avery Quinn is loaded',
-        body: 'Profile, 40 postings, gap map, plan and 24 applications.',
+        body: 'Profile, 40 job posts, gap map, plan, and 24 applications.',
         tone: 'success',
-        action: { label: 'Open gap map', onClick: () => navigate('/gap') },
+        action: { label: 'Open the gap map', onClick: () => navigate('/gap') },
       });
     } catch (e) {
       toast({ title: 'Could not load the demo person', body: (e as Error).message, tone: 'error' });
@@ -86,7 +86,7 @@ export function Start() {
       setResetOpen(false);
       toast({ title: 'Cleared. Start with a résumé or the demo person.' });
     } catch (e) {
-      toast({ title: 'Could not start over', body: (e as Error).message, tone: 'error' });
+      toast({ title: "Couldn't start over", body: (e as Error).message, tone: 'error' });
     } finally {
       setResetBusy(false);
     }
@@ -98,7 +98,7 @@ export function Start() {
 
       {!state && !error && <StartSkeleton />}
       {!state && error && (
-        <ErrorState title="Could not reach the coach" message={error.message} onRetry={() => refetch().catch(() => undefined)} />
+        <ErrorState title="Couldn't connect to the coach" message={error.message} onRetry={() => refetch().catch(() => undefined)} />
       )}
 
       {state && (
@@ -248,11 +248,11 @@ function ResumeSection({ state, onDemo, demoBusy }: { state: AppState; onDemo: (
         <SectionHead
           index="01"
           title="Your résumé"
-          text="Tack pulls out your skills and keeps the line from your résumé that shows each one. A skill it cannot quote is left out."
+          text="Tack finds your skills and quotes lines from your résumé as proof. Any skill without proof is left out."
           aside={
             replacing ? (
               <Button variant="quiet" onClick={() => setReplacing(false)}>
-                Keep the current profile
+                Keep current profile
               </Button>
             ) : undefined
           }
@@ -308,11 +308,11 @@ function Intake({ onDone, onDemo, demoBusy, showDemo }: { onDone: () => void; on
 
   const onFile = async (file: File) => {
     if (file.type && file.type !== 'application/pdf') {
-      setErr('That file is not a PDF. Export your résumé as PDF, or paste the text instead.');
+      setErr("That file isn't a PDF. Export your résumé as a PDF, or paste the text instead.");
       return;
     }
     if (file.size > maxBytes) {
-      setErr(`That PDF is over ${maxLabel}. Try a smaller export, or paste the text.`);
+      setErr(`That PDF is over ${maxLabel}. Try a smaller file, or paste the text.`);
       return;
     }
     setFileName(file.name);
@@ -358,7 +358,7 @@ function Intake({ onDone, onDemo, demoBusy, showDemo }: { onDone: () => void; on
                 <div className="intake__paste">
                   <TextArea
                     aria-label="Résumé text"
-                    placeholder="Paste the full text of your résumé: roles, dates and bullet points."
+                    placeholder="Paste your full résumé text: jobs, dates, and bullet points."
                     value={text}
                     onChange={(e) => setText(e.target.value)}
                     rows={10}
@@ -371,7 +371,7 @@ function Intake({ onDone, onDemo, demoBusy, showDemo }: { onDone: () => void; on
                   </div>
                 </div>
               )}
-              {err && <ErrorState compact title="That did not work" message={err} />}
+              {err && <ErrorState compact title="That didn't work" message={err} />}
             </motion.div>
           )}
         </AnimatePresence>
@@ -384,21 +384,21 @@ function Intake({ onDone, onDemo, demoBusy, showDemo }: { onDone: () => void; on
             <span className="t-num">01</span>
             <div>
               <strong>Skills, with proof</strong>
-              <p>Each skill keeps the résumé line that shows it. You can edit them.</p>
+              <p>Each skill quotes your résumé as proof. You can edit them anytime.</p>
             </div>
           </li>
           <li>
             <span className="t-num">02</span>
             <div>
-              <strong>Roles next door</strong>
-              <p>Adjacent roles ranked by how much of you they already use.</p>
+              <strong>Similar roles</strong>
+              <p>Related roles ranked by how well your current skills match.</p>
             </div>
           </li>
           <li>
             <span className="t-num">03</span>
             <div>
-              <strong>The market, compared</strong>
-              <p>About 40 postings read and set against your profile.</p>
+              <strong>Market comparison</strong>
+              <p>About 40 job postings compared to your profile.</p>
             </div>
           </li>
         </ol>
@@ -446,7 +446,7 @@ function ProfileEditor({ profile }: { profile: Profile }) {
       await actions.saveProfile(draft);
       toast({ title: 'Profile saved', tone: 'success' });
     } catch (e) {
-      toast({ title: 'Could not save the profile', body: (e as Error).message, tone: 'error' });
+      toast({ title: "Couldn't save the profile", body: (e as Error).message, tone: 'error' });
     } finally {
       setSaving(false);
     }
@@ -547,7 +547,7 @@ function SkillEditor({ skill, onChange, onRemove }: { skill: ProfileSkill; onCha
       {skill.evidence[0] ? (
         <QuoteBlock size="sm" quote={skill.evidence[0]} source="Résumé" detail={skill.evidence.length > 1 ? `+${skill.evidence.length - 1} more` : undefined} />
       ) : (
-        <p className="skill-ed__none">No line from the résumé. This skill will be dropped on the next read.</p>
+        <p className="skill-ed__none">No résumé quote found. This skill will be dropped on the next scan.</p>
       )}
     </div>
   );
@@ -612,7 +612,7 @@ function TargetSection({ state }: { state: AppState }) {
       <SectionHead
         index="02"
         title="Target"
-        text="The role you want next, where, and how much time you have each week."
+        text="Your target role, location, and how much time you have each week."
         aside={
           <span className={`savestate t-micro is-${saveState}`} aria-live="polite">
             {saveState === 'saving' ? 'Saving' : saveState === 'saved' ? 'Saved' : saveState === 'error' ? 'Not saved' : ''}
@@ -631,11 +631,11 @@ function TargetSection({ state }: { state: AppState }) {
             onBlur={flush}
           />
           <div className="target__suggest">
-            <span className="t-label">Roles next door</span>
+            <span className="t-label">Similar roles</span>
             {disabled ? (
-              <p className="t-faint target__hint">Suggestions appear once Tack has read a résumé.</p>
+              <p className="t-faint target__hint">Suggestions will appear once Tack reads a résumé.</p>
             ) : roles.error ? (
-              <ErrorState compact title="Could not suggest roles" message={roles.error.message} onRetry={() => roles.refetch().catch(() => undefined)} />
+              <ErrorState compact title="Couldn't suggest roles" message={roles.error.message} onRetry={() => roles.refetch().catch(() => undefined)} />
             ) : !roles.data ? (
               <div className="roles">
                 {[0, 1, 2, 3].map((i) => (
@@ -674,9 +674,9 @@ function TargetSection({ state }: { state: AppState }) {
         <div className="target__grid">
           <TextField label="Location" placeholder="Bengaluru" value={goal.location} disabled={disabled} onChange={(e) => set({ location: e.target.value })} onBlur={flush} />
           <div className="target__toggle">
-            <Toggle checked={goal.remote} onChange={(v) => set({ remote: v })} label="Include remote roles" hint="Remote postings in your country" disabled={disabled} />
+            <Toggle checked={goal.remote} onChange={(v) => set({ remote: v })} label="Include remote roles" hint="Remote jobs in your country" disabled={disabled} />
           </div>
-          <Stepper label="Hours a week" value={goal.hoursPerWeek} min={2} max={40} unit="h" onChange={(v) => set({ hoursPerWeek: v })} />
+          <Stepper label="Hours per week" value={goal.hoursPerWeek} min={2} max={40} unit="h" onChange={(v) => set({ hoursPerWeek: v })} />
           <Stepper label="Weeks" value={goal.weeks} min={4} max={26} unit="wk" onChange={(v) => set({ weeks: v })} />
         </div>
 
@@ -753,8 +753,8 @@ function DetailsSection({ state }: { state: AppState }) {
         index="04"
         title="Application details"
         text={canApply
-          ? 'What forms ask for. Tack gives these and your résumé to the browser engine, which fills and submits applications for you.'
-          : 'What forms ask for. In the desktop app, Tack gives these and your résumé to the browser engine, which fills and submits applications for you.'}
+          ? 'Details forms ask for. Tack uses these with your résumé to fill and submit job applications.'
+          : 'Details forms ask for. In the desktop app, Tack uses these with your résumé to fill and submit applications.'}
         aside={
           <span className={`savestate t-micro is-${saveState}`} aria-live="polite">
             {saveState === 'saving' ? 'Saving' : saveState === 'saved' ? 'Saved' : saveState === 'error' ? 'Not saved' : ''}
@@ -764,7 +764,7 @@ function DetailsSection({ state }: { state: AppState }) {
       <Card pad="lg" className="details">
         {!d ? (
           view.error ? (
-            <ErrorState compact title="Could not load the details" message={view.error.message} onRetry={() => view.refetch().catch(() => undefined)} />
+            <ErrorState compact title="Couldn't load details" message={view.error.message} onRetry={() => view.refetch().catch(() => undefined)} />
           ) : (
             <Skeleton height={180} radius={12} />
           )
@@ -793,7 +793,7 @@ function DetailsSection({ state }: { state: AppState }) {
                     Résumé file: <span className="t-paper">{resume.filename}</span>
                   </span>
                 ) : (
-                  <span className="t-mute">No résumé file yet. Add one in 01 above; it is what gets uploaded to forms.</span>
+                  <span className="t-mute">No résumé file yet. Add one in 01 above to upload to forms.</span>
                 )}
               </p>
               {canApply && ready && (
@@ -805,7 +805,7 @@ function DetailsSection({ state }: { state: AppState }) {
               {!canApply && (
                 <p className="details__ready" role="status">
                   <Icon name="file" size={16} />
-                  <span>Applying with these, and the consent to submit, run in the desktop app.</span>
+                  <span>Auto-applying and submission consent run in the desktop app.</span>
                 </p>
               )}
             </div>
@@ -826,9 +826,9 @@ function ConsentRow({ consent, onChange }: { consent: Consent; onChange: () => v
       await api.setConsent(on);
       onChange();
       invalidate('apply-readiness', 'autopilot');
-      toast(on ? { title: 'Consent given', body: 'Tack ticks consent boxes and submits applications for you from now on.', tone: 'success' } : { title: 'Consent withdrawn', body: 'Tack fills forms and stops before every Submit.' });
+      toast(on ? { title: 'Consent given', body: 'Tack will check consent boxes and submit applications for you from now on.', tone: 'success' } : { title: 'Consent withdrawn', body: 'Tack fills forms and pauses before each submit button.' });
     } catch (e) {
-      toast({ title: 'Could not change it', body: (e as Error).message, tone: 'error' });
+      toast({ title: "Couldn't update this", body: (e as Error).message, tone: 'error' });
     } finally {
       setBusy(false);
     }
@@ -842,8 +842,8 @@ function ConsentRow({ consent, onChange }: { consent: Consent; onChange: () => v
         disabled={busy}
         label={consent.label}
         hint={consent.on
-          ? `Given on ${date(consent.givenAt)}. Turn it off and every application stops before Submit.`
-          : `Off${consent.withdrawnAt ? ` since ${date(consent.withdrawnAt)}` : ''}: Tack fills each form and stops at the consent box or the final Submit, and tells you why.`}
+          ? `Turned on ${date(consent.givenAt)}. Turn it off to review every application before submitting.`
+          : `Off${consent.withdrawnAt ? ` since ${date(consent.withdrawnAt)}` : ''}: Tack fills each form and stops before consent or final submit, then tells you why.`}
       />
     </div>
   );
@@ -890,7 +890,7 @@ function MarketSection({ state }: { state: AppState }) {
       });
       if (!mounted.current) return;
       setPhase('idle');
-      toast({ title: 'Gap map ready', body: `Readiness ${result.readiness} of 100, from ${result.postingCount} postings.`, tone: 'success' });
+      toast({ title: 'Gap map is ready', body: `Readiness ${result.readiness} of 100, based on ${result.postingCount} job postings.`, tone: 'success' });
       navigate('/gap');
     } catch (e) {
       if (!mounted.current) return;
@@ -943,13 +943,13 @@ function MarketSection({ state }: { state: AppState }) {
                   ))}
                 </ol>
                 <p className="runcard__mode t-micro">
-                  {state.engine.available ? 'Live: open roles are read straight from public company job boards.'
-                    : state.profile && state.profile.source !== 'demo' && !state.hosted ? 'The public job boards are not reachable right now. Check the connection, then read the market.'
-                      : 'Demo: the engine is off, so Tack reads the bundled sample of 40 postings.'}
+                  {state.engine.available ? 'Live: open jobs are pulled directly from company career sites.'
+                    : state.profile && state.profile.source !== 'demo' && !state.hosted ? "We can't reach job boards right now. Check your connection, then try again."
+                      : 'Demo mode: live search is off, so Tack uses 40 sample job posts.'}
                 </p>
               </div>
               <div className="runcard__actions">
-                {phase === 'error' && err && <ErrorState compact title="The run stopped" message={err.message} />}
+                {phase === 'error' && err && <ErrorState compact title="The search stopped" message={err.message} />}
                 {gap.data && (
                   <div className="runcard__last">
                     <span className="t-label">Last read</span>
@@ -969,7 +969,7 @@ function MarketSection({ state }: { state: AppState }) {
                   )}
                 </div>
                 {!ready && (
-                  <span className="runcard__hint">{!state.profile ? 'Add a résumé first.' : 'Add a target role first.'}</span>
+                  <span className="runcard__hint">{!state.profile ? 'Add a résumé first.' : 'Choose a target role first.'}</span>
                 )}
               </div>
             </motion.div>

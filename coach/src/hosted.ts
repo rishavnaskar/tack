@@ -252,7 +252,7 @@ export function visitorFor(req: IncomingMessage, res: ServerResponse, ip: string
   if (!id) {
     const times = (newByIp.get(ip) ?? []).filter((t) => now - t < 3_600_000);
     if (times.length >= l.newSessionsPerIpHour) {
-      throw new Refusal(429, 'sessions', 'Too many new sessions from your network in the last hour. Try again later.', 600);
+      throw new Refusal(429, 'sessions', 'Too many visits from your network this hour. Try again later.', 600);
     }
     times.push(now);
     newByIp.set(ip, times);
@@ -263,7 +263,7 @@ export function visitorFor(req: IncomingMessage, res: ServerResponse, ip: string
   let v = visitors.get(key);
   if (!v) {
     while (visitors.size >= l.maxSessions) {
-      if (!evictOne()) throw new Refusal(503, 'full', 'The web preview is full right now. Try again in a few minutes.', 120);
+      if (!evictOne()) throw new Refusal(503, 'full', 'The web preview is busy right now. Try again in a few minutes.', 120);
     }
     v = newVisitor(key, now);
     visitors.set(key, v);
@@ -319,8 +319,8 @@ export function limitIp(ip: string, now = Date.now()): void {
 
 export function limitVisitor(v: Visitor, stream: boolean, now = Date.now()): void {
   const l = limits();
-  if (!v.bucket.take(now)) throw new Refusal(429, 'rate', 'Too many requests in a short time. Wait a moment and try again.', v.bucket.wait());
-  if (stream && v.streams >= l.streamsPerSession) throw new Refusal(429, 'streams', 'Too many open Tack tabs for this session. Close one and reload.', 30);
+  if (!v.bucket.take(now)) throw new Refusal(429, 'rate', 'You are moving a bit too fast. Wait a moment and try again.', v.bucket.wait());
+  if (stream && v.streams >= l.streamsPerSession) throw new Refusal(429, 'streams', 'You have too many Tack tabs open. Close one and reload.', 30);
   if (!stream && v.inflight >= l.sessionInflight) throw new Refusal(429, 'busy', 'Tack is still working on your earlier requests. Wait for them to finish.', 5);
 }
 
@@ -328,7 +328,7 @@ export function limitVisitor(v: Visitor, stream: boolean, now = Date.now()): voi
 export function track(v: Visitor, res: ServerResponse, stream: boolean, ip: string): void {
   if (stream) {
     const open = ipStreams.get(ip) ?? 0;
-    if (open >= limits().streamsPerIp) throw new Refusal(429, 'streams', 'Too many open Tack tabs from your network.', 30);
+    if (open >= limits().streamsPerIp) throw new Refusal(429, 'streams', 'Too many Tack tabs are open on your network.', 30);
     ipStreams.set(ip, open + 1);
     v.streams++;
   } else {
@@ -403,20 +403,20 @@ export function chargeModelCall(now = Date.now()): void {
     prune(v.calls, now);
     if (within(v.calls, now, HOUR) >= b.sessionHour) {
       const s = refill(v.calls, now, HOUR, b.sessionHour);
-      fail(new BudgetError('session', `You have used this preview's model allowance for the hour (${calls(b.sessionHour)}). It refills in about ${inWords(s)}. Everything you have built stays here, and the desktop app has no such limit.`, s));
+      fail(new BudgetError('session', `You have reached this preview's hourly limit (${calls(b.sessionHour)}). It resets in about ${inWords(s)}. Your work is saved, and the desktop app has no limit.`, s));
     }
     if (v.calls.length >= b.sessionDay) {
       const s = refill(v.calls, now, DAY, b.sessionDay);
-      fail(new BudgetError('session', `You have used this preview's model allowance for the day (${calls(b.sessionDay)}). It refills in about ${inWords(s)}. Everything you have built stays here, and the desktop app has no such limit.`, s));
+      fail(new BudgetError('session', `You have reached this preview's daily limit (${calls(b.sessionDay)}). It resets in about ${inWords(s)}. Your work is saved, and the desktop app has no limit.`, s));
     }
   }
   if (within(globalCalls, now, HOUR) >= b.globalHour) {
     const s = refill(globalCalls, now, HOUR, b.globalHour);
-    fail(new BudgetError('preview', `The web preview has used its shared model allowance for the hour. Try again in about ${inWords(s)}, or use the desktop app.`, s));
+    fail(new BudgetError('preview', `The web preview has reached its hourly limit. Try again in about ${inWords(s)}, or use the desktop app.`, s));
   }
   if (globalCalls.length >= b.globalDay) {
     const s = refill(globalCalls, now, DAY, b.globalDay);
-    fail(new BudgetError('preview', `The web preview has used its shared model allowance for today. Try again in about ${inWords(s)}, or use the desktop app.`, s));
+    fail(new BudgetError('preview', `The web preview has reached its daily limit. Try again in about ${inWords(s)}, or use the desktop app.`, s));
   }
   v?.calls.push(now);
   globalCalls.push(now);
@@ -428,7 +428,7 @@ const DESKTOP = 'run in the Tack desktop app';
 
 export function capabilities(): { apply: boolean; mail: boolean; autopilot: boolean; reason: string } {
   if (!isHosted()) return { apply: true, mail: true, autopilot: true, reason: '' };
-  return { apply: false, mail: false, autopilot: false, reason: `This is the web preview. Automated applying, mail reading and autopilot ${DESKTOP}.` };
+  return { apply: false, mail: false, autopilot: false, reason: `This is the web preview. Auto-applying, reading mail and autopilot ${DESKTOP}.` };
 }
 
 // `part` marks a piece of automated applying rather than a feature of its own.
@@ -452,7 +452,7 @@ export function blocked(pathname: string): { error: string; capability: string; 
   const hit = BLOCKED.find((b) => pathname === b.prefix || pathname.startsWith(`${b.prefix}/`));
   if (!hit) return null;
   return {
-    error: `${hit.what} ${hit.part ? 'is part of automated applying, which runs' : 'runs'} in the Tack desktop app. This web preview covers the market, gap map, plan, portfolio, interviews and the tracker.`,
+    error: `${hit.what} ${hit.part ? 'is part of automated applying, which runs' : 'runs'} in the Tack desktop app. This web preview covers the market, gap map, plan, portfolio, interviews and tracker.`,
     capability: hit.capability,
     download: downloadUrl(),
   };
@@ -559,15 +559,15 @@ function str(v: unknown, field: string, max: number, required = false): void {
     if (required) throw new InvalidInput(`${field} is required`);
     return;
   }
-  if (typeof v !== 'string') throw new InvalidInput(`${field} must be a string`);
+  if (typeof v !== 'string') throw new InvalidInput(`${field} must be text`);
   if (required && !v.trim()) throw new InvalidInput(`${field} is required`);
-  if (v.length > max) throw new InvalidInput(`${field} is too long (${max} characters at most)`);
+  if (v.length > max) throw new InvalidInput(`${field} is too long (${max} characters max)`);
 }
 
 function numIn(v: unknown, field: string, min: number, max: number): void {
   if (v === undefined || v === null || v === '') return;
   const n = typeof v === 'string' ? Number(v) : v;
-  if (typeof n !== 'number' || !Number.isFinite(n) || n < min || n > max) throw new InvalidInput(`${field} must be a number from ${min} to ${max}`);
+  if (typeof n !== 'number' || !Number.isFinite(n) || n < min || n > max) throw new InvalidInput(`${field} must be a number between ${min} and ${max}`);
 }
 
 function oneOf(v: unknown, field: string, values: readonly unknown[], required = false): void {
@@ -580,15 +580,15 @@ function oneOf(v: unknown, field: string, values: readonly unknown[], required =
 
 function strList(v: unknown, field: string, maxItems: number, maxLen: number): void {
   if (v === undefined) return;
-  if (!Array.isArray(v)) throw new InvalidInput(`${field} must be an array`);
-  if (v.length > maxItems) throw new InvalidInput(`${field} has too many items (${maxItems} at most)`);
+  if (!Array.isArray(v)) throw new InvalidInput(`${field} must be a list`);
+  if (v.length > maxItems) throw new InvalidInput(`${field} has too many items (${maxItems} max)`);
   v.forEach((x, i) => str(x, `${field}[${i}]`, maxLen, true));
 }
 
 function list(v: unknown, field: string, maxItems: number, each: (x: unknown, at: string) => void): void {
   if (v === undefined) return;
-  if (!Array.isArray(v)) throw new InvalidInput(`${field} must be an array`);
-  if (v.length > maxItems) throw new InvalidInput(`${field} has too many items (${maxItems} at most)`);
+  if (!Array.isArray(v)) throw new InvalidInput(`${field} must be a list`);
+  if (v.length > maxItems) throw new InvalidInput(`${field} has too many items (${maxItems} max)`);
   v.forEach((x, i) => each(x, `${field}[${i}]`));
 }
 

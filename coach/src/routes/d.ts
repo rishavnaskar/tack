@@ -54,7 +54,7 @@ export function mount(r: Router): void {
   r.get('/autopilot', () => status());
 
   r.put('/autopilot/settings', ({ body }) => {
-    if (isHosted() && body?.on === true) throw new HttpError(409, 'The autopilot runs only in the desktop app, where it can keep running between visits.');
+    if (isHosted() && body?.on === true) throw new HttpError(409, 'The autopilot only runs in the desktop app, where it stays active between visits.');
     let next;
     try {
       next = validateSettings(body, getSettings());
@@ -71,10 +71,10 @@ export function mount(r: Router): void {
   });
 
   r.post('/autopilot/run', () => {
-    if (isHosted()) throw new HttpError(409, 'The autopilot runs only in the desktop app, where it can keep running between visits.');
+    if (isHosted()) throw new HttpError(409, 'The autopilot only runs in the desktop app, where it stays active between visits.');
     const ready = currentReadiness();
     if (!ready.ready) throw new HttpError(409, `Before the autopilot can run: ${ready.missing.map((m) => `${m.label} (${m.where})`).join('; ')}.`);
-    if (activeBatches().length) throw new HttpError(409, 'Applications are being sent right now; run again when they finish.');
+    if (activeBatches().length) throw new HttpError(409, 'Sending applications now. Try again once they finish.');
     try {
       const { run, done } = autopilot().start('manual', { dryRun: isDryRun() });
       done.catch((e) => console.error('autopilot run:', e));

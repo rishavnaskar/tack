@@ -107,7 +107,7 @@ export function Constellation({ skills, ranks, selected, onSelect }: Constellati
               className={['node', `node--${s.level}`, dim && 'is-dim', isSel && 'is-selected', hover === s.id && 'is-hover'].filter(Boolean).join(' ')}
               tabIndex={0}
               role="button"
-              aria-label={`${s.name}: ${levelLabel[s.level]}, asked for in ${pct(s.demand)} of postings${rank ? `, number ${rank} to close` : ''}`}
+              aria-label={`${s.name}: ${levelLabel[s.level]}, found in ${pct(s.demand)} of jobs${rank ? `, number ${rank} to close` : ''}`}
               onMouseEnter={() => setHover(s.id)}
               onMouseLeave={() => setHover(undefined)}
               onFocus={() => setHover(s.id)}
@@ -163,18 +163,18 @@ export function Constellation({ skills, ranks, selected, onSelect }: Constellati
             {activeNode.skill.name}
           </span>
           <span className="tip__line t-mono">
-            {pct(activeNode.skill.demand)} of postings <span className="t-faint">·</span> must in {pct(activeNode.skill.mustShare)}
+            {pct(activeNode.skill.demand)} of jobs <span className="t-faint">·</span> required in {pct(activeNode.skill.mustShare)}
           </span>
           <span className="tip__line t-mono">
             have {activeNode.skill.have} <span className="t-faint">/</span> need {activeNode.skill.need}
             <span className="t-faint"> · </span>priority {activeNode.skill.priority}
           </span>
-          <span className="tip__hint t-micro">Click for evidence</span>
+          <span className="tip__hint t-micro">Click to see proof</span>
         </div>
       )}
       {shown.length < skills.length && (
         <p className="constellation__more t-micro">
-          Showing the {shown.length} most requested of {skills.length} skills. The other {skills.length - shown.length} are in the list view.
+          Showing the top {shown.length} of {skills.length} skills. The other {skills.length - shown.length} are in the list.
         </p>
       )}
     </div>

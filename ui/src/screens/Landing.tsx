@@ -97,7 +97,7 @@ export function PreviewBanner() {
     <div className="preview-banner" role="note">
       <div className="preview-banner__inner">
         <span className="preview-banner__text">
-          <strong>Web preview.</strong> Automated applying and mail reading run in the desktop app.
+          <strong>Web preview.</strong> Auto-apply and email features run in the desktop app.
         </span>
         {hosted.downloadUrl && (
           <a className="preview-banner__link" href={hosted.downloadUrl}>

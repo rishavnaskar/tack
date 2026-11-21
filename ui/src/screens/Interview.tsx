@@ -40,8 +40,8 @@ export function Interview() {
       <PageHeader
         index="05"
         section="Interview"
-        title="Practise the questions they will ask"
-        purpose="One question at a time, from your target postings and open gaps. Each answer is scored on five criteria, with a stronger version built only from what you said."
+        title="Practice the questions you will be asked"
+        purpose="One question at a time, based on your target jobs and skill gaps. Each answer is scored on five areas, with a stronger version using your own words."
         actions={
           sessions.length ? (
             <Chip mono size="sm" tone="mute">
@@ -59,7 +59,7 @@ export function Interview() {
         <EmptyState
           eyebrow="No profile yet"
           title="Questions come from your target and your gaps"
-          body="Add a résumé and a target role on the start screen, or load the demo person, and the questions will be written for that move."
+          body="Add a résumé and target role on the start screen, or load the demo profile, to get questions tailored to your move."
           action={
             <Button variant="primary" icon="arrow-right" to="/">
               Go to Start
@@ -70,7 +70,7 @@ export function Interview() {
         <>
           {sessionId && !active && (
             <div className="iv__lost">
-              <ErrorState compact title="That session is gone" message="It may have been cleared with a reset. Start a new one below." />
+              <ErrorState compact title="That session is gone" message="It may have been cleared by a reset. Start a new one below." />
             </div>
           )}
           <div className="lobby">
@@ -119,7 +119,7 @@ function SetupCard({ postings, postingsLoading, onStarted }: { postings: Posting
         <BlueprintLoader
           height={300}
           label={picked ? `Writing questions for ${picked.company}` : 'Writing five questions'}
-          detail={latest ? `${latest.step} · ${latest.detail}` : 'Reading your target postings and open gaps'}
+          detail={latest ? `${latest.step} · ${latest.detail}` : 'Checking your target jobs and skill gaps'}
         />
       ) : (
         <>
@@ -166,7 +166,7 @@ function SetupCard({ postings, postingsLoading, onStarted }: { postings: Posting
                   Questions lean on <em className="setup__em">{picked.company}</em>&rsquo;s posting and the skills it asks for.
                 </>
               ) : (
-                'Questions are drawn from all your target postings and the gaps with the highest priority.'
+                'Questions come from your target jobs and top skill gaps.'
               )}
             </p>
             {err && <span className="setup__err t-mono">{err}</span>}
@@ -194,7 +194,7 @@ function PostingPicker({ postings, loading, value, onChange }: { postings: Posti
     <div className="against">
       <div className="against__head">
         <span className="t-label">
-          Against one posting <span className="t-faint">· optional</span>
+          For one job posting <span className="t-faint">· optional</span>
         </span>
         {picked && (
           <button type="button" className="against__clear t-micro" onClick={() => onChange(undefined)}>
@@ -230,7 +230,7 @@ function PostingPicker({ postings, loading, value, onChange }: { postings: Posti
                 <PostingRow posting={p} onClick={() => onChange(p.id)} />
               </li>
             ))}
-            {!shown.length && !picked && <li className="against__none">No posting matches &ldquo;{q}&rdquo;.</li>}
+            {!shown.length && !picked && <li className="against__none">No job matches “{q}”.</li>}
           </ul>
         </>
       )}
@@ -282,7 +282,7 @@ function History({ sessions, postings, onOpen }: { sessions: InterviewSession[];
       {sessions.length === 0 ? (
         <div className="history__empty">
           <Trend values={[]} />
-          <p>No sessions yet. Your first score starts the line.</p>
+          <p>No sessions yet. Your first score will start the graph.</p>
         </div>
       ) : (
         <>
@@ -363,7 +363,7 @@ function RubricTable() {
             <span className="rubric__rule" />
           </span>
           <h2 id="rubric-title">How answers are scored</h2>
-          <p>Every answer gets 1 to 5 on each criterion, with the reason and the line from your answer that earned it. Overall is the mean, out of 100.</p>
+          <p>Every answer gets 1 to 5 on each area, with feedback and quoted lines. Your total score is the average out of 100.</p>
         </div>
       </div>
       <div className="rubric__grid" role="table" aria-label="Scoring rubric">

@@ -59,7 +59,7 @@ export interface ErrorStateProps {
   compact?: boolean;
 }
 
-export function ErrorState({ title = 'Something did not load', message, onRetry, action, compact }: ErrorStateProps) {
+export function ErrorState({ title = "Something didn't load", message, onRetry, action, compact }: ErrorStateProps) {
   return (
     <motion.div
       role="alert"

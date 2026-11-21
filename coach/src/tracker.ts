@@ -144,7 +144,7 @@ const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 // Plain sentences written by code from the strongest and weakest segments.
 export function lessons(apps: Application[], overall: TrackerInsights['overall'], segs: Segment[], cuts: FitCuts = DEFAULT_CUTS): string[] {
   const out: string[] = [];
-  if (!overall.sent) return ['No applications yet. Send a first batch of five to high-fit postings so there is something to learn from.'];
+  if (!overall.sent) return ['No applications yet. Send five to top-fit jobs so there is something to learn from.'];
   const usable = segs.filter((s) => s.sent >= 3 && s.dimension !== 'fitBand');
   const CONF = { high: 2, medium: 1, low: 0 };
   // the strongest and weakest segment of each dimension, surest first
@@ -158,7 +158,7 @@ export function lessons(apps: Application[], overall: TrackerInsights['overall']
   };
   const top = best((s) => s.lift >= 1.25 && s.responses > 0, (a, b) => b.lift - a.lift || b.sent - a.sent).slice(0, 3);
   const bottom = best((s) => s.lift <= 0.8, (a, b) => a.lift - b.lift || b.sent - a.sent).slice(0, 2);
-  const caveat = (s: Segment) => (s.confidence === 'low' ? ' Small sample, so treat it as a hint.' : '');
+  const caveat = (s: Segment) => (s.confidence === 'low' ? ' Small sample, so take this as a hint.' : '');
   for (const s of top) {
     out.push(`${cap(segmentLabel(s))} replied ${s.responses} times out of ${s.sent} (${pct(s.rate)}), ${s.lift.toFixed(1)}x your average.${caveat(s)}`);
   }
@@ -168,15 +168,15 @@ export function lessons(apps: Application[], overall: TrackerInsights['overall']
   const hi = segs.find((s) => s.dimension === 'fitBand' && s.value === 'high');
   const lo = segs.find((s) => s.dimension === 'fitBand' && s.value === 'low');
   if (hi && lo && hi.rate > lo.rate) {
-    out.push(`Your highest-fit applications (fit ${cuts.high} and up) replied ${pct(hi.rate)} of the time against ${pct(lo.rate)} for the lowest (under ${cuts.low}); applying below ${cuts.low} mostly costs time.`);
+    out.push(`Your top fits (${cuts.high} and up) replied ${pct(hi.rate)} of the time, versus ${pct(lo.rate)} for the lowest (under ${cuts.low}). Applying below ${cuts.low} mostly wastes time.`);
   }
   const fam = top.find((s) => s.dimension === 'roleFamily');
   const size = top.find((s) => s.dimension === 'companySize');
-  if (fam && size) out.push(`Next batch: favour ${fam.value} roles at ${SIZE_NAMES[size.value] ?? size.value}.`);
+  if (fam && size) out.push(`Next batch: focus on ${fam.value} roles at ${SIZE_NAMES[size.value] ?? size.value}.`);
   const ghosted = apps.filter((a) => a.status === 'ghosted').length;
-  if (ghosted) out.push(`${ghosted} application${ghosted > 1 ? 's have' : ' has'} had no answer for more than ${GHOST_DAYS} days; follow up once, then let ${ghosted > 1 ? 'them' : 'it'} go.`);
-  if (overall.sent < 12) out.push(`Only ${overall.sent} application${overall.sent > 1 ? 's' : ''} so far; these patterns firm up after about 12.`);
-  if (!top.length && !bottom.length && overall.sent >= 5) out.push(`Replies are even across the kinds of roles you have tried (${pct(overall.rate)} overall); keep the mix until a pattern shows.`);
+  if (ghosted) out.push(`${ghosted} application${ghosted > 1 ? 's have' : ' has'} had no reply for over ${GHOST_DAYS} days. Follow up once, then let ${ghosted > 1 ? 'them' : 'it'} go.`);
+  if (overall.sent < 12) out.push(`Only ${overall.sent} application${overall.sent > 1 ? 's' : ''} so far. Patterns get clearer after about 12.`);
+  if (!top.length && !bottom.length && overall.sent >= 5) out.push(`Replies are steady across every role you tried (${pct(overall.rate)} overall). Keep this mix until a pattern shows.`);
   return out;
 }
 

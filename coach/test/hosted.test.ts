@@ -348,7 +348,7 @@ test('hosted limits: 409 for browser features, budget 429, body and type checks,
   const second = await v.call('POST', '/api/profile/resume', { text: resume('Lena Ortiz Second', 'Madrid') });
   assert.equal(second.status, 429);
   assert.equal(second.data.code, 'budget');
-  assert.match(second.data.error, /allowance for the hour/);
+  assert.match(second.data.error, /hourly limit/);
   assert.ok(Number(second.headers.get('retry-after')) > 0);
   // Routes with a built-in fallback still answer when the budget is spent.
   await v.ok('PUT', '/api/goal', { targetRole: 'Product Analyst', location: 'Madrid' });
@@ -364,7 +364,7 @@ test('hosted limits: 409 for browser features, budget 429, body and type checks,
   assert.equal((await v.call('PUT', '/api/goal', { targetRole: 'x' }, { origin: 'https://elsewhere.example' })).status, 403);
   const bad = await v.call('PUT', '/api/goal', { targetRole: 42 });
   assert.equal(bad.status, 400);
-  assert.match(bad.data.error, /targetRole must be a string/);
+  assert.match(bad.data.error, /targetRole must be text/);
   assert.equal((await v.call('POST', '/api/applications', { title: 'x', company: 'y', url: 'javascript:alert(1)' })).status, 400);
 
   // Headers on pages and API answers.
@@ -409,7 +409,7 @@ test('hosted limits: 409 for browser features, budget 429, body and type checks,
   const t0 = Date.now();
   const limitedUp = await w.call('POST', '/api/profile/resume', { text: resume('Quota Spent', 'Oslo') });
   assert.equal(limitedUp.status, 503);
-  assert.match(limitedUp.data.error, /rate limit/);
+  assert.match(limitedUp.data.error, /too busy/);
   assert.ok(Date.now() - t0 < 5000);
 
   // SIGTERM drains and exits cleanly.

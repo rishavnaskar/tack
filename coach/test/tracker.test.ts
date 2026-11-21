@@ -67,8 +67,8 @@ test('lessons are code-written sentences about the strongest and weakest segment
   const ls = lessons(APPS, overall, segs, cuts);
   assert.ok(ls.some((l) => /^Scaleups replied 4 times out of 6/.test(l)), ls.join('\n'));
   assert.ok(ls.some((l) => /^Enterprises replied 1 out of 5/.test(l) || /^Generalist roles replied 1 out of 5/.test(l)), ls.join('\n'));
-  assert.ok(ls.some((l) => l.startsWith('Your highest-fit applications (fit 74 and up)')), ls.join('\n'));
-  assert.ok(ls.some((l) => /no answer for more than 14 days/.test(l)));
+  assert.ok(ls.some((l) => l.startsWith('Your top fits (74 and up)')), ls.join('\n'));
+  assert.ok(ls.some((l) => /no reply for over 14 days/.test(l)));
   assert.deepEqual(lessons([], { sent: 0, responses: 0, rate: 0 }, []).length, 1);
 });
 

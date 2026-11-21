@@ -49,7 +49,7 @@ import './Plan.css';
 type Phase = 'past' | 'current' | 'next';
 type TaskStatus = PlanTask['status'];
 
-const REASONS = ['Fell behind this week', 'A busy week ahead', 'Moving faster than planned'];
+const REASONS = ['Behind schedule this week', 'Busy week coming up', 'Ahead of schedule'];
 
 function readinessNow(): number | undefined {
   const r = getQueryData<Progress>(keys.progress)?.readiness;
@@ -125,7 +125,7 @@ export function Plan() {
       if (before !== undefined && after !== undefined && Math.round(before) !== Math.round(after)) {
         announce(before, after, `Week ${week.index} checkpoint ${passed ? 'passed' : 'not yet passed'}.`);
       } else if (!passed) {
-        toast({ title: `Week ${week.index} checkpoint not yet passed`, body: 'The next replan adds a repair block for it.' });
+        toast({ title: `Week ${week.index} checkpoint not passed yet`, body: 'The next replan will add catch-up time for it.' });
       }
     } catch (e) {
       setQueryData<PlanData | null>(keys.plan, (p) =>
@@ -156,7 +156,7 @@ export function Plan() {
       const p = await actions.buildPlan();
       invalidate(keys.gap);
       const tasks = p.weeks.reduce((a, w) => a + w.tasks.length, 0);
-      toast({ title: 'Plan ready', body: `${p.weeks.length} weeks and ${tasks} tasks inside ${budget} hours a week.`, tone: 'success' });
+      toast({ title: 'Plan ready', body: `${p.weeks.length} weeks and ${tasks} tasks within ${budget} hours a week.`, tone: 'success' });
     } catch (e) {
       toast({ title: 'Could not build the plan', body: (e as Error).message, tone: 'error' });
     } finally {
@@ -176,7 +176,7 @@ export function Plan() {
       a.click();
       a.remove();
       window.setTimeout(() => URL.revokeObjectURL(url), 2000);
-      toast({ title: 'Calendar file saved', body: 'Open tack-plan.ics to add each week and its checkpoint to your calendar.', tone: 'success' });
+      toast({ title: 'Calendar saved', body: 'Open tack-plan.ics to add your weeks and checkpoints to your calendar.', tone: 'success' });
     } catch (e) {
       toast({ title: 'Could not export the calendar', body: (e as Error).message, tone: 'error' });
     } finally {
@@ -189,7 +189,7 @@ export function Plan() {
       <PageHeader
         index="03"
         section="Plan"
-        title="The move, week by week"
+        title="Week-by-week schedule"
         purpose={`Tasks sized to your ${budget} hours a week, a checkpoint at the end of each week, and a replan when a week slips.`}
         actions={
           data && !building ? (
@@ -262,7 +262,7 @@ function Overview({ plan, raw, cur, progress }: { plan: PlanData; raw: number; c
           label="Weeks left"
           value={left}
           unit={`of ${W}`}
-          note={raw === 0 && first ? `Starts ${dayLabel(first)}` : raw > W ? 'The plan has run its course' : `Week ${pad2(cur)} now${end ? `, ends ${dayLabel(end)}` : ''}`}
+          note={raw === 0 && first ? `Starts ${dayLabel(first)}` : raw > W ? 'Plan complete' : `Week ${pad2(cur)} now${end ? `, ends ${dayLabel(end)}` : ''}`}
         />
       </div>
       <div className="plan-over__cell">
@@ -290,8 +290,8 @@ function Overview({ plan, raw, cur, progress }: { plan: PlanData; raw: number; c
             next
               ? `${next.checkpoint.title}, due ${dayLabel(addDays(next.startDate, 6))}`
               : failed
-                ? `${failed} not yet passed. A replan adds repair blocks.`
-                : 'Every checkpoint is marked.'
+                ? `${failed} not passed yet. Replanning will add catch-up time.`
+                : 'All checkpoints complete.'
           }
         />
       </div>
@@ -501,7 +501,7 @@ function WeekColumn({
               ))}
             </ul>
           ) : (
-            <p className="week__empty">No tasks this week. It is held as a buffer.</p>
+            <p className="week__empty">No tasks this week. Kept open as buffer time.</p>
           )}
           <Checkpoint week={week} onSet={onCheckpoint} />
         </>
@@ -516,7 +516,7 @@ function HoursBar({ planned, done, budget }: { planned: number; done: number; bu
   const over = round1(planned - budget);
   return (
     <div className="hbar">
-      <div className="hbar__track" role="img" aria-label={`${round1(done)} of ${round1(planned)} hours done; budget ${budget} hours`}>
+      <div className="hbar__track" role="img" aria-label={`${round1(done)} of ${round1(planned)} hours done; ${budget} hour budget`}>
         <span className="hbar__planned" style={{ width: pct(Math.min(planned, budget)) }} />
         {over > 0 && <span className="hbar__over" style={{ left: pct(budget), width: pct(over) }} />}
         <motion.span className="hbar__done" initial={{ scaleX: 0 }} animate={{ scaleX: done / total }} transition={{ duration: 1, ease }} />
@@ -572,7 +572,7 @@ function TaskRow({ task, onStatus }: { task: PlanTask; onStatus: (t: PlanTask, s
             <span className="task__res-title">{task.resource.title}</span>
             <Icon name="arrow-up-right" size={12} />
             {task.resource.verified && (
-              <span className="task__verified" title="The engine opened this link and it loaded">
+              <span className="task__verified" title="Link opened and loaded">
                 <svg width="11" height="11" viewBox="0 0 12 12" aria-hidden="true">
                   <circle cx="6" cy="6" r="5" fill="none" stroke="currentColor" strokeWidth="1.1" />
                   <path d="m3.8 6.2 1.5 1.5 2.9-3.2" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
@@ -611,7 +611,7 @@ function Checkpoint({ week, onSet }: { week: PlanWeek; onSet: (w: PlanWeek, pass
           Not yet
         </button>
       </div>
-      {p === false && <p className="checkpoint__note">The next replan adds a repair block for this week.</p>}
+      {p === false && <p className="checkpoint__note">The next replan will add catch-up time for this week.</p>}
     </div>
   );
 }
@@ -726,10 +726,9 @@ function ReplanModal({ open, onClose, onReplan, budget }: { open: boolean; onClo
     >
       <div className="replan-ask">
         <p className="t-mute">
-          Late tasks roll forward into this week, weeks even out to your {budget} hours, closed skills free their hours, and a missed checkpoint adds a repair block.
-          You see what moved and why straight after.
+          Overdue tasks move forward, weeks fit into {budget} hours, completed skills free up time, and missed checkpoints add catch-up time. You will see what changed right away.
         </p>
-        <TextField label="What changed (optional)" placeholder="Work ran late this week" value={reason} onChange={(e) => setReason(e.target.value)} />
+        <TextField label="What changed (optional)" placeholder="Ran behind this week" value={reason} onChange={(e) => setReason(e.target.value)} />
         <div className="replan-ask__chips">
           {REASONS.map((r) => (
             <Chip key={r} size="sm" selected={reason === r} onClick={() => setReason(reason === r ? '' : r)}>
@@ -773,7 +772,7 @@ function HistoryDrawer({ open, onClose, plan }: { open: boolean; onClose: () => 
                 <span className="t-num hist__v">v{base}</span>
                 <span className="t-micro">{when(plan.createdAt)}</span>
               </div>
-              <h3 className="hist__reason">Plan built from the gap map</h3>
+              <h3 className="hist__reason">Plan created from skill gaps</h3>
               <p className="hist__summary">
                 {plan.weeks.length} weeks, {plan.weeks.reduce((a, w) => a + w.tasks.length, 0)} tasks.
               </p>
@@ -794,8 +793,8 @@ function BuildLoader({ since }: { since: number }) {
   return (
     <BlueprintLoader
       label="Planning the weeks"
-      detail={latest ? `${latest.step} · ${latest.detail}` : 'Placing each open skill into a week inside your hours'}
-      stages={['Allocate skills to weeks', 'Write tasks and checkpoints', 'Link resources']}
+      detail={latest ? `${latest.step} · ${latest.detail}` : 'Fitting skills into your weekly hours'}
+      stages={['Assign skills to weeks', 'Add tasks and checkpoints', 'Link resources']}
       stage={stage}
       height={260}
     />
@@ -807,8 +806,8 @@ function EmptyPlan({ hasGap, openSkills, budget, weeks, onBuild }: { hasGap: boo
     return (
       <EmptyState
         eyebrow="No plan yet"
-        title="Map the gap first"
-        body="The plan is built from the gap map: each open skill gets a week, tasks sized to your hours and a checkpoint."
+        title="Map your gaps first"
+        body="We build your plan from your skill gaps: each skill gets scheduled into your hours with tasks and a checkpoint."
         action={
           <Button variant="primary" icon="arrow-right" to="/gap">
             Open the gap map
@@ -821,7 +820,7 @@ function EmptyPlan({ hasGap, openSkills, budget, weeks, onBuild }: { hasGap: boo
     <EmptyState
       eyebrow="No plan yet"
       title="Turn the gap into weeks"
-      body={`Tack places ${openSkills ? `the ${openSkills} open skills` : 'each open skill'} into ${weeks} weeks of ${budget} hours, highest priority first, with tasks, resources and a checkpoint at the end of each week.`}
+      body={`Tack fits ${openSkills ? `the ${openSkills} open skills` : 'each open skill'} into ${weeks} weeks of ${budget} hours by priority, with tasks, resources, and a weekly checkpoint.`}
       action={
         <Button variant="primary" icon="arrow-right" onClick={onBuild}>
           Build my plan

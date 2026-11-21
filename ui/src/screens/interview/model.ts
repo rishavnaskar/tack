@@ -7,37 +7,37 @@ export const CRITERIA = ['Structure', 'Relevance to the role', 'Depth', 'Evidenc
 // The 1, 3 and 5 anchors the judge scores against (same wording as coach/src/interview.ts).
 export const ANCHORS: Record<(typeof CRITERIA)[number], [string, string, string]> = {
   Structure: [
-    'No discernible order; the point is hard to find.',
+    'Hard to follow, with no clear point.',
     'A recognisable shape (situation, action, result or claim, reasons, conclusion) with gaps or a buried lead.',
-    'Tight, signposted structure; the listener always knows where they are and the close lands the point.',
+    'Clear and easy to follow, ending with a strong conclusion.',
   ],
   'Relevance to the role': [
-    'Does not answer the question or has nothing to do with the target role.',
-    'Answers the question; the link to the target role is implied, not stated.',
-    "Answers directly, frames everything in the target role's terms and anticipates what the interviewer cares about.",
+    'Does not answer the question or fit the target role.',
+    'Answers the question, but the connection to the role is not clear.',
+    "Answers directly, fits the target role, and addresses what the interviewer cares about.",
   ],
   Depth: [
-    'Surface claims only, no reasoning.',
-    'Explains the main reasoning; alternatives or risks are thin.',
-    'Shows second-order thinking: risks, what would change the decision, what was learned.',
+    'Surface claims only, with no reasoning.',
+    'Explains the main reasoning, but overlooks other options or risks.',
+    'Shows deeper thinking: covers risks, lessons learned, and trade-offs.',
   ],
   'Evidence and metrics': [
     'No evidence at all.',
-    'One concrete fact or number, or evidence that is not tied to the outcome.',
-    'Baseline and result, how it was measured, and an honest note on attribution.',
+    'Mentions a fact or number, but does not connect it to the result.',
+    'Clear starting point, measurable results, and an honest note on what you owned.',
   ],
   Clarity: [
-    'Hard to follow; jargon or rambling hides the meaning.',
-    'Clear enough, with some filler, hedging or unexplained jargon.',
-    'Crisp and memorable; every sentence earns its place.',
+    'Hard to follow, with too much jargon or rambling.',
+    'Mostly clear, with some filler words or jargon.',
+    'Crisp and memorable, with every sentence adding value.',
   ],
 };
 
 export const KINDS: { id: SessionKind; label: string; line: string; mix: string }[] = [
-  { id: 'behavioural', label: 'Behavioural', line: 'Times you led, disagreed, cut scope and owned a miss.', mix: '5 behavioural' },
-  { id: 'technical', label: 'Technical', line: 'Model quality, retrieval, cost and the trade-offs behind them.', mix: '5 technical' },
+  { id: 'behavioural', label: 'Behavioural', line: 'Times you led, disagreed, cut scope, and owned a mistake.', mix: '5 behavioural' },
+  { id: 'technical', label: 'Technical', line: 'Model quality, retrieval, cost, and the trade-offs behind them.', mix: '5 technical' },
   { id: 'case', label: 'Case', line: 'An open product problem, worked through out loud.', mix: '5 case' },
-  { id: 'mixed', label: 'Mixed', line: 'Closest to a real loop: a little of everything.', mix: '2 behavioural, 2 technical, 1 case' },
+  { id: 'mixed', label: 'Mixed', line: 'Closest to a real interview: a little of everything.', mix: '2 behavioural, 2 technical, 1 case' },
 ];
 
 export const kindLabel = (k: string) => KINDS.find((x) => x.id === k)?.label ?? k.charAt(0).toUpperCase() + k.slice(1);
@@ -71,10 +71,10 @@ export function firstOpen(session: InterviewSession) {
 }
 
 export function verdict(overall: number) {
-  if (overall >= 85) return 'Strong. This one would land in a real loop.';
-  if (overall >= 70) return 'Solid. A fix or two away from strong.';
+  if (overall >= 85) return 'Strong. This would work well in a real interview.';
+  if (overall >= 70) return 'Solid. A tweak or two away from strong.';
   if (overall >= 55) return 'Getting there. The fixes below matter.';
-  return 'Needs work. Start with the lowest bar.';
+  return 'Needs work. Start with your lowest score.';
 }
 
 export function scoreFor(turn: InterviewTurn, criterion: string, index: number) {

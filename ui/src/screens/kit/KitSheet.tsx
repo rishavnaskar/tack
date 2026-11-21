@@ -82,7 +82,7 @@ function CopyButton({ text, label = 'Copy', what }: { text: string; label?: stri
       iconLeft={done ? 'check' : 'file'}
       onClick={async () => {
         if (await copyText(text)) setDone(true);
-        else toast({ title: 'Could not copy', body: `Select the ${what} and copy it by hand.`, tone: 'error' });
+        else toast({ title: 'Could not copy', body: `Select the ${what} and copy it manually.`, tone: 'error' });
       }}
       aria-label={`${label}: ${what}`}
     >
@@ -129,7 +129,7 @@ export function KitSheet({ target, onClose }: { target?: KitTarget; onClose: () 
     setStarting(true);
     try {
       const res = await applying.start([t.postingId]);
-      toast({ title: res.note, body: ready.data?.target === 'practice' ? 'It opens in a Chrome window and goes to Tack\'s practice form, never to the company.' : 'It opens in a Chrome window and is submitted without a review step.' });
+      toast({ title: res.note, body: ready.data?.target === 'practice' ? "Opens in a Chrome window and goes to Tack's practice form, never the company." : 'Opens in a Chrome window and submits automatically without a review step.' });
     } catch (e) {
       toast({ title: 'Could not start applying', body: (e as Error).message, tone: 'error' });
     } finally {
@@ -156,7 +156,7 @@ export function KitSheet({ target, onClose }: { target?: KitTarget; onClose: () 
       });
       toast({ title: `${t.company} is in Applied`, body: 'The tracker counts it from now on.', tone: 'success' });
     } catch (e) {
-      toast({ title: 'Could not log it', body: (e as Error).message, tone: 'error' });
+      toast({ title: 'Could not save it', body: (e as Error).message, tone: 'error' });
     } finally {
       setMarking(false);
     }
@@ -178,7 +178,7 @@ export function KitSheet({ target, onClose }: { target?: KitTarget; onClose: () 
   const copyAll = async () => {
     if (!data || !t) return;
     const ok = await copyText(kitAsText(data, t));
-    toast(ok ? { title: 'Kit copied', body: 'Headline, bullets, cover note, talking points, gaps and questions.', tone: 'success' } : { title: 'Could not copy', tone: 'error' });
+    toast(ok ? { title: 'Kit copied', body: 'Headline, bullets, cover note, talking points, gaps, and questions.', tone: 'success' } : { title: 'Could not copy', tone: 'error' });
   };
 
   const busy = kit.loading || rewriting;
@@ -232,7 +232,7 @@ export function KitSheet({ target, onClose }: { target?: KitTarget; onClose: () 
       )}
       {t && canApply === false && (
         <div className="kit__run">
-          <p className="kit__blocked t-mute">Applying for you runs in the desktop app. Copy the kit, send it on the company's site, then mark it applied.</p>
+          <p className="kit__blocked t-mute">Auto-apply runs in the desktop app. Copy the kit, apply on the company site, then mark it applied.</p>
         </div>
       )}
       {t &&
@@ -253,9 +253,9 @@ function KitLoading({ since }: { since: number }) {
   const stage = step === 'guard' || step === 'done' ? 2 : step === 'draft' ? 1 : 0;
   return (
     <BlueprintLoader
-      label="Preparing the application"
-      detail={latest ? `${latest.step} · ${latest.detail}` : 'Reading the posting against your résumé'}
-      stages={['Read the posting', 'Tailor to your résumé', 'Check every line']}
+      label="Preparing your application"
+      detail={latest ? `${latest.step} · ${latest.detail}` : 'Comparing the job post to your résumé'}
+      stages={['Read the job post', 'Tailor to your résumé', 'Check every line']}
       stage={stage}
       height={300}
     />
@@ -290,7 +290,7 @@ function KitBody({ kit, target }: { kit: Kit; target: KitTarget }) {
 
       <motion.section className="kit__sec" {...rise(2)}>
         <Head index="02" label="Résumé bullets" count={kit.bullets.length} aside={<CopyButton text={bulletLines(kit)} what="bullets" />} />
-        <p className="kit__lede">Every bullet stands on a line of your résumé. Tack drops any line it cannot trace back.</p>
+        <p className="kit__lede">Every bullet comes from your résumé. Tack removes anything it cannot verify.</p>
         <ol className="kit__bullets">
           {kit.bullets.map((b, i) => (
             <li key={`${i}-${b.basedOn}`}>
@@ -343,7 +343,7 @@ function KitBody({ kit, target }: { kit: Kit; target: KitTarget }) {
               })}
             </ul>
           ) : (
-            <p className="kit__lede">Nothing this posting asks for is missing from your résumé.</p>
+            <p className="kit__lede">Your résumé covers everything this job asks for.</p>
           )}
         </motion.section>
 

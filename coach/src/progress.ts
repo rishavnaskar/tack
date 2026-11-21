@@ -82,12 +82,12 @@ export function brief(input: BriefInput): Brief {
   const items: Brief['items'] = [];
   const { plan, progress } = input;
   if (!input.gap) {
-    return { headline: 'Start by mapping the gap.', items: [{ kind: 'setup', text: 'Load a résumé and a target role, then build the gap map from live postings.', action: 'Open Start' }] };
+    return { headline: 'Start by mapping your gaps.', items: [{ kind: 'setup', text: 'Add a résumé and target role, then build your gap map from live jobs.', action: 'Open Start' }] };
   }
   if (!plan) {
     return {
       headline: `Readiness ${Math.round(input.gap.readiness)}. Next: turn the gap into a plan.`,
-      items: [{ kind: 'setup', text: `Build a ${input.goal?.weeks ?? 12}-week plan from the ${input.gap.skills.filter((s) => s.status !== 'closed').length} open skills.`, action: 'Build plan' }],
+      items: [{ kind: 'setup', text: `Build a ${input.goal?.weeks ?? 12}-week plan for the ${input.gap.skills.filter((s) => s.status !== 'closed').length} open skills.`, action: 'Build plan' }],
     };
   }
   const cur = currentWeek(plan, today);
@@ -95,7 +95,7 @@ export function brief(input: BriefInput): Brief {
   const late = plan.weeks.filter((w) => w.index < cur).flatMap((w) => w.tasks.filter((t) => t.status === 'todo'));
   const next = late[0] ?? week?.tasks.find((t) => t.status === 'todo');
   if (!progress.onTrack && late.length >= 2) {
-    items.push({ kind: 'replan', text: `${late.length} tasks from earlier weeks are still open. Replan to roll them forward and rebalance the weeks.`, action: 'Replan' });
+    items.push({ kind: 'replan', text: `${late.length} tasks from earlier weeks are still open. Replan to roll them forward and balance the weeks.`, action: 'Replan' });
   }
   if (next) items.push({ kind: 'task', text: `${next.title} (${next.hours}h)`, action: 'Open plan' });
 
@@ -103,13 +103,13 @@ export function brief(input: BriefInput): Brief {
   const daysSince = lastSession ? daysBetween(lastSession.startedAt, today) : Infinity;
   if (!lastSession || daysSince >= 7 || (lastSession.score ?? 100) < 60) {
     const why = !lastSession ? 'You have not done one yet.' : lastSession.score != null && lastSession.score < 60 ? `The last one scored ${lastSession.score}.` : `The last one was ${daysSince} days ago.`;
-    items.push({ kind: 'interview', text: `Run a five-question mock interview. ${why}`, action: 'Start interview' });
+    items.push({ kind: 'interview', text: `Try a five-question mock interview. ${why}`, action: 'Start interview' });
   } else if (week && week.checkpoint.passed === undefined && daysBetween(week.startDate, today) >= 4) {
     items.push({ kind: 'checkpoint', text: `Week ${week.index} checkpoint: ${week.checkpoint.description}`, action: 'Mark checkpoint' });
   }
 
   const top = input.insights?.next[0];
-  if (top) items.push({ kind: 'apply', text: `Apply to ${top.title} at ${top.company}: fit ${top.fit}, reply chance ${Math.round(top.responseChance * 100)}%.`, action: 'Apply' });
+  if (top) items.push({ kind: 'apply', text: `Apply to ${top.title} at ${top.company}: fit ${top.fit}, ${Math.round(top.responseChance * 100)}% reply chance.`, action: 'Apply' });
 
   const theme = week ? `Week ${cur} of ${plan.weeks.length}: ${week.theme}.` : '';
   const pace = progress.onTrack ? 'On track.' : 'Behind plan.';

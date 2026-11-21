@@ -40,7 +40,7 @@ function topPostings(n: number): Posting[] {
 }
 
 function launch(postings: Posting[]) {
-  if (!postings.length) throw new HttpError(400, 'No postings to apply to.');
+  if (!postings.length) throw new HttpError(400, 'No jobs to apply to.');
   const ready = readiness(postings[0]);
   if (!ready.ready) throw new HttpError(409, ready.reason);
   const running = recentRuns(MAX_PARALLEL * 2).filter((r) => r.status === 'queued' || r.status === 'running');
@@ -70,7 +70,7 @@ export function mount(r: Router): void {
 
   // Fills the profile, details, résumé and saved answers from the person's own Fanfold, read-only.
   r.post('/details/import-fanfold', async ({ body }) => {
-    if (isHosted()) throw new HttpError(404, 'Importing from Fanfold works in the desktop app only.');
+    if (isHosted()) throw new HttpError(404, 'You can only import from Fanfold in the desktop app.');
     const dir = typeof body?.dir === 'string' && body.dir.trim() ? body.dir.trim() : defaultFanfoldDir();
     try {
       const summary = await importFanfold(dir, { resumeText: async (bytes, mime) => { const t = await engine.resumeText(bytes, mime); return t.ok ? t.text : ''; } });

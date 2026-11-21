@@ -67,8 +67,8 @@ export function Progress() {
       <PageHeader
         index="07"
         section="Progress"
-        title="How far you have come"
-        purpose="Readiness over time, hours put in, your streak, and the three things worth doing today."
+        title="Your progress so far"
+        purpose="Your readiness, time spent, current streak, and top three tasks for today."
       />
 
       <BriefHero q={brief} />
@@ -76,13 +76,13 @@ export function Progress() {
       {state?.profile && <AutopilotBlock />}
 
       {progress.error && !p ? (
-        <ErrorState title="Could not load progress" message={progress.error.message} onRetry={() => progress.refetch().catch(() => undefined)} />
+        <ErrorState title="Couldn't load your progress" message={progress.error.message} onRetry={() => progress.refetch().catch(() => undefined)} />
       ) : !p ? (
         <ProgressSkeleton />
       ) : nothing ? (
         <EmptyState
-          eyebrow="Nothing to measure yet"
-          title="Progress starts with the gap map"
+          eyebrow="Nothing to track yet"
+          title="Start with your gap map"
           body="Readiness is recorded every time the gap map changes, and hours come from the plan. Load a résumé and read the market to start the line."
           action={
             <Button variant="primary" icon="arrow-right" to="/">
@@ -105,7 +105,7 @@ export function Progress() {
             <Card
               pad="md"
               index="02"
-              label="Hours by week"
+              label="Weekly hours"
               aside={
                 <span className="chart-key">
                   <span className="chart-key__item">
@@ -146,7 +146,7 @@ function BriefHero({ q }: { q: QueryResult<Brief> }) {
   if (q.error && !q.data) {
     return (
       <div className="brief-wrap">
-        <ErrorState compact title="Could not load today's brief" message={q.error.message} onRetry={() => q.refetch().catch(() => undefined)} />
+        <ErrorState compact title="Couldn't load today's brief" message={q.error.message} onRetry={() => q.refetch().catch(() => undefined)} />
       </div>
     );
   }
@@ -268,7 +268,7 @@ function Verdict({ p }: { p: ProgressData }) {
         </div>
         {p.onTrack ? (
           <Button variant="ghost" size="sm" icon="arrow-right" to="/plan">
-            Open the plan
+            Open your plan
           </Button>
         ) : (
           <Button variant="primary" size="sm" icon="arrow-right" to="/plan?replan=1">
@@ -285,9 +285,9 @@ function HoursBlock({ plan, loading, budget }: { plan?: Plan | null; loading: bo
   if (!plan) {
     return (
       <div className="chart-none">
-        <p>No plan yet. Hours appear here week by week once the plan is built.</p>
+        <p>No plan yet. Your weekly hours will appear here once you make one.</p>
         <Button variant="ghost" size="sm" icon="arrow-right" to="/plan">
-          Build my plan
+          Create my plan
         </Button>
       </div>
     );
@@ -317,7 +317,7 @@ function Interviews({ points }: { points: ProgressData['interviewAvg'] }) {
           <span className="t-accent">{last}</span>
           <span className="iv__unit">latest</span>
         </span>
-        <span className="t-micro iv__best">Best {best} · below 50 adds practice</span>
+        <span className="t-micro iv__best">Best {best} · under 50 adds practice</span>
       </div>
       <ScoreChart points={points} />
     </div>
@@ -343,7 +343,7 @@ function buildFeed(plan: Plan | undefined, gap: GapMap | undefined, sessions: In
     const changes = changesNewestFirst(plan);
     changes.forEach((c, i) => out.push({ at: c.at, kind: 'plan', title: `Plan v${plan.version - i}: ${c.reason}`, body: c.summary, to: '/plan' }));
     const base = plan.version - changes.length;
-    if (base >= 1) out.push({ at: plan.createdAt, kind: 'plan', title: `Plan v${base} built`, body: `${plan.weeks.length} weeks from the gap map.`, to: '/plan' });
+    if (base >= 1) out.push({ at: plan.createdAt, kind: 'plan', title: `Plan v${base} is ready`, body: `${plan.weeks.length} weeks based on your gap map.`, to: '/plan' });
   }
   for (const s of sessions) {
     if (!s.finishedAt || s.score === undefined || s.score === null) continue;
@@ -360,7 +360,7 @@ function buildFeed(plan: Plan | undefined, gap: GapMap | undefined, sessions: In
   for (const s of gap?.skills ?? []) {
     const at = doneBySkill.get(s.id);
     if (s.status !== 'closed' || !at) continue;
-    out.push({ at, kind: 'skill', title: `${s.name} closed`, body: `Have ${s.have} of the ${s.need} the role needs.`, to: '/gap' });
+    out.push({ at, kind: 'skill', title: `${s.name} closed`, body: `You have ${s.have} of the ${s.need} this role needs.`, to: '/gap' });
   }
   return out.sort((a, b) => b.at.localeCompare(a.at)).slice(0, 8);
 }
@@ -373,7 +373,7 @@ function Feed({ plan, gap, sessions }: { plan?: Plan; gap?: GapMap; sessions: In
         <span className="t-label" id="feed-title">
           <span className="t-faint">04</span> What changed
         </span>
-        <span className="t-micro">Plan changes, finished interviews and closed skills</span>
+        <span className="t-micro">Plan updates, completed interviews, and finished skills</span>
       </div>
       {items.length ? (
         <ol className="feed__list">
@@ -392,7 +392,7 @@ function Feed({ plan, gap, sessions }: { plan?: Plan; gap?: GapMap; sessions: In
           ))}
         </ol>
       ) : (
-        <EmptyState compact eyebrow="Quiet so far" title="Nothing has changed yet" body="Replans, finished interviews and skills you close show up here." />
+        <EmptyState compact eyebrow="All quiet so far" title="No updates yet" body="Replans, finished interviews and skills you close show up here." />
       )}
     </section>
   );

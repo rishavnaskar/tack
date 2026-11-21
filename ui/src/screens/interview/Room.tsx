@@ -146,7 +146,7 @@ function RoomBar({
                 Against <em>{posting.company}</em> · {posting.title}
               </>
             ) : (
-              'Across your target postings'
+              'Across your target jobs'
             )}
             <span className="t-faint"> · {shortDate(session.startedAt)}</span>
           </span>
@@ -252,7 +252,7 @@ function useDictation(onFinal: (text: string) => void) {
     } catch {
       rec.current = null;
       setListening(false);
-      setError('Dictation is not available in this browser.');
+      setError('Voice input is not available in this browser.');
     }
   };
 
@@ -323,7 +323,7 @@ function QuestionStage({
   const submit = async () => {
     const answer = text.trim();
     if (wordCount(answer) < 8) {
-      setErr('Give it at least a couple of sentences so the judge has something to score.');
+      setErr('Write at least a couple of sentences so we have enough to score.');
       return;
     }
     dict.stop();
@@ -375,7 +375,7 @@ function QuestionStage({
           onChange={(e) => setText(e.target.value)}
           onKeyDown={onKey}
           readOnly={busy}
-          placeholder="Answer the way you would out loud. Where you were, what you did and why, and what happened."
+          placeholder="Answer like you would out loud. Say what the situation was, what you did and why, and what happened."
           rows={9}
         />
         {dict.interim && <p className="answer__interim">{dict.interim}</p>}
@@ -385,9 +385,9 @@ function QuestionStage({
             <motion.div key="judge" className="judge" role="status" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.4, ease }}>
               <div className="judge__top">
                 <span className="pulse-dot" />
-                <span className="judge__label">The judge is reading your answer</span>
+                <span className="judge__label">Reviewing your answer</span>
               </div>
-              <span className="judge__detail t-mono">{latest ? `${latest.step} · ${latest.detail}` : 'Sending the answer'}</span>
+              <span className="judge__detail t-mono">{latest ? `${latest.step} · ${latest.detail}` : 'Sending your answer'}</span>
               <ol className="judge__crit" aria-hidden="true">
                 {CRITERIA.map((c, i) => (
                   <li key={c} style={{ animationDelay: `${i * 0.4}s` }}>
@@ -417,7 +417,7 @@ function QuestionStage({
                   {clock(elapsed)}
                 </span>
                 <span className="answer__hint">
-                  {late ? 'Past three minutes. Land the result and stop.' : words > 0 && words < 60 ? 'Most strong answers run 120 to 250 words.' : ''}
+                  {late ? 'Past three minutes. Wrap up with your result.' : words > 0 && words < 60 ? 'Most strong answers are 120 to 250 words.' : ''}
                 </span>
               </div>
               <div className="answer__go">
@@ -542,7 +542,7 @@ function FeedbackStage({
       </div>
 
       <div className="fb__grid">
-        <Card pad="lg" className="crits" label="Five criteria" aside={<span className="t-micro">1 to 5 · hover to find the line</span>} settle={0.1}>
+        <Card pad="lg" className="crits" label="Five criteria" aside={<span className="t-micro">1 to 5 · hover to find the quote</span>} settle={0.1}>
           <ul className="crits__list">
             {rows.map(({ c, s }, i) =>
               s ? (
@@ -589,12 +589,12 @@ function FeedbackStage({
               ),
             )}
           </p>
-          <p className="said__key t-micro">Underlined lines are the ones the judge quoted.</p>
+          <p className="said__key t-micro">Underlined text shows lines quoted from your answer.</p>
         </Card>
       </div>
 
       <div className="fb__lists">
-        <FeedbackList title="What worked" items={turn.strengths} tone="paper" empty="Nothing stood out yet. The fixes are the place to start." />
+        <FeedbackList title="What worked" items={turn.strengths} tone="paper" empty="Nothing stood out yet. Start with the suggestions below." />
         <FeedbackList title="Fix next time" items={turn.fixes} tone="accent" empty="No fixes. Keep this shape." />
       </div>
 
@@ -604,7 +604,7 @@ function FeedbackStage({
 
       <div className="fb__nav">
         <Button variant="quiet" iconLeft="refresh" onClick={onRetry}>
-          Answer it again
+          Try again
         </Button>
         <Button variant="primary" icon="arrow-right" onClick={onNext}>
           {nextLabel}
@@ -641,7 +641,7 @@ function BetterText({ text }: { text: string }) {
         <p key={i}>
           {placeholderParts(p).map((x, j) =>
             x.hole ? (
-              <span key={j} className="hole t-mono" title="A fact you did not give. Fill it with your own.">
+              <span key={j} className="hole t-mono" title="Missing detail. Fill this in with your own facts.">
                 {x.part.slice(1, -1)}
               </span>
             ) : (
@@ -661,7 +661,7 @@ function Better({ answer, better }: { answer: string; better: string }) {
     <Card pad="lg" className="better" settle={0.2}>
       <div className="better__head">
         <div className="better__titles">
-          <span className="t-label">Rewritten from your own facts</span>
+          <span className="t-label">Rewritten with your own details</span>
           <h3 className="better__title">A stronger version of your answer</h3>
         </div>
         <Tabs
@@ -700,7 +700,7 @@ function Better({ answer, better }: { answer: string; better: string }) {
           </motion.div>
         )}
       </AnimatePresence>
-      {holes && <p className="better__note t-micro">Bracketed parts are facts you did not give. Fill them in with your own; Tack does not invent numbers.</p>}
+      {holes && <p className="better__note t-micro">Bracketed parts are details you did not mention. Fill them in with your own facts; Tack does not invent numbers.</p>}
     </Card>
   );
 }
@@ -735,7 +735,7 @@ function Probe({ line }: { line: string }) {
         </div>
       ) : (
         <Button variant="ghost" size="sm" iconLeft="plus" onClick={() => setOpen(true)}>
-          {text.trim() ? 'Keep practising' : 'Answer it as practice'}
+          {text.trim() ? 'Keep practising' : 'Answer for practice'}
         </Button>
       )}
     </motion.div>
@@ -789,7 +789,7 @@ function SummaryStage({
           </span>
         </div>
         <div className="sum__crit">
-          <span className="t-label">Average by criterion</span>
+          <span className="t-label">Average by category</span>
           <ul>
             {avgs.map((a, i) => {
               const weak = weakest && a.criterion === weakest.criterion && a.n > 0;
@@ -839,7 +839,7 @@ function SummaryStage({
             })}
           </ul>
         </Card>
-        <Card pad="md" label="Gap skills it probed" settle={0.14}>
+        <Card pad="md" label="Skills tested" settle={0.14}>
           {moves.length ? (
             <ul className="sum__skills">
               {moves.map((m) => (
@@ -859,7 +859,7 @@ function SummaryStage({
               ))}
             </ul>
           ) : (
-            <p className="sum__none">No skills were tagged on these questions.</p>
+            <p className="sum__none">No skills were tagged for these questions.</p>
           )}
           <p className="sum__rule t-micro">A skill moves up one level on the gap map when its questions average above 4 of 5.</p>
         </Card>
@@ -871,7 +871,7 @@ function SummaryStage({
             ? 'Under 50, so the next replan adds practice blocks aimed at the weakest criterion.'
             : moved.length
               ? `${moved.length === 1 ? 'One skill' : `${moved.length} skills`} moved up on the gap map. The plan picks that up at the next replan.`
-              : 'No skill crossed 4 of 5 this time. The plan keeps its practice blocks as they are.'}
+              : 'No skill reached 4 of 5 this time. Your practice plan stays as it is.'}
         </p>
         <div className="sum__buttons">
           <Button variant="primary" icon="arrow-right" to="/plan">
