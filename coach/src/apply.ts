@@ -395,6 +395,22 @@ export function activeBatches(): ApplyBatch[] {
   return [...batches.values()].filter((b) => !b.endedAt);
 }
 
+/** Runs a previous process left open: they ended when it did. */
+export function closeOrphanRuns(now = new Date()): number {
+  let n = 0;
+  for (const r of store.list<ApplyRun>('apply-run')) {
+    if ((r.status !== 'running' && r.status !== 'queued') || batches.has(r.batchId)) continue;
+    r.status = 'failed';
+    r.reasonCode = 'site-error';
+    r.reason = 'Tack stopped while this run was going; it is under Needs you to check and retry.';
+    r.endedAt = now.toISOString();
+    r.steps.push({ at: r.endedAt, kind: 'error', label: 'Ended when Tack stopped' });
+    save(r);
+    n++;
+  }
+  return n;
+}
+
 function persistBatch(b: ApplyBatch): void {
   store.put('apply-batch', b.id, { id: b.id, startedAt: b.startedAt, endedAt: b.endedAt, ms: b.ms, note: b.note, dryRun: b.dryRun, runIds: b.runs.map((r) => r.id) });
 }
