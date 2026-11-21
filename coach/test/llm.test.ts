@@ -79,6 +79,27 @@ test('a successful call is cached on disk and the second call skips the network'
   off();
 });
 
+test('TACK_LLM_CACHE=refresh always calls the model but keeps the answer; off neither reads nor writes', async () => {
+  const opts = { task: 'roles', system: 'sys', prompt: 'refresh me', schema };
+  try {
+    process.env.TACK_LLM_CACHE = 'refresh';
+    replies.push(reply('{"role": "PM", "overlap": 1}'), reply('{"role": "PM", "overlap": 2}'));
+    assert.deepEqual(await json(opts), { role: 'PM', overlap: 1 });
+    assert.deepEqual(await json(opts), { role: 'PM', overlap: 2 });
+    assert.equal(calls.length, 2);
+    delete process.env.TACK_LLM_CACHE;
+    assert.deepEqual(await json(opts), { role: 'PM', overlap: 2 });
+    assert.equal(calls.length, 2);
+    process.env.TACK_LLM_CACHE = 'off';
+    const files = readdirSync(join(dir, 'llm-cache')).length;
+    replies.push(reply('{"role": "PM", "overlap": 3}'));
+    assert.deepEqual(await json({ ...opts, prompt: 'never kept' }), { role: 'PM', overlap: 3 });
+    assert.equal(readdirSync(join(dir, 'llm-cache')).length, files);
+  } finally {
+    delete process.env.TACK_LLM_CACHE;
+  }
+});
+
 test('429 and 5xx are retried with backoff', async () => {
   replies.push(reply('{"error": "rate"}', 429, { 'retry-after': '0' }), reply('oops', 503), reply('{"role": "PM", "overlap": 1}'));
   assert.deepEqual(await json({ task: 't', system: 's', prompt: 'retry me', schema }), { role: 'PM', overlap: 1 });

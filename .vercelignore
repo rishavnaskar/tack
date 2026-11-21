@@ -1,0 +1,17 @@
+# Upload only what Dockerfile.vercel copies. ui/dist is gitignored but must be uploaded.
+/*
+!/vercel.json
+!/Dockerfile.vercel
+!/coach
+!/engine
+!/ui
+/coach/*
+!/coach/package.json
+!/coach/bin
+!/coach/src
+/engine/*
+!/engine/package.json
+!/engine/src
+/ui/*
+!/ui/dist
+.DS_Store

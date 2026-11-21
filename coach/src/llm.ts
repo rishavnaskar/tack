@@ -58,7 +58,9 @@ function cfg() {
     retries: Number(process.env.TACK_MODEL_RETRIES ?? 4),
     backoffMs: Number(process.env.TACK_MODEL_BACKOFF_MS ?? 2000),
     timeoutMs: Number(process.env.TACK_MODEL_TIMEOUT_MS ?? 90_000),
-    cache: process.env.TACK_LLM_CACHE !== 'off',
+    // off: never read or write; refresh: always call the model but keep the answer; anything else: read and write.
+    cache: process.env.TACK_LLM_CACHE !== 'off' && process.env.TACK_LLM_CACHE !== 'refresh',
+    keep: process.env.TACK_LLM_CACHE !== 'off',
     // The longest an upstream rate limit may hold a call before it fails instead. Hosted mode
     // answers within a minute; the desktop waits as long as the endpoint asks.
     maxWaitMs: Number(process.env.TACK_MODEL_MAX_WAIT_MS ?? (isHosted() ? 60_000 : Infinity)),
@@ -245,7 +247,7 @@ export async function json<T>(opts: JsonOpts): Promise<T> {
       if (errors.length) throw new LlmError(502, `model output failed schema check: ${errors.slice(0, 3).join('; ')}`);
     }
 
-    if (c.cache) {
+    if (c.keep) {
       mkdirSync(cacheDir(), { recursive: true });
       writeFileSync(file, JSON.stringify({ task: opts.task, model, at: new Date().toISOString(), value }));
     }

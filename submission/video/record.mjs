@@ -1,7 +1,9 @@
-// Records the Tack demo against the real app: live job boards, live model calls
-// (the model cache is off unless TACK_LLM_CACHE says otherwise), a fresh state,
-// and Tack's own engine applying to the local practice form. Frames come from a
-// CDP screencast; render.mjs cuts them into the final video.
+// Records the Tack demo against the real app: live job boards, live model calls, a
+// fresh state, and Tack's own engine applying to the local practice form. The model
+// cache is never read (TACK_LLM_CACHE=refresh), but every answer is kept, so a take
+// cut short by the provider can be finished later with TACK_LLM_CACHE=on and those
+// scenes captioned as replayed. Frames come from a CDP screencast; render.mjs cuts
+// them into the final video.
 //
 //   PLAYWRIGHT=/abs/path/to/node_modules/playwright/index.mjs node submission/video/record.mjs [take]
 //
@@ -27,6 +29,11 @@ const RESUME_PDF = join(HERE, 'avery-quinn-resume.pdf');
 const SCALE = Number(process.env.TACK_VIDEO_DPR) || 1.5;
 // Clean 1440x900 stills of the best moments, written when TACK_STILLS names a folder.
 const STILLS = process.env.TACK_STILLS || '';
+const CACHE_MODE = process.env.TACK_LLM_CACHE || 'refresh';
+// A later take can carry on from a scene with the state the last one left (no reset).
+const FROM = Number(process.env.TACK_VIDEO_FROM) || 1;
+// With the cache read, answers come from the earlier live run: every caption bar says so.
+const REPLAY = CACHE_MODE === 'on';
 
 // Typed answers, one per kind of opening question; the take picks the one that fits.
 const ANSWERS = [
@@ -99,7 +106,13 @@ async function makeResume(browser) {
 // ------------------------------------------------------------ coach
 
 async function startCoach() {
-  const env = { ...process.env, TACK_STATE_DIR: STATE, TACK_PORT: String(PORT), TACK_LLM_CACHE: process.env.TACK_LLM_CACHE || 'off' };
+  // A full take starts the engine fresh too: it remembers what it sent before and will not send it twice.
+  if (FROM === 1) {
+    rmSync(join(STATE, 'engine'), { recursive: true, force: true });
+    // and reads the job boards afresh rather than from the half-hour board cache
+    rmSync(join(STATE, 'engine-cache'), { recursive: true, force: true });
+  }
+  const env = { ...process.env, TACK_STATE_DIR: STATE, TACK_PORT: String(PORT), TACK_LLM_CACHE: CACHE_MODE };
   const child = spawn(process.execPath, ['--no-warnings', join(ROOT, 'coach/bin/serve.ts')], { cwd: ROOT, env, stdio: ['ignore', 'pipe', 'pipe'] });
   const log = [];
   child.stdout.on('data', (d) => log.push(String(d)));
@@ -162,13 +175,14 @@ function recorder(page) {
     mkdirSync(STILLS, { recursive: true });
     await page.screenshot({ path: join(STILLS, `${name}.png`), scale: 'css', style: '#__cursor, #__ring { display: none !important; }' }).catch((e) => console.log(`still ${name}: ${e.message}`));
   };
-  const caption = (text) => mark('cap', { text });
+  // A replayed take never claims a call happened just now.
+  const caption = (text) => mark('cap', { text: REPLAY ? text.replace(' reads it now;', ' read it;').replace('Judged live on', 'Judged on') : text });
   // A small note in the caption bar's top line, until the next tag ('' clears it).
-  const tag = (text) => mark('tag', { text });
+  const tag = (text) => mark('tag', { text: REPLAY ? [/not cached/.test(text) ? '' : text, 'Answers replayed from an earlier live run'].filter(Boolean).join(' · ') : text });
 
   async function moveTo(x, y, ms) {
     const dist = Math.hypot(x - mx, y - my);
-    const dur = ms ?? Math.min(800, 280 + dist * 0.5);
+    const dur = ms ?? Math.min(600, 220 + dist * 0.4);
     const steps = Math.max(10, Math.round(dur / 16));
     const sx = mx;
     const sy = my;
@@ -184,7 +198,7 @@ function recorder(page) {
   async function scrollTo(target, block = 'center', wait = 1000) {
     const loc = typeof target === 'string' ? page.locator(target).first() : target;
     await loc.evaluate((el, b) => el.scrollIntoView({ behavior: 'smooth', block: b }), block);
-    await sleep(wait * 0.8);
+    await sleep(wait * 0.7);
   }
 
   async function scrollBy(dy, wait = 1000, inside) {
@@ -208,13 +222,13 @@ function recorder(page) {
 
   async function click(target, opts) {
     const loc = await point(target, opts);
-    await sleep(100);
+    await sleep(80);
     const b = await loc.boundingBox();
     await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2);
     await page.mouse.down();
-    await sleep(70);
+    await sleep(60);
     await page.mouse.up();
-    await sleep(120);
+    await sleep(90);
     return loc;
   }
 
@@ -235,6 +249,9 @@ function recorder(page) {
 
 async function storyboard(page, r) {
   const { mark, caption, tag, still, click, point, scrollTo, scrollBy, wait, moveTo } = r;
+  let result;
+  if (REPLAY) tag('');
+  if (FROM > 1) await page.goto(BASE, { waitUntil: 'networkidle' });
   const nav = (label) => click(page.locator('nav.rail a', { hasText: label }).first(), { scroll: false });
   const top = async (ms = 900) => {
     await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'smooth' }));
@@ -260,275 +277,354 @@ async function storyboard(page, r) {
   };
 
   // 1 Start
-  await page.goto(BASE, { waitUntil: 'networkidle' });
-  await page.mouse.move(980, 620);
-  mark('scene', { id: 1 });
-  caption('Tack: a career pivot coach. Start with a résumé.');
-  await sleep(2400);
-  await scrollTo('.intake', 'center', 1100);
-  caption('Upload the résumé PDF. The model reads it now; every skill keeps the line that proves it.');
-  const chooser = page.waitForEvent('filechooser');
-  await click(page.locator('.intake .dropzone__hit').first());
-  tag('Model calls are live, not cached');
-  await (await chooser).setFiles(RESUME_PDF);
-  await wait('resume', 3, () => page.getByRole('heading', { name: 'Profile' }).first().waitFor({ timeout: 180_000 }));
-  await showCall(1800);
-  await closeTrace();
-  await sleep(300);
-  await scrollTo(page.getByRole('heading', { name: 'Profile' }).first(), 'start', 1200);
-  await moveTo(560, 640);
-  await sleep(900);
-  await scrollBy(320, 1300);
-  await sleep(300);
+  if (FROM <= 1) {
+    await page.goto(BASE, { waitUntil: 'networkidle' });
+    await page.mouse.move(980, 620);
+    mark('scene', { id: 1 });
+    caption('Tack: a career pivot coach. Start with a résumé.');
+    await sleep(1800);
+    await scrollTo('.intake', 'center', 1100);
+    caption('Upload the résumé PDF. The model reads it now; every skill keeps the line that proves it.');
+    const chooser = page.waitForEvent('filechooser');
+    await click(page.locator('.intake .dropzone__hit').first());
+    tag('Model calls are live, not cached');
+    await (await chooser).setFiles(RESUME_PDF);
+    await wait('resume', 2, () => page.getByRole('heading', { name: 'Profile' }).first().waitFor({ timeout: 180_000 }));
+    await showCall(1500);
+    await closeTrace();
+    await sleep(200);
+    await scrollTo(page.getByRole('heading', { name: 'Profile' }).first(), 'start', 1200);
+    await moveTo(560, 640);
+    await sleep(600);
+    await scrollBy(320, 1100);
+    await sleep(300);
 
-  await closeTrace();
-  caption('Set the target: AI Product Manager in Bengaluru, 10 hours a week for 12 weeks.');
-  const role = page.getByLabel('Target role');
-  await click(role);
-  await role.fill('');
-  await role.pressSequentially('AI Product Manager', { delay: 30 });
-  tag('');
-  const loc = page.getByLabel('Location');
-  await click(loc);
-  await loc.fill('');
-  await loc.pressSequentially('Bengaluru', { delay: 35 });
-  const more = page.getByRole('button', { name: 'Increase' }).first();
-  await click(more, { scroll: false });
-  await sleep(200);
-  await click(more, { scroll: false });
-  await scrollTo('.target .roles, .target', 'center', 1100);
-  await wait('roles', 1.5, () => page.locator('.roles .role').first().waitFor({ timeout: 90_000 }));
-  await sleep(1300);
+    await closeTrace();
+    caption('Set the target: AI Product Manager in Bengaluru, 10 hours a week for 12 weeks.');
+    const role = page.getByLabel('Target role');
+    await click(role);
+    await role.fill('');
+    await role.pressSequentially('AI Product Manager', { delay: 30 });
+    tag('');
+    const loc = page.getByLabel('Location');
+    await click(loc);
+    await loc.fill('');
+    await loc.pressSequentially('Bengaluru', { delay: 35 });
+    const more = page.getByRole('button', { name: 'Increase' }).first();
+    await click(more, { scroll: false });
+    await sleep(200);
+    await click(more, { scroll: false });
+    await scrollTo('.target .roles, .target', 'center', 1100);
+    await wait('roles', 1.5, () => page.locator('.roles .role').first().waitFor({ timeout: 90_000 }));
+    await sleep(900);
+  }
 
   // 2 Read the market
-  mark('scene', { id: 2 });
-  caption('Read the market: open roles straight from 60 public company job boards.');
-  await scrollTo(page.getByRole('heading', { name: 'Read the market' }).first(), 'start', 1100);
-  await click(page.getByRole('button', { name: /^Read the market/ }).first());
-  await sleep(1200);
-  caption('The trace shows the agent at work: boards listed, 40 live postings read.');
-  await wait('harvest', 6, () => page.getByText('Extracting skills').first().waitFor({ timeout: 300_000 }));
-  caption('Then the model reads them in 8 batches of 5, each skill kept with the exact line it came from.');
-  await wait('extract', 7, () => page.waitForURL('**/gap', { timeout: 600_000 }));
-  await showCall(1200);
+  if (FROM <= 2) {
+    mark('scene', { id: 2 });
+    caption('Read the market: open roles straight from 60 public company job boards.');
+    await scrollTo(page.getByRole('heading', { name: 'Read the market' }).first(), 'start', 1100);
+    await click(page.getByRole('button', { name: /^Read the market/ }).first());
+    await sleep(1200);
+    caption('The trace shows the agent at work: boards listed, 40 live postings read.');
+    await wait('harvest', 5, () => page.getByText('Extracting skills').first().waitFor({ timeout: 300_000 }));
+    caption('Then the model reads them in 8 batches of 5, each skill kept with the exact line it came from.');
+    await wait('extract', 5, () => page.waitForURL('**/gap', { timeout: 600_000 }));
+    await showCall(1000);
+  }
 
   // 3 Gap map
-  mark('scene', { id: 3 });
-  await closeTrace();
-  await top(600);
-  caption('The gap map: readiness weighted by how often each skill is asked for.');
-  await sleep(2200);
-  await scrollTo('.constellation', 'center', 1300);
-  caption('Size is demand; fill is how much of it the résumé shows. Numbers are computed in code.');
-  await moveTo(800, 520);
-  await still('01-gap-map');
-  await sleep(1900);
-  await scrollTo(page.getByText('Top five to close').first(), 'start', 1100);
-  caption('Open the top gap: the résumé against what real postings say, company by company.');
-  await click(page.locator('.top5 .close-card').first());
-  await sleep(1700);
-  await moveTo(1180, 640);
-  await scrollBy(340, 1700, '.drawer__body');
-  await still('02-evidence-drawer');
-  await sleep(900);
-  await page.keyboard.press('Escape');
-  await sleep(700);
+  if (FROM <= 3) {
+    mark('scene', { id: 3 });
+    await closeTrace();
+    await top(600);
+    caption('The gap map: readiness weighted by how often each skill is asked for.');
+    await sleep(1700);
+    await scrollTo('.constellation', 'center', 1300);
+    caption('Size is demand; fill is how much of it the résumé shows. Numbers are computed in code.');
+    await moveTo(800, 520);
+    await still('01-gap-map');
+    await sleep(1500);
+    await scrollTo(page.getByText('Top five to close').first(), 'start', 1100);
+    caption('Open the top gap: the résumé against what real postings say, company by company.');
+    await click(page.locator('.top5 .close-card').first());
+    await sleep(1400);
+    await moveTo(1180, 640);
+    await scrollBy(340, 1500, '.drawer__body');
+    await still('02-evidence-drawer');
+    await sleep(700);
+    await page.keyboard.press('Escape');
+    await sleep(700);
+  }
 
   // 4 Market
-  await closeTrace();
-  mark('scene', { id: 4 });
-  caption('The market: the 40 postings Tack read, from real companies, with fit against the résumé.');
-  await nav('Market');
-  await sleep(1500);
-  await scrollTo('.wall', 'start', 1200);
-  await still('03-live-market');
-  await sleep(400);
-  await click(page.locator('button.win').first());
-  await sleep(1200);
-  caption('Each skill is highlighted on the exact line of the posting it came from.');
-  const chip = page.locator('.pd__chips button').first();
-  if (await chip.isVisible().catch(() => false)) await click(chip, { scroll: false });
-  await sleep(2000);
-  await page.keyboard.press('Escape');
-  await sleep(600);
+  if (FROM <= 4) {
+    await closeTrace();
+    mark('scene', { id: 4 });
+    caption('The market: the 40 postings Tack read from real companies, each with its fit.');
+    await nav('Market');
+    await sleep(1300);
+    await scrollTo('.wall', 'start', 1100);
+    await still('03-live-market');
+    await sleep(1800);
+  }
 
   // 5 Plan
-  await closeTrace();
-  mark('scene', { id: 5 });
-  caption('The plan: 12 weeks inside 10 hours a week, biggest gaps first. The model only words the tasks.');
-  await nav('Plan');
-  await sleep(700);
-  const build = page.getByRole('button', { name: 'Build my plan' }).first();
-  if (await build.isVisible().catch(() => false)) {
-    await click(build);
-    await wait('plan', 2.5, () => page.locator('.week__tasks').first().waitFor({ timeout: 180_000 }));
-    await showCall(1400);
+  if (FROM <= 5) {
     await closeTrace();
+    mark('scene', { id: 5 });
+    caption('The plan: 12 weeks inside 10 hours a week, biggest gaps first. The model only words the tasks.');
+    await nav('Plan');
+    await sleep(700);
+    const build = page.getByRole('button', { name: 'Build my plan' }).first();
+    if (await build.isVisible().catch(() => false)) {
+      await click(build);
+      await wait('plan', 2, () => page.locator('.week__tasks').first().waitFor({ timeout: 180_000 }));
+      await showCall(1100);
+      await closeTrace();
+    }
+    await sleep(300);
+    await scrollTo('.plan-legend', 'start', 1100);
+    await sleep(300);
+    caption('Tick a task and pass the checkpoint: the week\'s skills are credited and readiness moves.');
+    await click(page.locator('.task__tick').first());
+    await sleep(600);
+    await click(page.getByRole('button', { name: 'Passed' }).first());
+    await sleep(2000);
+    caption('Mark it not yet instead, then replan: a repair block goes in and the card says what moved and why.');
+    await click(page.getByRole('button', { name: 'Not yet' }).first(), { scroll: false });
+    await sleep(900);
+    await top(700);
+    await click(page.getByRole('button', { name: /^Replan/ }).first());
+    await sleep(700);
+    await click(page.locator('.modal').getByRole('button', { name: /Replan/ }).last(), { scroll: false });
+    await wait('replan', 1.5, () => page.locator('[aria-label="What moved and why"]').first().waitFor({ timeout: 60_000 }));
+    await closeTrace();
+    await scrollTo('[aria-label="What moved and why"]', 'center', 1100);
+    await moveTo(900, 470);
+    await sleep(2300);
   }
-  await sleep(300);
-  await scrollTo('.plan-legend', 'start', 1100);
-  await sleep(600);
-  caption('Tick a task and pass the checkpoint: the week\'s skills are credited and readiness moves.');
-  await click(page.locator('.task__tick').first());
-  await sleep(600);
-  await click(page.getByRole('button', { name: 'Passed' }).first());
-  await sleep(2300);
-  caption('Mark it not yet instead, then replan: a repair block goes in and the card says what moved and why.');
-  await click(page.getByRole('button', { name: 'Not yet' }).first(), { scroll: false });
-  await sleep(1200);
-  await top(700);
-  await click(page.getByRole('button', { name: /^Replan/ }).first());
-  await sleep(700);
-  await click(page.locator('.modal').getByRole('button', { name: /Replan/ }).last(), { scroll: false });
-  await wait('replan', 1.5, () => page.locator('[aria-label="What moved and why"]').first().waitFor({ timeout: 60_000 }));
-  await closeTrace();
-  await scrollTo('[aria-label="What moved and why"]', 'center', 1100);
-  await moveTo(900, 470);
-  await sleep(2700);
 
   // 6 Interview
-  await closeTrace();
-  mark('scene', { id: 6 });
-  caption('Mock interviews: questions drawn from the target postings and the open gaps.');
-  await nav('Interview');
-  await sleep(700);
-  await click(page.getByRole('button', { name: /Start the session/ }));
-  const box = page.locator('textarea').first();
-  await wait('question', 2.5, () => box.waitFor({ timeout: 120_000 }));
-  await showCall(1200);
-  await closeTrace();
-  await sleep(1600);
-  const question = (await page.locator('.stage__q').first().textContent().catch(() => '')) || '';
-  await click(box);
-  await wait('typing', 3.5, () => box.pressSequentially(answerFor(question), { delay: 6 }));
-  await sleep(400);
-  await click(page.getByRole('button', { name: 'Score this answer' }));
-  caption('Judged live on a five-part rubric. Every score quotes the candidate\'s own words.');
-  await wait('judge', 3, () => page.locator('.crits__list').first().waitFor({ timeout: 180_000 }));
-  await showCall(1500);
-  await closeTrace();
-  await scrollTo('.fb', 'start', 1000);
-  await sleep(1300);
-  await scrollTo('.crits', 'start', 1100);
-  await point(page.locator('.crits__list li').nth(1), { scroll: false }).catch(() => {});
-  await still('04-interview-feedback');
-  await sleep(2400);
-  caption('Then a stronger answer built only from what was said, and the follow-up to expect.');
-  await scrollTo(page.getByText(/stronger version/i).first(), 'start', 1200);
-  await moveTo(900, 700);
-  await sleep(2600);
-  const probe = page.getByText('The interviewer follows up').first();
-  if (await probe.count()) {
-    await scrollTo(probe, 'center', 1100);
-    await sleep(2200);
+  if (FROM <= 6) {
+    await closeTrace();
+    mark('scene', { id: 6 });
+    caption('Mock interviews: questions drawn from the target postings and the open gaps.');
+    await nav('Interview');
+    await sleep(500);
+    await click(page.getByRole('button', { name: /Start the session/ }));
+    const box = page.locator('textarea').first();
+    await wait('question', 1.5, () => box.waitFor({ timeout: 120_000 }));
+    await showCall(1000);
+    await closeTrace();
+    await sleep(1000);
+    const question = (await page.locator('.stage__q').first().textContent().catch(() => '')) || '';
+    await click(box);
+    await wait('typing', 1.5, () => box.pressSequentially(answerFor(question), { delay: 6 }));
+    await sleep(400);
+    await click(page.getByRole('button', { name: 'Score this answer' }));
+    caption('Judged live on a five-part rubric. Every score quotes the candidate\'s own words.');
+    await wait('judge', 2.5, () => page.locator('.crits__list').first().waitFor({ timeout: 180_000 }));
+    await showCall(1200);
+    await closeTrace();
+    await scrollTo('.fb', 'start', 1000);
+    await sleep(900);
+    await scrollTo('.crits', 'start', 1100);
+    await point(page.locator('.crits__list li').nth(1), { scroll: false }).catch(() => {});
+    await still('04-interview-feedback');
+    await sleep(2000);
+    caption('Then a stronger answer built only from what was said, and the follow-up to expect.');
+    await scrollTo(page.getByText(/stronger version/i).first(), 'start', 1200);
+    await moveTo(900, 700);
+    await sleep(3000);
   }
 
   // 7 Tracker
-  await closeTrace();
-  mark('scene', { id: 7 });
-  caption('The tracker learns which kinds of roles reply. A new profile has no history yet.');
-  await nav('Tracker');
-  await sleep(1300);
-  await click(page.getByRole('button', { name: 'Load the demo person' }));
-  await sleep(800);
-  caption('So load the demo person: 24 sample applications, marked sample on screen.');
-  tag('Demo person · sample data');
-  await click(page.getByRole('button', { name: 'Load Avery Quinn' }), { scroll: false });
-  await wait('demo', 1.5, () => page.getByText('What gets replies').first().waitFor({ timeout: 60_000 }));
-  await sleep(600);
-  await scrollTo(page.getByText('What gets replies').first(), 'start', 1100);
-  caption('What gets replies: lessons written by code from reply rates per kind of role.');
-  await moveTo(960, 520);
-  await still('05-tracker-lessons');
-  await sleep(2600);
+  if (FROM <= 7) {
+    await closeTrace();
+    mark('scene', { id: 7 });
+    caption('A new profile has no reply history yet, so start over with the demo person.');
+    await nav('Start');
+    await top(700);
+    await click(page.getByRole('button', { name: 'Start over' }).first());
+    await sleep(700);
+    await click(page.getByRole('button', { name: 'Clear and start over' }), { scroll: false });
+    await sleep(900);
+    tag('Demo person · sample data');
+    await click(page.getByRole('button', { name: 'Load the demo person' }).first());
+    await wait('demo', 1.5, () => page.getByText('Avery Quinn is loaded').first().waitFor({ timeout: 60_000 }));
+    await sleep(500);
+    const details = page.getByRole('heading', { name: 'Application details' }).first();
+    if (await details.count()) {
+      caption('Her details and standing consent come with the sample; her applications go only to a practice form.');
+      await scrollTo(details, 'start', 1200);
+      await moveTo(760, 560);
+      await sleep(1700);
+    }
+    await nav('Tracker');
+    await page.getByText('What gets replies').first().waitFor({ timeout: 60_000 });
+    await sleep(500);
+    await scrollTo(page.getByText('What gets replies').first(), 'start', 1100);
+    caption('What gets replies: lessons written by code from reply rates per kind of role.');
+    await moveTo(960, 520);
+    await still('05-tracker-lessons');
+    await sleep(2000);
 
-  await top(900);
-  tag('Sample mailbox · no real mail is read');
-  caption('Check replies: Tack searches the sample mailbox for every company with an open application.');
-  const rateBefore = ((await page.locator('.replies__rate').first().textContent().catch(() => '')) || '').trim();
-  await click(page.locator('.mail__acts').getByRole('button', { name: 'Check replies' }));
-  await wait('mail', 3, () => page.locator('.changed').first().waitFor({ timeout: 120_000 }));
-  await showCall(1600);
-  await closeTrace();
-  await sleep(500);
-  const rateAfter = ((await page.locator('.replies__rate').first().textContent().catch(() => '')) || '').trim();
-  const moved = rateBefore && rateAfter && rateBefore !== rateAfter ? `: the response rate moves from ${rateBefore} to ${rateAfter}` : '';
-  caption(`One live model call sorts the messages and statuses move${moved}.`);
-  await scrollTo('.changed', 'start', 1100);
-  await moveTo(820, 500);
-  await still('08-check-replies');
-  await sleep(2600);
-  await scrollTo('.replies', 'center', 1100);
-  caption('Automatic acknowledgements never count as a reply; the lessons relearn from the new statuses.');
-  await sleep(2600);
+    await top(900);
+    tag('Sample mailbox · no real mail is read');
+    caption('Check replies: Tack searches the sample mailbox for every company with an open application.');
+    const rateBefore = ((await page.locator('.replies__rate').first().textContent().catch(() => '')) || '').trim();
+    await click(page.locator('.mail__acts').getByRole('button', { name: 'Check replies' }));
+    await wait('mail', 3, () => page.locator('.changed').first().waitFor({ timeout: 180_000 }));
+    await showCall(1300);
+    await closeTrace();
+    await sleep(300);
+    const rateAfter = ((await page.locator('.replies__rate').first().textContent().catch(() => '')) || '').trim();
+    const moved = rateBefore && rateAfter && rateBefore !== rateAfter ? `: the response rate moves from ${rateBefore} to ${rateAfter}` : '';
+    caption(`One model call sorts the messages and statuses move${moved}.`);
+    await scrollTo('.changed', 'start', 1100);
+    await moveTo(820, 500);
+    await still('08-check-replies');
+    await sleep(2200);
+    await scrollTo('.replies', 'center', 1000);
+    await sleep(1600);
 
-  tag('Demo person · sample data');
-  await scrollTo(page.getByRole('heading', { name: 'Apply next' }).first(), 'start', 1200);
-  caption('Apply next ranks postings by fit and by how often that kind of role replies.');
-  await sleep(1500);
-  await click(page.getByRole('button', { name: 'Prepare application' }).first());
-  caption('Prepare application: the model tailors the bullets; each is shown with the résumé line it comes from.');
-  // the sheet sits over the trace rail, so the rail is left alone here
-  await wait('kit', 2.5, () => page.locator('.kit__bullets').first().waitFor({ timeout: 180_000 }));
-  await sleep(800);
-  await scrollTo('.kit__bullets', 'start', 1200);
-  await moveTo(1100, 560);
-  await still('06-application-kit');
-  await sleep(2600);
-  await page.keyboard.press('Escape');
-  await sleep(600);
-  await closeTrace();
+    tag('Demo person · sample data');
+    await scrollTo(page.getByRole('heading', { name: 'Apply next' }).first(), 'start', 1200);
+    caption('Prepare application: the model tailors the bullets, each shown with its résumé line.');
+    await sleep(500);
+    await click(page.getByRole('button', { name: 'Prepare application' }).first());
+    // the sheet sits over the trace rail, so the rail is left alone here
+    await wait('kit', 1.5, () => page.locator('.kit__bullets').first().waitFor({ timeout: 180_000 }));
+    await sleep(500);
+    await scrollTo('.kit__bullets', 'start', 1200);
+    await moveTo(1100, 560);
+    await still('06-application-kit');
+    await sleep(2000);
+    await page.keyboard.press('Escape');
+    await sleep(600);
+    await closeTrace();
 
-  tag('Practice applications · local sandbox form');
-  await scrollTo('.topn', 'center', 1100);
-  caption('Apply to top 3: three engine sessions in parallel, each filling and submitting in its own Chrome.');
-  await click(page.getByRole('button', { name: /^Apply to top 3/ }));
-  await page.locator('.batch').first().waitFor({ timeout: 30_000 });
-  await sleep(600);
-  await scrollTo('.batch', 'start', 1000);
-  await closeTrace();
-  caption('These are practice applications to Tack\'s local sandbox form, never sent to a company.');
-  const runsDone = () => page.evaluate(() => {
-    const runs = [...document.querySelectorAll('.batch .run')];
-    return runs.length > 0 && runs.every((el) => el.classList.contains('is-applied') || el.classList.contains('is-failed'));
-  });
-  const allFilling = () => page.evaluate(() => {
-    const runs = [...document.querySelectorAll('.batch .run')];
-    return runs.length > 0 && runs.every((el) => /Filled|Pressed Submit|Confirmed/.test(el.textContent || '') || el.classList.contains('is-failed'));
-  });
-  await wait('apply-start', 4, async () => { while (!(await allFilling()) && !(await runsDone())) await sleep(250); });
-  caption('With a real person and a live posting, the same run fills and submits the real posting instead.');
-  await wait('apply-finish', 6, async () => {
-    const t0 = Date.now();
-    while (!(await runsDone())) {
-      if (Date.now() - t0 > 360_000) throw new Error('the apply batch did not finish within 6 minutes');
+    tag('Practice applications · local sandbox form');
+    await scrollTo('.topn', 'center', 1100);
+    caption('Apply to top 3: three engine sessions in parallel, each filling and submitting in its own Chrome.');
+    await click(page.getByRole('button', { name: /^Apply to top 3/ }));
+    await page.locator('.batch').first().waitFor({ timeout: 30_000 });
+    await sleep(600);
+    await scrollTo('.batch', 'start', 1000);
+    await closeTrace();
+    caption('These are practice applications to Tack\'s local sandbox form, never sent to a company.');
+    const runsDone = () => page.evaluate(() => {
+      const runs = [...document.querySelectorAll('.batch .run')];
+      return runs.length > 0 && runs.every((el) => el.classList.contains('is-applied') || el.classList.contains('is-failed'));
+    });
+    const allFilling = () => page.evaluate(() => {
+      const runs = [...document.querySelectorAll('.batch .run')];
+      return runs.length > 0 && runs.every((el) => /Filled|Pressed Submit|Confirmed/.test(el.textContent || '') || el.classList.contains('is-failed'));
+    });
+    await wait('apply-start', 3.5, async () => { while (!(await allFilling()) && !(await runsDone())) await sleep(250); });
+    caption('With a real person and a live posting, the same run fills and submits the real posting instead.');
+    await wait('apply-finish', 5, async () => {
+      const t0 = Date.now();
+      while (!(await runsDone())) {
+        if (Date.now() - t0 > 480_000) throw new Error('the apply batch did not finish within 8 minutes');
+        await sleep(250);
+      }
+    });
+    await sleep(900);
+    result = await page.evaluate(() => ({
+      applied: document.querySelectorAll('.batch .run.is-applied').length,
+      failed: document.querySelectorAll('.batch .run.is-failed').length,
+      line: document.querySelector('.batch__line')?.textContent?.replace(/\s+/g, ' ').trim() ?? '',
+    }));
+    r.mark('apply', result);
+    caption(result.failed
+      ? `${result.applied} of 3 confirmed; a run that is not sent says why.`
+      : 'All three confirmed: the form\'s reference number and the page each run ended on.');
+    await scrollTo('.batch__runs', 'center', 1100);
+    await moveTo(900, 560);
+    await still('07-parallel-apply');
+    await sleep(3000);
+  }
+
+  // 8 Autopilot
+  if (FROM <= 8) {
+    mark('scene', { id: 8 });
+    tag('Demo person · practice form · sample mailbox');
+    caption('Autopilot runs the whole loop on a schedule: read, rank, apply, read replies, replan.');
+    await nav('Autopilot');
+    await page.locator('.ap__status').first().waitFor({ timeout: 30_000 });
+    await sleep(1300);
+    await scrollTo(page.getByRole('heading', { name: 'Settings' }).first(), 'start', 1200);
+    const set = (await fetch(`${BASE}/api/autopilot`).then((x) => x.json()).catch(() => null))?.settings ?? { intervalHours: 12, minFit: 50, needsApproval: false };
+    caption(`Every ${set.intervalHours} hours, fit ${set.minFit} and up, ${set.needsApproval ? 'each waiting for approval' : 'no approval step'}. For this demo the daily cap goes to 2.`);
+    await moveTo(820, 520);
+    await sleep(1200);
+    const capStepper = page.locator('.stepper').filter({ has: page.getByLabel('Daily cap') }).first();
+    for (let i = 0; i < 6 && Number(await page.getByLabel('Daily cap').inputValue()) > 2; i++) {
+      await click(capStepper.getByRole('button', { name: 'Decrease' }), { scroll: false });
       await sleep(250);
     }
-  });
-  await sleep(900);
-  const result = await page.evaluate(() => ({
-    applied: document.querySelectorAll('.batch .run.is-applied').length,
-    failed: document.querySelectorAll('.batch .run.is-failed').length,
-    line: document.querySelector('.batch__line')?.textContent?.replace(/\s+/g, ' ').trim() ?? '',
-  }));
-  r.mark('apply', result);
-  caption(result.failed
-    ? `${result.applied} of 3 confirmed; a run that is not sent says why.`
-    : 'All three confirmed: the form\'s reference number and the page each run ended on.');
-  await scrollTo('.batch__runs', 'center', 1100);
-  await moveTo(900, 560);
-  await still('07-parallel-apply');
-  await sleep(3600);
-  tag('');
+    await sleep(500);
+    await click(page.getByRole('button', { name: 'Save settings' }));
+    await sleep(1800);
+    await top(900);
+    caption('Run now on the demo person: every step streams in as it runs.');
+    await click(page.getByRole('button', { name: 'Run now' }).first());
+    await page.locator('.ap__live-steps').first().waitFor({ timeout: 30_000 }).catch(() => {});
+    await sleep(500);
+    await closeTrace();
+    await scrollTo(page.getByRole('heading', { name: 'Running now' }).first(), 'start', 1000);
+    const apNow = () => fetch(`${BASE}/api/autopilot`).then((x) => x.json()).catch(() => null);
+    const stepOf = (s, name) => s?.running?.steps?.find((x) => x.name === name)?.status;
+    await wait('autopilot-prep', 3, async () => {
+      for (;;) {
+        const s = await apNow();
+        if (!s?.running || ['running', 'done', 'failed', 'skipped'].includes(stepOf(s, 'apply'))) return;
+        await sleep(400);
+      }
+    });
+    const before = await apNow();
+    const rankNote = before?.running?.steps?.find((x) => x.name === 'rank')?.note ?? '';
+    const picked = rankNote.match(/^picked (\d+) of (\d+)/);
+    caption(picked
+      ? `It ranked ${picked[2]} postings, picked ${picked[1]} within the cap, wrote their kits, and applies to them in parallel.`
+      : 'Kits written, then the picks are applied to in parallel, each in its own engine session.');
+    await wait('autopilot-apply', 4.5, async () => {
+      const t0 = Date.now();
+      for (;;) {
+        const s = await apNow();
+        if (!s?.running) return;
+        if (Date.now() - t0 > 480_000) throw new Error('the autopilot run did not finish within 8 minutes');
+        await sleep(400);
+      }
+    });
+    await sleep(800);
+    const done = await apNow();
+    r.mark('autopilot', { status: done?.lastRun?.status, summary: done?.lastRun?.summary });
+    caption('The run report: what it read, what it applied to and why, what came back, what the plan changed.');
+    await page.locator('.ap__run-head').first().waitFor({ timeout: 40_000 }).catch(() => {});
+    await scrollTo(page.getByRole('heading', { name: 'Run history' }).first(), 'start', 1100);
+    await click(page.locator('.ap__run-head').first(), { scroll: false });
+    await page.locator('.ap__report').first().waitFor({ timeout: 15_000 }).catch(() => {});
+    await sleep(700);
+    await scrollTo('.ap__report', 'start', 1100);
+    await moveTo(900, 520);
+    await still('09-autopilot');
+    await sleep(3000);
+    tag('');
+  }
 
-  // 8 Progress
-  mark('scene', { id: 8 });
-  caption('Progress and the daily brief: the three things worth doing today.');
-  await nav('Progress');
-  await sleep(3000);
-  await scrollTo('.nums', 'start', 1200);
-  caption('Readiness over time, hours against the plan, streak and interview scores.');
-  await sleep(2700);
+  // 9 Progress
+  if (FROM <= 9) {
+    mark('scene', { id: 9 });
+    await nav('Progress');
+    caption('Progress and the daily brief: the three things worth doing today.');
+    await sleep(2400);
+    await scrollTo('.nums', 'start', 1200);
+    caption('Readiness over time, hours against the plan, streak and interview scores.');
+    await sleep(2200);
+  }
   mark('end');
   return result;
 }
@@ -541,9 +637,9 @@ let result;
 try {
   browser = await chromium.launch();
   await makeResume(browser);
-  await api('/reset', 'POST');
+  if (FROM === 1) await api('/reset', 'POST');
   const state = await api('/state');
-  console.log(`coach on ${BASE}: engine ${state.engine.available ? 'on' : 'off'} (${state.engine.note}), model ${state.model.name}, model cache ${process.env.TACK_LLM_CACHE || 'off'}`);
+  console.log(`coach on ${BASE}: engine ${state.engine.available ? 'on' : 'off'} (${state.engine.note}), model ${state.model.name}, model cache ${CACHE_MODE}`);
   if (!state.engine.available || !state.model.configured) throw new Error('the video needs the engine on and a model key');
 
   rmSync(OUT, { recursive: true, force: true });
@@ -563,6 +659,28 @@ try {
   await cdp.send('Page.startScreencast', { format: 'jpeg', quality: 90, maxWidth: Math.round(1440 * SCALE), maxHeight: Math.round(900 * SCALE), everyNthFrame: 1 });
 
   const r = recorder(page);
+  // Every model call the coach makes (the engine's go through it too), for the take's own record.
+  const events = new AbortController();
+  void (async () => {
+    try {
+      const res = await fetch(`${BASE}/api/events`, { signal: events.signal });
+      const dec = new TextDecoder();
+      let buf = '';
+      for await (const chunk of res.body) {
+        buf += dec.decode(chunk, { stream: true });
+        let i;
+        while ((i = buf.indexOf('\n')) >= 0) {
+          const line = buf.slice(0, i).trim();
+          buf = buf.slice(i + 1);
+          if (!line.startsWith('data:')) continue;
+          try {
+            const e = JSON.parse(line.slice(5));
+            if (e.run === 'model' && e.status !== 'start') r.mark('model', { task: e.step, status: e.status, detail: String(e.detail ?? '').slice(0, 200), ms: e.ms });
+          } catch { /* not an event */ }
+        }
+      }
+    } catch { /* stream closed */ }
+  })();
   const started = now();
   try {
     result = await storyboard(page, r);
@@ -572,7 +690,12 @@ try {
     await Promise.all(writes);
     await page.screenshot({ path: join(OUT, 'last.png') }).catch(() => {});
     writeFileSync(join(OUT, 'take.json'), JSON.stringify({ started, scale: SCALE, frames, marks: r.marks }, null, 1));
+    events.abort();
     console.log(`${frames.length} frames over ${(now() - started).toFixed(1)} s in ${OUT}`);
+    const calls = r.marks.filter((x) => x.type === 'model');
+    const failed = calls.filter((x) => x.status === 'fail');
+    console.log(`  model calls: ${calls.length - failed.length} answered, ${calls.filter((x) => /cached/.test(x.detail)).length} from the cache, ${failed.length} failed`);
+    for (const f of failed.slice(0, 8)) console.log(`    failed ${f.task}: ${f.detail.slice(0, 140)}`);
     for (const m of r.marks.filter((x) => x.type === 'wait')) console.log(`  wait ${m.label}: ${(m.t1 - m.t0).toFixed(1)} s`);
   }
 } finally {
@@ -582,7 +705,8 @@ try {
   child.kill('SIGTERM');
   await Promise.race([gone, sleep(20_000)]);
   if (child.exitCode === null && child.signalCode === null) child.kill('SIGKILL');
+  try { writeFileSync(join(OUT, 'coach.log'), log.join('')); } catch { /* no take folder */ }
   if (process.env.TACK_VIDEO_LOG) console.log(log.join(''));
 }
 if (result) console.log(`apply: ${result.applied} confirmed, ${result.failed} not sent (${result.line})`);
-if (!result || result.failed || result.applied < 3) process.exitCode = 3;
+if (FROM <= 7 && (!result || result.failed || result.applied < 3)) process.exitCode = 3;

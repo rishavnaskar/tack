@@ -2,7 +2,7 @@
 // labelled, a caption bar under the app (with a small note for live model
 // calls and sample data), a title card and a closing card.
 //
-//   PLAYWRIGHT=/abs/path/to/node_modules/playwright/index.mjs node submission/video/render.mjs [take]
+//   PLAYWRIGHT=/abs/path/to/node_modules/playwright/index.mjs node submission/video/render.mjs [take | take:1-6 take2:7-9]
 //
 // Needs ffmpeg on PATH. Writes submission/video/tack-demo.mp4 (1920x1080, H.264, 30 fps).
 
@@ -16,9 +16,6 @@ const { chromium } = await import(process.env.PLAYWRIGHT || 'playwright');
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const HERE = join(ROOT, 'submission/video');
 const STATE = process.env.TACK_STATE_DIR || join(ROOT, 'state/video');
-const TAKE = process.argv[2] || 'take';
-const DIR = join(STATE, 'takes', TAKE);
-const WORK = join(DIR, 'render');
 const OUT = process.env.TACK_VIDEO_OUT || join(HERE, 'tack-demo.mp4');
 const FPS = 30;
 const W = 1920;
@@ -37,62 +34,78 @@ const SCENES = {
   5: 'Plan',
   6: 'Interview',
   7: 'Tracker',
-  8: 'Progress',
+  8: 'Autopilot',
+  9: 'Progress',
 };
 
-const take = JSON.parse(readFileSync(join(DIR, 'take.json'), 'utf8'));
-const frames = take.frames;
-const marks = take.marks;
+// One or more takes, each as name or name:from-to (scene numbers), with +seconds to start a
+// little after the scene's first mark (past the click that leaves the scene skipped before it).
+// A take finished later from a scene (record.mjs with TACK_VIDEO_FROM) is joined the same way.
+const PARTS = (process.argv.slice(2).length ? process.argv.slice(2) : ['take']).map((arg) => {
+  const [name, spec] = arg.split(':');
+  const [range, lead] = (spec ?? '1-99').split('+');
+  const [from, to] = range.split('-').map(Number);
+  const dir = join(STATE, 'takes', name);
+  return { name, dir, from, to: to || from, lead: Number(lead) || 0, take: JSON.parse(readFileSync(join(dir, 'take.json'), 'utf8')) };
+});
+const WORK = join(PARTS[0].dir, 'render');
 rmSync(WORK, { recursive: true, force: true });
 mkdirSync(WORK, { recursive: true });
 
 // ------------------------------------------------------------ timeline
 
-const first = marks.find((m) => m.type === 'scene');
-const end = marks.find((m) => m.type === 'end');
-const T0 = first.t;
-const T1 = (end?.t ?? frames.at(-1).t) + 0.4;
-
-// Waits longer than their `keep` play faster, so each lasts about `keep` seconds.
-const fast = marks
-  .filter((m) => m.type === 'wait' && m.t1 - m.t0 > m.keep + 0.6)
-  .map((m) => ({ a: m.t0, b: m.t1, speed: (m.t1 - m.t0) / m.keep, label: m.label }));
-
-const pieces = [];
-let cursor = T0;
-for (const f of fast) {
-  if (f.b <= T0 || f.a >= T1) continue;
-  if (f.a > cursor) pieces.push({ a: cursor, b: f.a, speed: 1 });
-  pieces.push({ a: Math.max(f.a, cursor), b: Math.min(f.b, T1), speed: f.speed });
-  cursor = Math.min(f.b, T1);
-}
-if (cursor < T1) pieces.push({ a: cursor, b: T1, speed: 1 });
-
 const out = [];
-for (const p of pieces) {
-  const n = Math.max(1, Math.round(((p.b - p.a) / p.speed) * FPS));
-  for (let k = 0; k < n; k++) out.push({ src: p.a + (k * p.speed) / FPS, speed: p.speed });
-}
+const fast = [];
+for (const part of PARTS) {
+  const { frames, marks } = part.take;
+  const scenes = marks.filter((m) => m.type === 'scene');
+  const first = scenes.find((m) => m.id >= part.from);
+  const after = scenes.find((m) => m.id > part.to);
+  const end = marks.find((m) => m.type === 'end');
+  const T0 = first.t + part.lead;
+  const T1 = after ? after.t : (end?.t ?? frames.at(-1).t) + 0.4;
 
-const frameAt = (t) => {
-  let lo = 0;
-  let hi = frames.length - 1;
-  if (t <= frames[0].t) return frames[0].file;
-  while (lo < hi) {
-    const mid = (lo + hi + 1) >> 1;
-    if (frames[mid].t <= t) lo = mid;
-    else hi = mid - 1;
+  // Waits longer than their `keep` play faster, so each lasts about `keep` seconds.
+  const quick = marks
+    .filter((m) => m.type === 'wait' && m.t1 - m.t0 > m.keep + 0.6 && m.t1 > T0 && m.t0 < T1)
+    .map((m) => ({ a: m.t0, b: m.t1, speed: (m.t1 - m.t0) / m.keep, label: m.label }));
+  fast.push(...quick);
+
+  const pieces = [];
+  let cursor = T0;
+  for (const f of quick) {
+    if (f.a > cursor) pieces.push({ a: cursor, b: f.a, speed: 1 });
+    pieces.push({ a: Math.max(f.a, cursor), b: Math.min(f.b, T1), speed: f.speed });
+    cursor = Math.min(f.b, T1);
   }
-  return frames[lo].file;
-};
-const lastBefore = (type, t) => marks.filter((m) => m.type === type && m.t <= t).at(-1);
+  if (cursor < T1) pieces.push({ a: cursor, b: T1, speed: 1 });
 
-for (const o of out) {
-  o.file = frameAt(o.src);
-  o.scene = lastBefore('scene', o.src)?.id ?? 1;
-  o.caption = lastBefore('cap', o.src)?.text ?? '';
-  o.tag = lastBefore('tag', o.src)?.text ?? '';
-  o.sped =o.speed > 1.05 ? (o.speed < 3 ? o.speed.toFixed(1) : String(Math.round(o.speed))) : 0;
+  const frameAt = (t) => {
+    let lo = 0;
+    let hi = frames.length - 1;
+    if (t <= frames[0].t) return frames[0].file;
+    while (lo < hi) {
+      const mid = (lo + hi + 1) >> 1;
+      if (frames[mid].t <= t) lo = mid;
+      else hi = mid - 1;
+    }
+    return frames[lo].file;
+  };
+  const lastBefore = (type, t) => marks.filter((m) => m.type === type && m.t <= t).at(-1);
+
+  for (const p of pieces) {
+    const n = Math.max(1, Math.round(((p.b - p.a) / p.speed) * FPS));
+    for (let k = 0; k < n; k++) {
+      const src = p.a + (k * p.speed) / FPS;
+      out.push({
+        src, speed: p.speed, path: join(part.dir, 'frames', frameAt(src)),
+        scene: lastBefore('scene', src)?.id ?? part.from,
+        caption: lastBefore('cap', src)?.text ?? '',
+        tag: lastBefore('tag', src)?.text ?? '',
+        sped: p.speed > 1.05 ? (p.speed < 3 ? p.speed.toFixed(1) : String(Math.round(p.speed))) : 0,
+      });
+    }
+  }
 }
 
 // ------------------------------------------------------------ caption bars and cards
@@ -138,7 +151,7 @@ const cardStyle = `
   .rule { flex: 1; height: 1px; background: rgba(247,246,244,.14); }
 `;
 
-const recordedOn = new Date(take.started * 1000).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+const recordedOn = new Date(PARTS[0].take.started * 1000).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 const titleHtml = `<!doctype html><meta charset="utf-8"><style>${fonts}${cardStyle}
   .promise { font-size: 54px; line-height: 1.12; letter-spacing: -0.025em; font-weight: 420; max-width: 1220px; margin-top: 64px; }
 </style><div class="grid"></div><div class="glow"></div><div class="wrap">
@@ -148,19 +161,22 @@ const titleHtml = `<!doctype html><meta charset="utf-8"><style>${fonts}${cardSty
 </div>`;
 
 const closingHtml = `<!doctype html><meta charset="utf-8"><style>${fonts}${cardStyle}
-  ol { list-style: none; padding: 0; margin-top: 56px; display: grid; gap: 0; max-width: 1280px; }
-  li { display: grid; grid-template-columns: 90px 1fr; align-items: baseline; padding: 19px 0; border-top: 1px solid rgba(247,246,244,.12); font-size: 38px; letter-spacing: -0.02em; font-weight: 430; }
+  ol { list-style: none; padding: 0; margin-top: 44px; display: grid; gap: 0; max-width: 1556px; }
+  li { display: grid; grid-template-columns: 80px 1fr; align-items: baseline; padding: 14px 0; border-top: 1px solid rgba(247,246,244,.12); font-size: 33px; letter-spacing: -0.02em; font-weight: 430; }
+  li .note { color: rgba(247,246,244,.55); }
   li:last-child { border-bottom: 1px solid rgba(247,246,244,.12); }
   li .mono { font-size: 16px; }
 </style><div class="grid"></div><div class="glow"></div><div class="wrap">
-  ${wordmark(130)}
+  ${wordmark(112)}
   <ol>
     <li><span class="mono accent">01</span><span>Live postings from 60 real company boards</span></li>
     <li><span class="mono accent">02</span><span>Every claim quoted from its source</span></li>
     <li><span class="mono accent">03</span><span>Numbers computed in code</span></li>
     <li><span class="mono accent">04</span><span>Applies in parallel through a real browser</span></li>
     <li><span class="mono accent">05</span><span>Reads replies and relearns</span></li>
-    <li><span class="mono accent">06</span><span>Desktop app and MCP server</span></li>
+    <li><span class="mono accent">06</span><span>Autopilot: runs the whole loop on a schedule</span></li>
+    <li><span class="mono accent">07</span><span>Real forms verified by dry run on Greenhouse, Lever and Ashby <span class="note">(never submitted)</span></span></li>
+    <li><span class="mono accent">08</span><span>Desktop app and MCP server</span></li>
   </ol>
 </div>`;
 
@@ -197,8 +213,8 @@ await browser.close();
 
 const q = (p) => `file '${p.replace(/'/g, "'\\''")}'`;
 const frameList = [];
-for (const o of out) frameList.push(q(join(DIR, 'frames', o.file)), `duration ${(1 / FPS).toFixed(6)}`);
-frameList.push(q(join(DIR, 'frames', out.at(-1).file)));
+for (const o of out) frameList.push(q(o.path), `duration ${(1 / FPS).toFixed(6)}`);
+frameList.push(q(out.at(-1).path));
 writeFileSync(join(WORK, 'frames.txt'), frameList.join('\n'));
 const capList = [];
 for (const r of runs) capList.push(q(r.file), `duration ${(r.n / FPS).toFixed(6)}`);

@@ -1,17 +1,19 @@
 Problem
-Pivoting careers is hard. A backend engineer moving to AI Product Manager in Bengaluru lacks clear data on what local employers actually demand, where their résumé falls short, and how to structure their preparation week by week.
+Pivoting careers is difficult. People rarely know what target jobs truly require, where their real skill gaps lie, or how to prepare while juggling dozens of applications.
 
 What I built
-I built Tack, a career pivot coach running as a local web app, a macOS Electron app, and an 8-tool MCP server over stdio, all sharing one SQLite store. Tack takes a PDF or pasted résumé, suggests 5 adjacent roles, and scans 60 public boards (33 Greenhouse, 18 Ashby, 9 Lever). In testing, it scanned 10,654 roles, found 450 AI PM titles, and harvested 40 postings in 11 seconds. It maps 30 to 32 skills, builds a plan of 55 to 60 tasks in 8.6 seconds, suggests 3 projects covering at least 2 gap skills, and runs 5-question mock interviews. Passing checkpoints updates your readiness, which rose from 34 to 39 in testing. A tracker uses Thompson sampling to rank target roles. Tack includes 112 passing tests and a demo profile with 40 postings and 24 applications.
+I built Tack in one day for the Product Space Agentic AI Hackathon. It is a career pivot coach that compares your resume against live job postings. In tests, it scanned 10,654 listings across 60 company boards, matched 450 AI Product Manager roles, and read 40 in 11 seconds to build a skill-gap map in 12 seconds.
+
+Tack organizes those gaps into a weekly study plan with checkpoints, calendar exports, and three portfolio projects. It drills you with five mock interview questions scored 1 to 5 against a rubric. It also opens Chrome to apply for you. One test application took 17 seconds; three in parallel took 35 to 71 seconds. On real company forms, in dry runs that were never submitted, it filled 8 of 11 fields on Greenhouse, 12 of 21 on Lever, and 6 of 7 on Ashby, attaching the resume every time. An autopilot mode runs every 12 hours, sorts email replies, and uses Thompson sampling to prioritize roles with the best response rates. The project includes 176 passing tests, an 8-tool MCP server, and a macOS desktop app.
 
 How it uses AI
-I used Gemini (gemini-3.5-flash-lite) through an OpenAI-compatible endpoint with JSON schemas, disk caching, and a 12-call-per-minute limit for 8 tasks: résumé parsing, adjacent roles, extracting skills from 5-job batches, plan wording, project briefs, interview questions, 5-criterion rubric scoring (1 to 5), and application kits. All math, rankings, gap formulas, dates, and tracker insights run in deterministic code, not AI.
+Tack uses Gemini through an OpenAI-compatible endpoint. The model reads and judges: it extracts skills, drafts project briefs, scores interviews, and sorts replies. Code handles the math, including job rankings, readiness scores, and schedules. Every quote from the model is checked against original text or dropped. Built-in fallbacks keep the system running if the model goes down.
 
 What is different
-Every claim is backed by verbatim evidence. Skills require exact résumé quotes, job demand requires exact posting quotes, and interview scores quote the user's answers. Unverified quotes are dropped. Interview scores above 4 raise readiness, while scores under 50 add practice. When checkpoints fail, replanning instantly rebalances tasks in code without AI hallucinations.
+Career tools often stop at generic advice. Tack proves every matched skill and bullet with exact quotes from source texts. Instead of just offering advice, it applies in a real browser and learns from actual responses.
 
 Honest limits
-The macOS app is unsigned. Gmail sync is opt-in. Applications are prepared to copy and paste, not auto-submitted. The free model tier limits requests to 15 per minute, making cold gap builds take about 65 seconds. The board list is fixed to 60 companies, and the demo tracker uses 24 sample applications.
+The demo uses fictional profiles, local forms, and sample emails. Real Gmail integration was tested only to Google's sign-in screen. Live forms leave pay, gender, and relocation fields for you. The macOS app is unsigned, the web preview cannot apply or read mail, and the free Gemini tier has strict limits.
 
 Built on
-Node 22, TypeScript, React 19, Electron, and SQLite. The job-board reader and résumé parser were vendored from my earlier project Fanfold; all coaching workflows, gap math, interview tools, and the MCP server were built new for this hackathon.
+I reused Fanfold, my earlier browser agent, for board scraping, resume parsing, and browser automation. Everything else was built during the hackathon.

@@ -1,0 +1,19 @@
+# Tack web preview on Vercel (container service, see vercel.json).
+# Same image as the Dockerfile, except the UI is not rebuilt: the prebuilt ui/dist is copied in.
+
+FROM node:22-slim
+ENV NODE_ENV=production \
+    TACK_HOSTED=1 \
+    PORT=8080 \
+    TACK_STATE_DIR=/tmp/tack
+WORKDIR /app
+COPY coach/package.json coach/
+COPY coach/bin coach/bin
+COPY coach/src coach/src
+COPY engine/package.json engine/
+COPY engine/src engine/src
+COPY ui/dist ui/dist
+USER node
+EXPOSE 8080
+STOPSIGNAL SIGTERM
+CMD ["node", "--no-warnings", "coach/bin/serve.ts"]

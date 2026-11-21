@@ -1,155 +1,86 @@
 # Tack
 
-Tack is a career pivot coach. It reads live job postings, maps them against your résumé with the exact lines as proof, plans the move week by week, drills interviews, and learns from which applications get replies.
+Tack is a career pivot coach. It checks live job ads, compares them to your resume using exact lines as proof, sets up a week-by-week plan, runs practice interviews, fills out job applications for you in a real browser, and learns from the jobs that reply. I built it in one day for the Product Space Agentic AI Hackathon, problem statement 05 (Career pivot coach).
 
 ## What it does
 
 | Requirement | How Tack meets it |
-| --- | --- |
-| Résumé and target-role intake | Accepts uploaded PDFs or pasted text (`coach/src/intake.ts`, `parseResume`). The PDF is sent directly to the model as a file (task `intake.resume`), while the local engine reader (`coach/src/engine-live.ts`, `resumeText`, using `engine/src/memory/import.ts`) extracts text locally to verify quotes and serve as a fallback if the endpoint cannot take PDFs. Every extracted skill must include an exact quote from the résumé; `finishProfile` verifies each quote against the text and discards any skill without one. Users configure their target role, location, remote work preference, weekly hours budget, and timeline on the Start screen (`ui/src/screens/Start.tsx`), saved via `PUT /api/goal`. The model also suggests five "roles next door" with estimated overlap percentages and one-line explanations (`intake.ts`, `suggestRoles`, task `intake.roles`), falling back to a hardcoded table (`adjacentRoles`) if no model is connected. |
-| Skill-gap map built from real job descriptions | Harvests postings from 60 public company job boards (33 Greenhouse, 18 Ashby, 9 Lever; listed in `coach/src/boards.ts`) using their public APIs without a browser or login (`engine-live.ts`, `harvest`, with readers from `engine/src/jobs/ats.ts`). Ranks postings in code by title match, location (city first, then country, then country-compatible remote; roles based elsewhere rank below all local roles), recency, and keyword density for role modifiers like "AI", capping results at a few postings per company. The model processes postings in batches of five to extract skills, marking each as must-have or nice-to-have alongside a verbatim quote (`coach/src/gap.ts`, `extractSkills`, task `gap.extract`); quotes missing from the posting text are discarded (`cleanSkills`, `skills.ts`, `findQuote`). Code computes the gap (`gap.ts`, `computeGap`): `demand` is the share of postings requesting the skill; `mustShare` is the proportion marking it mandatory; `need` is derived from demand and mustShare; `have` comes from the profile's current level (or an implied skill, minus a penalty from a lookup table in `skills.ts`); proficiency is categorized as strong, partial, or missing; `priority = round(100 x demand x (need - have)/5 x (0.6 + 0.4 x mustShare))`; and `readiness` is the demand-weighted average of `min(have/need, 1)`. Skill aliases and transferable bridge skills are mapped via lookup tables in `coach/src/skills.ts`. The Gap screen (`ui/src/screens/Gap.tsx`) displays a readiness dial, top five priority skills, a constellation visualization (node size represents demand, fill shows proficiency), and an evidence drawer pairing résumé quotes against job posting quotes with company names. |
-| Week-by-week learning plan | `coach/src/plan.ts` (`buildPlan`) schedules unmastered skills into weekly blocks by priority and prerequisites within the user's weekly study budget. Code schedules practice, a portfolio project, mock interviews, and application sprints, managing all IDs, hours, and calendar dates. The model is only used to generate task titles, checkpoints, and search queries for study resources (`wordPlan`, task `plan.wording`), while resource URLs are constructed as search links in code. Each week ends with a checkpoint (marked passed or not yet), and plans can be exported as an `.ics` calendar (`toIcs`, `GET /api/plan/calendar.ics`). Displayed on `ui/src/screens/Plan.tsx`. |
-| Portfolio project suggestions matched to the gaps | `coach/src/portfolio.ts` selects three projects that each cover at least two open skill gaps (`pickProjects`), pins them to plan weeks, and attaches matching job posting quotes (`quotesFor`). The model drafts the project brief, milestone checklist, and deliverables (task `portfolio.briefs`), falling back to code templates if unavailable. Displayed on `ui/src/screens/Portfolio.tsx` with a skill coverage indicator, plan milestone alignment, and "why it counts" quotes with company names. |
-| Mock interviews scored against a rubric | `coach/src/interview.ts` generates five interview questions drawn directly from target postings and open gap skills (task `interview.questions`). An evaluation rubric scores answers across five anchored criteria: structure, relevance to the role, depth, evidence and metrics, and clarity. Each criterion is scored from 1 to 5 with an explanation and an excerpt quoted from the user's answer (task `interview.judge`). Code validates that every quote appears verbatim in the answer (`verbatimQuote`), computes the overall score (`overallScore`), strips unmentioned facts from the model's suggested stronger answers (`guardInvented`), and generates one follow-up probe. Scores update the profile: scoring above 4 on a skill's questions increases `have`, while a session score under 50 schedules extra practice during the next replan. UI runs on `ui/src/screens/Interview.tsx` and `ui/src/screens/interview/Room.tsx`. |
-| Progress tracking that adjusts the plan | `coach/src/progress.ts` tracks readiness trends over time, completed versus planned hours, active streaks, on-track status, and a three-item daily brief (`brief`). When adjustments are needed, `plan.ts` (`replan`) runs deterministically: overdue tasks roll forward, weekly loads rebalance to the study budget, mastering a skill early frees up remaining hours, a failed checkpoint adds a review block, and weak interview scores add practice tasks. Each adjustment generates a `PlanChange` log ("what moved and why"), shown as a diff card and saved to plan history. Checking off tasks and passing checkpoints raises `have` for targeted skills, improving overall readiness (demonstrated by a move from 37 to 39 after one checkpoint). UI located at `ui/src/screens/Progress.tsx` and the diff card in `Plan.tsx`. |
-| Application tracker that learns which kinds of roles get responses | `coach/src/tracker.ts` tracks outcomes where a response is defined as a reply, interview, or offer. Tracks performance across segments (role family, seniority, company size, source, and fit band) using a Beta(1,1) posterior distribution on response rates. Calculates lift as the segment average divided by the overall average, along with confidence derived from sample size. Applications without updates for over 14 days are marked as ghosted. Key takeaways are written as simple sentences by code based on top and bottom segments, not by the model. The "Apply next" feature ranks unapplied postings using Thompson sampling over segment posteriors combined with role fit. UI located at `ui/src/screens/Tracker.tsx` and the pipeline board at `ui/src/screens/tracker/Pipeline.tsx`. |
+|---|---|
+| Resume and target-role intake | Upload a PDF or paste in text. Every skill it picks up must include an exact quote from your resume, or the tool drops it. It also recommends five related roles next door. |
+| Skill-gap map from real job descriptions | Pulls 40 live job posts from 60 real company job boards (Greenhouse, Ashby, Lever). Every skill links directly to an exact line in the job post. Code calculates demand, need, have, priority, and readiness. |
+| Week-by-week learning plan | Code maps skills into weekly schedules based on priority, prerequisites, and how many hours you have each week. Includes weekly checkpoints and lets you export to your calendar. |
+| Portfolio projects matched to the gaps | Sets up three projects. Each covers at least two open gaps, ties into your weekly plan, and links back to quotes from real job ads. |
+| Mock interviews scored against a rubric | Gives you five questions taken from target job posts. Grades each on five fixed criteria from 1 to 5, explains the score, and quotes your own words. It gives you a better answer made only from your facts, plus a follow-up question. |
+| Progress tracking that adjusts the plan | Checking off tasks and clearing checkpoints updates your readiness. The replan tool reschedules delayed work and clearly shows what changed and why. |
+| Application tracker that learns which roles get responses | Tracks reply rates by role family, seniority, company size, source, and fit band, along with confidence scores. It uses Thompson sampling to rank where you should apply next. |
 
 ## Beyond the brief
 
-- Live market reader: Fetches live postings from company boards in about 10 seconds, streaming every search step over Server-Sent Events (`GET /api/events`, `coach/src/trace.ts`, `ui/src/ui/TraceRail.tsx`).
-- Application kit generator (`coach/src/kit.ts`, `POST /api/kit/:postingId`): Generates a role headline, tailored résumé bullet points mapped directly to original résumé lines (`guardBullets` drops bullets that cannot be traced back), a cover letter, talking points, honest talking points for open skill gaps, and questions to ask the interviewer.
-- MCP server integration (`coach/bin/mcp.ts`, `docs/MCP.md`): Exposes eight tools (state, gap, plan week, complete task, next applications, prepare application, interview question, and interview answer) over stdio against the exact same data store as the web app.
-- Native desktop wrapper (`desktop/`): Electron shell that manages the coach process, provides an API key configuration screen, and includes a crash monitor.
-- Automated applying (`coach/src/apply.ts`, `POST /api/apply`, `POST /api/apply/top`): Tack starts its own copy of the browser engine (`coach/src/engine-proc.ts`) and hands it each posting. Every posting gets its own engine session in its own Chrome window, and a batch ("Apply to top N", up to 8) runs them side by side; one failure does not stop the others. The engine fills the form from the Application details on Start, the résumé file and the kit's answers, then submits it. Each run streams its steps into the trace and ends confirmed or failed with the reason, plus a picture of the page it ended on.
-- Practice form (`coach/src/practice.ts`, `/practice/apply/:postingId`): a three-step application form Tack serves itself, with a résumé upload, screening questions from the posting, a consent box, a review step and a reference number. The demo person and sample postings always apply here, never to a company. Submissions are kept under `practice-submission`.
-- Replies from mail (`coach/src/replies.ts`, `POST /api/applications/sync`): searches mail for every company with an open application, four at a time, sorts each message (interview, reply, rejected, offer, automatic acknowledgement, unrelated) in one model call with a keyword fallback, and moves statuses; acknowledgements never count as a reply. The demo person reads a bundled 12-message sample mailbox. Real Gmail goes through the engine's read-only search; only sender, subject and snippet are kept, in local state.
-- Read-only import of existing job applications from a Fanfold database (`TACK_FANFOLD_DB`).
-- Full offline support: Includes a bundled profile (Avery Quinn), 40 sample job postings, a 24-application history, and programmatic fallbacks for all eight model tasks.
-- Responsive layout: Every view includes dedicated loading, empty, and error states, scaling cleanly from 1440 px down to 390 px.
+- Applies for you: Launches a real Chrome window using the Fanfold engine, completes the entire form, adds your resume, and sends it in. It can run multiple applications at once, using a separate browser session for each.
+- Reads your replies: Looks through your email for messages from each company, labels each one (interview, rejection, offer, or auto-reply), and updates the tracker and learning model.
+- Application kit: Customizes your resume bullets for each specific job. Every bullet points to the exact line in your resume it came from. Any bullet without clear proof is cut out.
+- Smart apply queue: Never applies to the same job twice, keeps a "needs you" list for captchas, logins, or blank fields, and includes a standing consent toggle.
+- Multi-platform: Works as a desktop app for macOS, a hosted web preview, and an MCP server with 8 tools.
+
+## Autopilot
+
+Turn Autopilot on and it takes care of the full cycle on a timer (every 12 hours by default): it reads fresh job ads, updates your gap map, selects the best matches up to your daily cap, builds your application kits, applies in parallel, checks for email replies, updates the plan, and writes a status report. If it crashes, it starts right back up on its own. You can adjust the run interval, daily cap, minimum fit score, excluded companies, quiet hours, and decide if applications need manual approval (turned off by default).
 
 ## How the model is used
 
-- Model connection: Connects to Gemini through its OpenAI-compatible endpoint (`coach/src/llm.ts`), tested with `gemini-3.5-flash-lite`. Enforces JSON schema output, schema validation and repair, on-disk caching keyed by request hash, rate limiting (12 requests per minute by default), automatic retry with exponential backoff on 429 and 5xx responses, and trace events emitted for each call.
-- The eight model tasks:
-  1. `intake.resume`: Extracts background details from an uploaded PDF or pasted text.
-  2. `intake.roles`: Recommends adjacent career transitions.
-  3. `gap.extract`: Identifies requested skills from job descriptions with quotes.
-  4. `plan.wording`: Writes task names, weekly checkpoint goals, and learning queries.
-  5. `portfolio.briefs`: Drafts project outlines, milestones, and deliverables.
-  6. `interview.questions`: Writes relevant interview questions based on postings and skill gaps.
-  7. `interview.judge`: Evaluates candidate interview answers against rubric criteria.
-  8. `kit.tailor`: Customizes résumé bullets and prep materials for a specific posting.
-- What code handles instead of the model: Finding and sorting job postings; computing all statistics and metrics (demand, priority, readiness, fit, hours, dates, streaks, response rates, lift, confidence, and overall interview scores); distributing plan tasks and running replans; writing tracker takeaway sentences; ranking next applications via Thompson sampling; verifying quote authenticity; and generating the daily brief. The only numbers the model produces are initial résumé skill ratings (1 to 5, editable on the Start screen), 1 to 5 interview rubric marks, and role overlap estimates.
-- Guardrails on model output: All quotes must be found word-for-word in their source text (the résumé, job description, or candidate answer) or code removes them. Upgraded interview answers and tailored application bullets are restricted to facts explicitly mentioned by the candidate.
+- Runs Gemini through an OpenAI-compatible endpoint with JSON schemas, a disk cache, a single shared request budget, and retry logic.
+- The model handles language and evaluation: reading resumes, pulling out skills, writing plan text, drafting project briefs, writing and grading interview questions, tailoring kits, and sorting incoming emails.
+- Code handles the math: searching and sorting job ads, calculating demand, readiness, fit, schedules, reply rates, score lift, and what to apply to next.
+- The app verifies every quote from the model against the original text. If it is not an exact substring, it gets removed.
+- Every feature includes a fallback that works without the model, so the app stays up even if the model goes down.
 
 ## Numbers
 
-- Board collection: Configured across 60 boards (33 Greenhouse, 18 Ashby, 9 Lever), with all 60 responding successfully. Scanned 10,654 job listings, matched 450 titles for "AI Product Manager", and ingested 40 full postings. Cold harvest took 9.8 s via the command line and 11.0 s during the recorded demo run (querying boards and parsing postings live without cache).
-- Location matching: For the target goal of Bengaluru with remote enabled, all 40 selected postings were located in India or open to remote, spread across 20 companies (InMobi, Razorpay, Meesho, Bureau, Sumo Logic, Netomi, UiPath, Sarvam AI, FamPay, Rubrik, Zeta, Glean, GitLab, Glance, Okta, HackerRank, Fivetran, Hevo Data, Mindtickle, and Harvey). Ranking logic ensures US-only remote listings no longer outrank Indian opportunities when remote is enabled.
-- Skill-gap calculation: Processing 40 live postings took 64.6 s on a cold run (8 extraction calls kept under the 12-per-minute limit, handling Gemini 503 retries) and approximately 1 s from cache. Extracted 30 to 32 skills, giving the demo profile an initial readiness score of 34 to 37 depending on the postings retrieved.
-- Plan generation and updates: Initial plan generation took 8.6 s cold (producing 55 to 60 tasks). Replanning runs entirely in code and is instantaneous.
-- Plan updates: Passing the week 1 checkpoint increased readiness from 36 to 38 during the recorded session. Marking the checkpoint as "not yet" and replanning added a review block, removed one low-priority task that could no longer fit, and delayed 12 tasks.
-- Mock interview evaluation: A 79-word candidate answer received an overall score of 80/100 under the rubric.
-- Test coverage and packaging: 134 automated tests passing (`cd coach && npm test`), clean UI type checks and builds, and desktop builds (`npm run dist`) producing `.dmg` and `.zip` installers of roughly 120 MB each. The packaged desktop application starts the coach server in about 0.7 s.
-- Demo recording: 2:46 runtime at 1920x1080 (H.264, 24 MB), recorded in a single continuous take using Chromium at 1440x900. Job boards were queried live; model calls were served from the local disk cache populated during warm-up runs to remove waiting delays. Only the 11.0 s harvest step was sped up (1.6x, labeled in video).
+- 60 company boards checked; 10,654 roles scanned; 450 matched "AI Product Manager"; 40 full descriptions read in about 11 seconds.
+- Made a complete gap map from 40 postings in about 12 seconds using the fast model.
+- Finished one test application in about 17 seconds. Handled three parallel applications in 35 to 71 seconds.
+- Filled out real forms without submitting: Greenhouse (InMobi) filled 8 of 11 fields including all 3 required; Lever (Meesho) filled 12 of 21 fields including 8 of 14 required; Ashby (Sarvam AI) filled 6 of 7 fields including all 4 required. Attached the resume in all three cases.
+- Passes 176 automated tests.
 
 ## Architecture
 
-- `coach/`: Node 22 TypeScript server with zero third-party runtime dependencies (uses native `node:http`, `node:sqlite`, and `fetch`), exposing a JSON API under `/api`, an SSE event stream, and static UI hosting.
-- `ui/`: Single-page application built with Vite and React 19, styled using standard CSS tokens and animations, communicating exclusively with `/api`.
-- `engine/`: Scrapers for job boards and résumé parsing vendored directly from Fanfold without modifications; called solely by `coach/src/engine-live.ts`.
-- `desktop/`: Electron wrapper that launches the coach backend and displays the frontend; `coach/bin/mcp.ts` exposes the same capabilities over stdio for MCP clients.
-- State storage: A single SQLite document store alongside file-based caches for LLM responses and scraped job postings, saved inside `state/` (or the desktop app's application data folder).
+- engine/: Contains code brought over from Fanfold, my earlier browser agent. It reads job boards, extracts resume text, controls Chrome, and checks email.
+- coach/: A Node 22 TypeScript server with zero runtime dependencies. Uses SQLite for storage and runs all coaching logic.
+- ui/: Built with React and Vite across nine screens.
+- desktop/: An Electron wrapper that launches the coach server.
 
 ## Run it
 
-Requires Node 22.18 or higher. Add your model API key to a `.env` file at the root of the repository:
-
 ```bash
-GEMINI_API_KEY=your_key_here
-```
-
-You can also use `TACK_MODEL_KEY`, and set `TACK_MODEL_URL` if pointing to an alternate OpenAI-compatible endpoint.
-
-### Web
-
-```bash
-cd ui && npm install && npm run build
+cd ui && npm ci && npm run build && cd ..
+echo "GEMINI_API_KEY=your-key" > .env
 node --no-warnings coach/bin/serve.ts
 ```
 
-Open http://127.0.0.1:4400 in your browser. Click "Load the demo person" on the Start screen to populate all screens without needing to upload a résumé.
+Open http://127.0.0.1:4400 in your browser and click "Load the demo person", or paste your own resume.
 
-### The browser engine
-
-Mail and applying start Tack's own engine the first time they are used: `engine/bin/serve.ts` as a child process with its state in `<state>/engine`, sign-in off, Tack's model, and no scheduler. It stops when the coach stops. Settings, all optional:
-
-| Variable | What it does |
-| --- | --- |
-| `TACK_APPROVALS` | Passed to the engine as `BROWSER_AGENT_APPROVALS`. Default `none`: fully automated. |
-| `TACK_ENGINE_MODEL` | The model the engine's agent uses. Default `TACK_MODEL_SMART`, then `TACK_MODEL_FAST`. |
-| `TACK_CHROME_PATH` | The Chrome executable the engine drives (Chrome for Testing works well). Default: the engine's own choice. |
-| `TACK_ENGINE_HEADLESS=1` | No visible windows. |
-| `TACK_FANFOLD_STATE` | Use a Fanfold that is already running from this state folder instead of starting one (its tools only). |
-| `TACK_MAIL=sample` | Read the bundled sample mailbox even for a real person. |
-| `TACK_EXTENSION_PORT`, `TACK_ENGINE_PORT` | The engine's extension bridge and HTTP ports. |
-| `TACK_ENGINE=off` | No engine at all. |
-
-### Desktop
-
-For macOS on Apple silicon:
+To build the desktop app:
 
 ```bash
-cd ui && npm install && npm run build
-cd desktop && npm install && npm run dist
+cd desktop && npm ci && npm run dist
 ```
 
-Installers are generated inside `desktop/out/` as a `.dmg` and `.zip`. To run in development mode:
-
-```bash
-cd desktop && npm run dev
-```
-
-### MCP
-
-Add Tack to your MCP client configuration:
-
-```json
-{
-  "command": "node",
-  "args": ["--no-warnings", "/abs/path/tack/coach/bin/mcp.ts"]
-}
-```
-
-Refer to `docs/MCP.md` for complete configuration options.
-
-### Tests and demo scripts
-
-Run tests and type checks:
+For hosted mode, read docs/DEPLOY.md. For the MCP server, read docs/MCP.md. To run tests:
 
 ```bash
 cd coach && npm test
-cd ui && npx tsc --noEmit && npm run build
-```
-
-Record and render the demo video:
-
-```bash
-PLAYWRIGHT=/abs/path/playwright/index.mjs node submission/video/record.mjs final
-node submission/video/render.mjs final
 ```
 
 ## Limits
 
-- The macOS desktop binary uses ad-hoc code signing; Gatekeeper will require approval on first launch (right-click the app and choose Open).
-- Gmail needs `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`, and the person connects it once with "Connect Gmail" on the Tracker (Google's consent window). With `TACK_FANFOLD_STATE`, the running Fanfold's own connection is used, and that Fanfold must be signed in.
-- For live postings and a real person, applications are submitted for real with no review step unless `TACK_APPROVALS` says otherwise. The engine may still stop at a question it cannot answer (a consent box on an unknown form, a CAPTCHA, a sign-in); the run then ends as not sent, with what it asked.
-- Several applications at once share one model key. On Gemini's free tier a burst of parallel form steps can hit the per-minute limit, and the engine then waits about a minute before carrying on.
-- Application trends in the demo are calculated from sample records (the bundled profile's 24 applications, labeled as "sample" in the cards and the "What gets replies" panel).
-- Using the free Gemini API tier (15 requests per minute) causes an initial uncached gap calculation to take roughly one minute; subsequent runs pull from the local disk cache.
-- Board harvesting searches a fixed directory of 60 company boards; target roles with few listings across those specific companies will return fewer than 40 postings.
+- The sample user is made up. Demo applications fill out a local practice form, and demo replies come from an included test mailbox. Real applications go straight to real job listings.
+- Live email checks require connecting your Gmail account once. This flow was tested up to the Google sign-in screen, not on an active personal inbox.
+- On live application forms, fields like gender, salary expectations, and relocation preferences are skipped for you to fill out.
+- Open browser windows stack on top of each other instead of snapping side by side.
+- The macOS build is not signed with an Apple developer certificate. Right-click the app icon and click "Open" the first time you run it.
+- The hosted web preview cannot send applications or read your inbox; you need the desktop app for those features.
+- The free Gemini tier is slower and comes with tight daily limits. Using a paid API key runs much faster.
 
 ## Built on
 
-- The ATS job-board parsers and résumé extraction utilities were vendored without alterations from Fanfold (an earlier browser agent project by the author) located under `engine/`.
-- All other components—including the coach server, React interface, Electron desktop wrapper, MCP server, gap calculation math, study planner, interview evaluation rubric, and application feedback tracker—were created during the hackathon.
+The job-board scraper, resume reader, and browser automation were copied into engine/ from my earlier project, Fanfold. I wrote the rest of the application during the hackathon.
