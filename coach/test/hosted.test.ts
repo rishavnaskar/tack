@@ -27,6 +27,11 @@ const model: Server = createServer((req, res) => {
       return;
     }
     const text: string = body.messages[1].content.replace(/^Résumé:\n\n/, '');
+    if (text.includes('Quota Spent')) {
+      res.writeHead(429, { 'content-type': 'application/json', 'retry-after': '3600' });
+      res.end('{"error":"quota"}');
+      return;
+    }
     const lines = text.split('\n').map((l) => l.trim()).filter(Boolean);
     const quote = (word: string) => lines.find((l) => l.toLowerCase().includes(word)) ?? lines[1];
     const profile = {
@@ -300,7 +305,7 @@ test('two visitors at once: neither sees the other\'s profile, postings, gap, pl
 // ---------------------------------------------------------------- limits and hardening
 
 test('hosted limits: 409 for browser features, budget 429, body and type checks, headers, traversal, rate', async () => {
-  const srv = await startServer({ TACK_BUDGET_SESSION_HOUR: '1', TACK_RATE_SESSION_PER_MINUTE: '40', TACK_DOWNLOAD_URL: 'https://download.example/tack' });
+  const srv = await startServer({ TACK_BUDGET_SESSION_HOUR: '1', TACK_RATE_SESSION_PER_MINUTE: '40', TACK_MODEL_RETRIES: '2', TACK_DOWNLOAD_URL: 'https://download.example/tack' });
   const v = new Visitor(srv.base);
   await v.ok('GET', '/api/state');
 
@@ -373,6 +378,14 @@ test('hosted limits: 409 for browser features, budget 429, body and type checks,
   const limited = burst.filter((r) => r.status === 429);
   assert.ok(limited.length > 0);
   assert.ok(limited.every((r) => r.data.code === 'rate' || r.data.code === 'busy'));
+
+  // An upstream rate limit that asks for an hour fails the call within seconds instead of holding it.
+  const w = new Visitor(srv.base);
+  const t0 = Date.now();
+  const limitedUp = await w.call('POST', '/api/profile/resume', { text: resume('Quota Spent', 'Oslo') });
+  assert.equal(limitedUp.status, 503);
+  assert.match(limitedUp.data.error, /rate limit/);
+  assert.ok(Date.now() - t0 < 5000);
 
   // SIGTERM drains and exits cleanly.
   const exited = new Promise<number | null>((ok) => srv.proc.once('exit', (code) => ok(code)));

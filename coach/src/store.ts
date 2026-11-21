@@ -93,7 +93,7 @@ function scoped(create: boolean): Handle | null {
       const oldest = [...pool.entries()].sort((a, b) => a[1].used - b[1].used)[0];
       if (oldest) close(oldest[0]);
     }
-    mkdirSync(sessionsDir(), { recursive: true });
+    mkdirSync(sessionsDir(), { recursive: true, mode: 0o700 });
     h = openFile(file, 'PRAGMA journal_mode = WAL; PRAGMA synchronous = NORMAL;');
     pool.set(v.key, h);
     v.hasData = true;

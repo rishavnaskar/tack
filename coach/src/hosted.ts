@@ -381,7 +381,9 @@ function refill(times: number[], now: number, span: number, limit: number): numb
   return Math.max(60, Math.ceil((oldest + span - now) / 1000));
 }
 
-const inWords = (s: number) => (s < 3600 ? `${Math.ceil(s / 60)} minutes` : `${Math.ceil(s / 3600)} hours`);
+const calls = (n: number) => `${n} model call${n === 1 ? '' : 's'}`;
+const plural = (n: number, unit: string) => `${n} ${unit}${n === 1 ? '' : 's'}`;
+const inWords = (s: number) => (s < 3600 ? plural(Math.ceil(s / 60), 'minute') : plural(Math.ceil(s / 3600), 'hour'));
 
 /**
  * Counts one model call (a cache miss) against the visitor's and the preview's allowance.
@@ -401,11 +403,11 @@ export function chargeModelCall(now = Date.now()): void {
     prune(v.calls, now);
     if (within(v.calls, now, HOUR) >= b.sessionHour) {
       const s = refill(v.calls, now, HOUR, b.sessionHour);
-      fail(new BudgetError('session', `You have used this preview's model allowance for the hour (${b.sessionHour} calls). It refills in about ${inWords(s)}. Everything you have built stays here, and the desktop app has no such limit.`, s));
+      fail(new BudgetError('session', `You have used this preview's model allowance for the hour (${calls(b.sessionHour)}). It refills in about ${inWords(s)}. Everything you have built stays here, and the desktop app has no such limit.`, s));
     }
     if (v.calls.length >= b.sessionDay) {
       const s = refill(v.calls, now, DAY, b.sessionDay);
-      fail(new BudgetError('session', `You have used this preview's model allowance for the day (${b.sessionDay} calls). It refills in about ${inWords(s)}. Everything you have built stays here, and the desktop app has no such limit.`, s));
+      fail(new BudgetError('session', `You have used this preview's model allowance for the day (${calls(b.sessionDay)}). It refills in about ${inWords(s)}. Everything you have built stays here, and the desktop app has no such limit.`, s));
     }
   }
   if (within(globalCalls, now, HOUR) >= b.globalHour) {
@@ -486,7 +488,8 @@ const CSP = [
   "default-src 'self'",
   "script-src 'self'",
   "style-src 'self' 'unsafe-inline'",
-  "font-src 'self'",
+  // The UI build inlines its smallest font files as data: URLs.
+  "font-src 'self' data:",
   "img-src 'self' data: blob:",
   "connect-src 'self'",
   "manifest-src 'self'",

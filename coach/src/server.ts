@@ -205,7 +205,10 @@ export function createApp(): App {
     if (err instanceof hosted.InvalidInput) return { status: err.status, body: { error: err.message } };
     const status = err instanceof HttpError ? err.status : err instanceof LlmError ? (err.status === 503 ? 503 : 502) : 500;
     if (!isHosted || status < 500) return { status, body: { error: (err as Error).message || 'internal error' } };
-    const noKey = err instanceof LlmError && err.status === 503;
+    if (err instanceof LlmError && err.status === 429) {
+      return { status: 503, body: { error: 'The model service is at its rate limit right now. Try again later.', requestId: rid }, retryAfter: 60 };
+    }
+    const noKey = err instanceof LlmError && err.status === 503 && /no model key/.test(err.message);
     return { status, body: { error: noKey ? 'The model is not configured on this server.' : GENERIC[status] ?? GENERIC[500], requestId: rid } };
   }
 
@@ -360,7 +363,8 @@ export function createApp(): App {
     if (route.pattern !== '/api/state' || route.method !== 'GET' || !out || typeof out !== 'object' || Array.isArray(out)) return out;
     const o = out as Record<string, unknown>;
     if (!isHosted) return { ...o, capabilities: o.capabilities ?? hosted.capabilities() };
-    return { ...o, capabilities: hosted.capabilities(), hosted: { preview: true, downloadUrl: hosted.downloadUrl() } };
+    const retentionHours = Math.round(hosted.limits().sessionTtlMs / 3_600_000);
+    return { ...o, capabilities: hosted.capabilities(), hosted: { preview: true, downloadUrl: hosted.downloadUrl(), retentionHours } };
   }
 
   function logError(err: unknown, where: string, rid: string): void {
