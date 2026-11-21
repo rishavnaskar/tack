@@ -4,6 +4,7 @@ import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { stateDir } from './store.ts';
 import { emit } from './trace.ts';
+import { chargeModelCall, isHosted } from './hosted.ts';
 
 const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';
 const DEFAULT_MODEL = 'gemini-3.5-flash-lite';
@@ -58,6 +59,9 @@ function cfg() {
     backoffMs: Number(process.env.TACK_MODEL_BACKOFF_MS ?? 2000),
     timeoutMs: Number(process.env.TACK_MODEL_TIMEOUT_MS ?? 90_000),
     cache: process.env.TACK_LLM_CACHE !== 'off',
+    // The longest an upstream rate limit may hold a call before it fails instead. Hosted mode
+    // answers within a minute; the desktop waits as long as the endpoint asks.
+    maxWaitMs: Number(process.env.TACK_MODEL_MAX_WAIT_MS ?? (isHosted() ? 60_000 : Infinity)),
   };
 }
 
@@ -84,6 +88,7 @@ function slot(task: string): Promise<void> {
       while (stamps.length && now - stamps[0] >= 60_000) stamps.shift();
       const wait = Math.max(pausedUntil - now, stamps.length < cfg().rpm ? 0 : 60_000 - (now - stamps[0]) + 50);
       if (wait <= 0) { stamps.push(now); return; }
+      if (pausedUntil - now > cfg().maxWaitMs) throw new LlmError(429, `model rate limited for another ${Math.ceil((pausedUntil - now) / 1000)} s`);
       if (wait > 1500) emit({ run: 'model', step: task, detail: `waiting ${Math.ceil(wait / 1000)} s for the model rate limit (${cfg().rpm} a minute)`, status: 'start' });
       await sleep(wait);
     }
@@ -152,6 +157,7 @@ async function post(body: object, call: CallOpts): Promise<string> {
     if ((res.status === 429 || res.status >= 500) && attempt < retries) {
       const wait = retryDelay(res, text, attempt, c.backoffMs);
       if (res.status === 429) pausedUntil = Math.max(pausedUntil, Date.now() + wait);
+      if (wait > c.maxWaitMs) throw new LlmError(res.status, `model ${res.status === 429 ? 'rate limited' : `error ${res.status}`}; it asks to wait ${Math.ceil(wait / 1000)} s`);
       note(`${res.status === 429 ? 'rate limited' : `model error ${res.status}`}; retry ${attempt + 1} of ${retries} in ${Math.ceil(wait / 1000)} s`);
       await sleep(wait);
       continue;
@@ -208,6 +214,8 @@ export async function json<T>(opts: JsonOpts): Promise<T> {
   const messages: Message[] = [{ role: 'system', content: opts.system }, { role: 'user', content: opts.prompt }];
   const call: CallOpts = { task: opts.task, timeoutMs: opts.timeoutMs, retries: opts.retries };
   try {
+    // Hosted mode only: every cache miss counts against the visitor's and the preview's allowance.
+    chargeModelCall();
     let raw: string;
     if (opts.pdfBase64) {
       const filename = opts.filename || 'resume.pdf';

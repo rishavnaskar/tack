@@ -84,7 +84,13 @@ export interface AppState {
   model: { configured: boolean; name: string };
   profile?: Profile; goal?: Goal; counts: { postings: number; applications: number; interviews: number };
   has: { gap: boolean; plan: boolean; portfolio: boolean };
+  /** What this server can do. Servers that leave it out can do everything. */
+  capabilities?: Capabilities;
+  /** Only on the hosted web preview. */
+  hosted?: HostedInfo;
 }
+export interface Capabilities { apply: boolean; mail: boolean; autopilot: boolean; reason: string }
+export interface HostedInfo { preview: boolean; downloadUrl: string | null; retentionHours?: number }
 export interface Kit {
   postingId: string; generatedAt: string; fit: number; headline: string;
   bullets: { text: string; basedOn: string }[]; // basedOn is a verbatim line from the profile

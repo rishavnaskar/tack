@@ -24,10 +24,12 @@ export interface AppShellProps {
   overlay?: ReactNode;
   /** The right panel is open; on wide screens the main column makes room for it. */
   asideOpen?: boolean;
+  /** A slim notice across the top of the main column. */
+  banner?: ReactNode;
   children: ReactNode;
 }
 
-export function AppShell({ nav, status, overlay, asideOpen, children }: AppShellProps) {
+export function AppShell({ nav, status, overlay, asideOpen, banner, children }: AppShellProps) {
   return (
     <div className={['shell', asideOpen && 'has-aside'].filter(Boolean).join(' ')}>
       <a href="#main" className="shell__skip">
@@ -69,6 +71,7 @@ export function AppShell({ nav, status, overlay, asideOpen, children }: AppShell
         {status && <div className="rail__status">{status}</div>}
       </nav>
       <main id="main" className="shell__main" tabIndex={-1}>
+        {banner}
         <div className="shell__content">{children}</div>
       </main>
       {overlay}

@@ -5,7 +5,7 @@ import { MOCK } from './api/client';
 import { trace, useTrace } from './api/events';
 import { useAppState } from './api/hooks';
 import { AppShell, TraceRail, ease, type NavItem } from './ui';
-import { Start } from './screens/Start';
+import { Landing, PreviewBanner } from './screens/Landing';
 import { Market } from './screens/Market';
 import { Gap } from './screens/Gap';
 import { Plan } from './screens/Plan';
@@ -96,9 +96,9 @@ export function App() {
   }, [pathname, nav]);
 
   return (
-    <AppShell nav={nav} status={<RailStatus />} overlay={<ConnectedTraceRail />} asideOpen={traceOpen}>
+    <AppShell nav={nav} status={<RailStatus />} overlay={<ConnectedTraceRail />} asideOpen={traceOpen} banner={<PreviewBanner />}>
       <Routes>
-        <Route path="/" element={<Screen key="start"><Start /></Screen>} />
+        <Route path="/" element={<Screen key="start"><Landing /></Screen>} />
         <Route path="/market" element={<Screen key="market"><Market /></Screen>} />
         <Route path="/gap" element={<Screen key="gap"><Gap /></Screen>} />
         <Route path="/plan" element={<Screen key="plan"><Plan /></Screen>} />

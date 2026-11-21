@@ -39,27 +39,50 @@ export class ApiError extends Error {
 export type Method = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 export type Transport = (method: Method, path: string, body?: unknown) => Promise<unknown>;
 
+const onThisMachine = () => typeof location === 'undefined' || /^(localhost|127\.0\.0\.1|\[::1\]|)$/.test(location.hostname);
+
+function unreachable(): string {
+  return onThisMachine()
+    ? 'Could not reach the coach server. Check that it is running on port 4400.'
+    : 'Could not reach Tack. Check your connection and try again.';
+}
+
+// The first request goes out alone. On the web preview its answer sets the session cookie, and
+// requests sent before it lands would each start a session of their own.
+let first: Promise<unknown> | null = null;
+
 const http: Transport = async (method, path, body) => {
-  let res: Response;
-  try {
-    res = await fetch(`${API_BASE}${path}`, {
+  const send = () =>
+    fetch(`${API_BASE}${path}`, {
       method,
       headers: body !== undefined ? { 'content-type': 'application/json' } : undefined,
       body: body !== undefined ? JSON.stringify(body) : undefined,
     });
+  let res: Response;
+  try {
+    if (!first) {
+      const p = send();
+      first = p.catch(() => undefined);
+      res = await p;
+    } else {
+      await first;
+      res = await send();
+    }
   } catch {
-    throw new ApiError(0, 'Could not reach the coach server. Check that it is running on port 4400.', path);
+    throw new ApiError(0, unreachable(), path);
   }
   const type = res.headers.get('content-type') ?? '';
   const data: unknown = type.includes('json') ? await res.json().catch(() => null) : await res.text();
   if (!res.ok) {
     if (res.status >= 500 && !type.includes('json')) {
-      throw new ApiError(res.status, 'Could not reach the coach server. Check that it is running on port 4400.', path);
+      throw new ApiError(res.status, unreachable(), path);
     }
     const msg =
       data && typeof data === 'object' && 'error' in data && typeof (data as { error: unknown }).error === 'string'
         ? (data as { error: string }).error
-        : `Request failed with ${res.status}`;
+        : res.status === 429
+          ? 'Tack is busy right now. Wait a minute and try again.'
+          : `Request failed with ${res.status}`;
     throw new ApiError(res.status, msg, path);
   }
   return data;
