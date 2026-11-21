@@ -2,6 +2,9 @@
 
 Tack is a career pivot coach. It checks live job ads, compares them to your resume using exact lines as proof, sets up a week-by-week plan, runs practice interviews, fills out job applications for you in a real browser, and learns from the jobs that reply. I built it in one day for the Product Space Agentic AI Hackathon, problem statement 05 (Career pivot coach).
 
+- Web preview: https://tack-black.vercel.app
+- Desktop app and demo video: https://github.com/rishavnaskar/tack/releases/tag/v0.1.0
+
 ## What it does
 
 | Requirement | How Tack meets it |
