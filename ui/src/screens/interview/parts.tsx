@@ -42,7 +42,8 @@ export function Trend({ values, labels }: { values: number[]; labels?: string[] 
   const hi = Math.min(100, Math.max(50, ...values) + 12);
   const yOf = (v: number) => H - pad - ((Math.max(lo, Math.min(hi, v)) - lo) / (hi - lo)) * (H - pad * 2);
   const pts = values.map((v, i) => ({
-    x: values.length === 1 ? W / 2 : 8 + (i * (W - 40)) / (values.length - 1),
+    // starts clear of the "50" label at the left edge
+    x: values.length === 1 ? W / 2 : 30 + (i * (W - 62)) / (values.length - 1),
     y: yOf(v),
     v,
   }));

@@ -1,5 +1,5 @@
 import type { GapMap, GapSkill, Goal, Plan, PortfolioProject, Posting, Profile } from './types.ts';
-import { joinNames, type Ask } from './plan.ts';
+import { joinNames, withArticle, type Ask } from './plan.ts';
 
 export interface ProjectSeed {
   id: string; skillIds: string[]; weeks: number[]; postingQuotes: PortfolioProject['postingQuotes'];
@@ -66,7 +66,7 @@ const TEMPLATES: Template[] = [
     keys: ['llm-evaluation', 'prompt-engineering', 'responsible-ai', 'ai-cost-latency', 'llm-fundamentals'],
     title: 'Ship-or-not scorecard for an LLM support assistant',
     pitch: (n) => `An evaluation set and scorecard that decides whether a support assistant is ready to launch, built around ${n}.`,
-    brief: (n, role) => `Pick a public product's help centre. Write 50 real-looking customer questions with expected answers, including ten that should be refused or escalated. Run two prompt versions of an assistant over the set, score each answer for correctness, tone and safety, and set pass thresholds before you look at the results. Close with the call a ${role} would make: ship, ship behind a flag, or hold, and what it would take to change the call. This shows ${n} as working judgement, not vocabulary.`,
+    brief: (n, role) => `Pick a public product's help centre. Write 50 real-looking customer questions with expected answers, including ten that should be refused or escalated. Run two prompt versions of an assistant over the set, score each answer for correctness, tone and safety, and set pass thresholds before you look at the results. Close with the call ${role} would make: ship, ship behind a flag, or hold, and what it would take to change the call. This shows ${n} as working judgement, not vocabulary.`,
     milestones: ['Golden set of 50 questions with expected answers', 'Two prompt versions scored against the set', 'Ship decision memo and scorecard'],
     deliverables: ['Golden set (CSV) with expected answers and refusal cases', 'Scorecard with thresholds set before the run', 'Two-page decision memo: ship, flag or hold'],
     reviewerSees: 'You can define what good means for a model feature, measure it honestly and make a launch call from the numbers.',
@@ -75,7 +75,7 @@ const TEMPLATES: Template[] = [
     keys: ['experimentation', 'product-analytics', 'metrics-definition', 'sql'],
     title: 'Experiment readout on a public product dataset',
     pitch: (n) => `A full experiment write-up from hypothesis to decision, practising ${n} on real data.`,
-    brief: (n, role) => `Take a public e-commerce or app-usage dataset. Define a north-star metric and two guardrails, then frame one change as an A/B test: hypothesis, unit of randomisation, sample size and stopping rule. Simulate or slice the data to produce a result, write the SQL, and draft the readout a ${role} would send: what happened, how sure we are, and the decision. It turns ${n} into something a hiring manager can read in five minutes.`,
+    brief: (n, role) => `Take a public e-commerce or app-usage dataset. Define a north-star metric and two guardrails, then frame one change as an A/B test: hypothesis, unit of randomisation, sample size and stopping rule. Simulate or slice the data to produce a result, write the SQL, and draft the readout ${role} would send: what happened, how sure we are, and the decision. It turns ${n} into something a hiring manager can read in five minutes.`,
     milestones: ['Metric tree and experiment design doc', 'SQL analysis and result charts', 'One-page readout with the decision'],
     deliverables: ['Metric tree with north star and guardrails', 'Experiment design with sample size and stopping rule', 'SQL notebook and a one-page readout'],
     reviewerSees: 'You can choose the right metric, design a fair test and say what the result means without overclaiming.',
@@ -84,7 +84,7 @@ const TEMPLATES: Template[] = [
     keys: ['product-discovery', 'user-research', 'prd-writing', 'product-strategy'],
     title: 'From five user interviews to an AI feature PRD',
     pitch: (n) => `A discovery-to-spec case study that shows ${n} end to end.`,
-    brief: (n, role) => `Choose a workflow people find tedious (expense reports, meeting notes, support triage). Interview five people who do it, synthesise what you heard into one problem statement with evidence, and size the opportunity. Write the PRD a ${role} would hand to engineering: users, jobs, success metrics, model behaviour and failure handling, what is out of scope, and launch criteria. Include the interview notes so a reviewer can trace each requirement back to a quote.`,
+    brief: (n, role) => `Choose a workflow people find tedious (expense reports, meeting notes, support triage). Interview five people who do it, synthesise what you heard into one problem statement with evidence, and size the opportunity. Write the PRD ${role} would hand to engineering: users, jobs, success metrics, model behaviour and failure handling, what is out of scope, and launch criteria. Include the interview notes so a reviewer can trace each requirement back to a quote.`,
     milestones: ['Five interviews done and synthesised', 'Problem statement and opportunity sizing', 'PRD with success metrics and launch criteria'],
     deliverables: ['Interview notes and synthesis board', 'Problem statement with evidence', 'PRD with metrics, failure handling and scope'],
     reviewerSees: 'You start from users rather than technology and can write a spec an engineering team could build from.',
@@ -93,7 +93,7 @@ const TEMPLATES: Template[] = [
     keys: ['rag', 'ai-agents', 'apis', 'system-design', 'technical-fluency', 'ml-fundamentals', 'fine-tuning'],
     title: 'Retrieval prototype with the PM spec beside it',
     pitch: (n) => `A small working prototype plus the product spec that explains its trade-offs in ${n}.`,
-    brief: (n, role) => `Build a minimal retrieval assistant over a public documentation set. Keep the code small; the point is the product thinking around it. Document chunking and model choices as trade-offs between quality, latency and cost, measure answer quality on twenty questions, and write the spec a ${role} would own: who it is for, what it must never do, how you would know it is working. Your engineering background is the bridge here; the spec is what proves the move to product.`,
+    brief: (n, role) => `Build a minimal retrieval assistant over a public documentation set. Keep the code small; the point is the product thinking around it. Document chunking and model choices as trade-offs between quality, latency and cost, measure answer quality on twenty questions, and write the spec ${role} would own: who it is for, what it must never do, how you would know it is working. Your engineering background is the bridge here; the spec is what proves the move to product.`,
     milestones: ['Working prototype over a public doc set', 'Quality, latency and cost measured on 20 questions', 'Spec with trade-offs and success criteria'],
     deliverables: ['Prototype repository with a short README', 'Measurement table: quality, latency, cost per answer', 'Product spec with trade-offs and guardrails'],
     reviewerSees: 'You understand how model features are built and can turn technical trade-offs into product decisions.',
@@ -102,7 +102,7 @@ const TEMPLATES: Template[] = [
     keys: ['roadmapping', 'prioritization', 'stakeholder-management', 'go-to-market', 'pricing', 'cross-functional-leadership'],
     title: 'Six-month roadmap and launch plan for a developer API',
     pitch: (n) => `A roadmap, prioritisation and launch plan that shows ${n} on a realistic product.`,
-    brief: (n, role) => `Pick a public developer API you know from engineering work. Gather twenty requests from its forums or changelog, score them with a stated framework, and turn the top ones into a six-month roadmap with the reasoning for what is cut. Plan the launch of the first item: audience, pricing or packaging change if any, docs, and the metric that says it landed. Write the stakeholder update a ${role} would send to engineering, sales and support.`,
+    brief: (n, role) => `Pick a public developer API you know from engineering work. Gather twenty requests from its forums or changelog, score them with a stated framework, and turn the top ones into a six-month roadmap with the reasoning for what is cut. Plan the launch of the first item: audience, pricing or packaging change if any, docs, and the metric that says it landed. Write the stakeholder update ${role} would send to engineering, sales and support.`,
     milestones: ['Request inventory and prioritisation scores', 'Six-month roadmap with cut list', 'Launch plan and stakeholder update'],
     deliverables: ['Scored request inventory', 'Roadmap with explicit trade-offs', 'Launch plan and a stakeholder update email'],
     reviewerSees: 'You can say no with reasons, sequence work and bring several teams along.',
@@ -114,7 +114,7 @@ function generic(names: string): Template {
     keys: [],
     title: `${names}: a worked case study`,
     pitch: () => `A case study that shows ${names} applied to a real product problem.`,
-    brief: (_n, role) => `Pick a product you use and a problem it has. Apply ${names} to it the way a ${role} would, write down the decision you would make and why, and back it with whatever evidence you can gather in public: reviews, changelogs, usage data, five short user conversations.`,
+    brief: (_n, role) => `Pick a product you use and a problem it has. Apply ${names} to it the way ${role} would, write down the decision you would make and why, and back it with whatever evidence you can gather in public: reviews, changelogs, usage data, five short user conversations.`,
     milestones: ['Problem chosen and evidence gathered', 'Analysis and decision drafted', 'Write-up published'],
     deliverables: ['Evidence log', 'Decision write-up', 'Five-minute walkthrough recording'],
     reviewerSees: `You can apply ${names} to a real problem and explain your reasoning.`,
@@ -142,7 +142,7 @@ export function fallbackProjects(seeds: ProjectSeed[], gap: GapMap, goal?: Goal)
     const t = chooseTemplate(skills, used) ?? generic(names);
     used.add(t);
     return {
-      id: seed.id, title: t.title, pitch: t.pitch(names), skillIds: seed.skillIds, brief: t.brief(names, role),
+      id: seed.id, title: t.title, pitch: t.pitch(names), skillIds: seed.skillIds, brief: t.brief(names, withArticle(role)),
       milestones: milestoneWeeks(seed.weeks, t.milestones),
       deliverables: t.deliverables, reviewerSees: t.reviewerSees, postingQuotes: seed.postingQuotes, status: 'idea',
     };

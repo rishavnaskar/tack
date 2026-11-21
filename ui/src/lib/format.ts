@@ -18,6 +18,18 @@ export function ago(at?: string, now = Date.now()) {
   return `${weeks} weeks ago`;
 }
 
+/** "3d ago", "5w ago", "4mo ago": for places with room for a few characters. */
+export function agoShort(at?: string, now = Date.now()) {
+  if (!at) return '';
+  const t = Date.parse(at);
+  if (Number.isNaN(t)) return '';
+  const days = Math.max(0, Math.round((now - t) / 86400000));
+  if (days === 0) return 'today';
+  if (days < 14) return `${days}d ago`;
+  if (days < 63) return `${Math.round(days / 7)}w ago`;
+  return `${Math.round(days / 30)}mo ago`;
+}
+
 export function pct(x: number, digits = 0) {
   return `${(x * 100).toFixed(digits)}%`;
 }

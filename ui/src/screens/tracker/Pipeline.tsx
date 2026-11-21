@@ -165,8 +165,11 @@ function StatusList({ groups, onOpen, onMove }: { groups: Groups; onOpen: (id: s
 
 function Origin({ origin }: { origin: Application['origin'] }) {
   return (
-    <span className={`origin origin--${origin}`} title={origin === 'fanfold' ? 'Sent through the engine' : origin === 'manual' ? 'Logged by hand' : 'Demo data'}>
-      {origin}
+    <span
+      className={`origin origin--${origin}`}
+      title={origin === 'fanfold' ? 'Sent through the engine' : origin === 'manual' ? 'Logged by hand' : 'Sample application that comes with the demo person'}
+    >
+      {origin === 'demo' ? 'sample' : origin}
     </span>
   );
 }
@@ -417,7 +420,7 @@ export function AppDrawer({ app, onClose }: { app?: Application; onClose: () => 
             <Stat size="sm" label="Fit" value={a.fit} unit="/100" />
             <Stat size="sm" label="Applied" value={daysSince(a.appliedAt)} unit="days ago" note={shortDate(a.appliedAt)} />
             <Stat size="sm" label="Source" value={<span className="ad__word">{humanise(a.source)}</span>} />
-            <Stat size="sm" label="Origin" value={<span className="ad__word">{humanise(a.origin)}</span>} />
+            <Stat size="sm" label="Origin" value={<span className="ad__word">{a.origin === 'demo' ? 'Sample data' : humanise(a.origin)}</span>} />
           </div>
 
           <div className="ad__timeline">

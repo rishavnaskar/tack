@@ -61,7 +61,7 @@ export function computeProgress(input: ProgressInput): Progress {
   if (!input.plan) note = 'Build a plan to start tracking progress.';
   else if (weekOf(input.plan, today) === 0) note = `The plan starts on ${dayName(input.plan.weeks[0]?.startDate)}.`;
   else if (hoursDone >= expected) note = `Ahead of plan: ${hoursDone}h done against ${expected}h expected by today.`;
-  else if (onTrack) note = `On track: ${hoursDone}h done against ${expected}h expected by today.`;
+  else if (onTrack) note = `${hoursDone}h done against ${expected}h expected by today, within the 20% the plan allows.`;
   else note = `Behind by ${round1(expected - hoursDone)}h: replan to roll late tasks forward and rebalance the weeks.`;
   return {
     readiness, hoursDone, hoursPlanned, tasksDone: done.length, tasksTotal: tasks.length, skillsClosed,

@@ -4,7 +4,7 @@ import { api } from '../api/client';
 import { actions, useAppState, useApplications, useInsights, usePostings } from '../api/hooks';
 import type { Posting, Segment, TrackerInsights } from '../api/types';
 import { hostOf, pad2 } from '../lib/format';
-import { Button, Card, Chip, EmptyState, ErrorState, Icon, PageHeader, Skeleton, ease, useToast } from '../ui';
+import { Button, Card, Chip, EmptyState, ErrorState, Icon, Modal, PageHeader, Skeleton, ease, useToast } from '../ui';
 import { AddApplication, AppDrawer, Pipeline, SectionHead } from './tracker/Pipeline';
 import { chance, groupSegments, isWinner, pctOf, segKey, segmentValue } from './tracker/model';
 import { KitSheet, type KitTarget } from './kit/KitSheet';
@@ -20,7 +20,22 @@ export function Tracker() {
   const [adding, setAdding] = useState(false);
   const [openId, setOpenId] = useState<string>();
   const [syncing, setSyncing] = useState(false);
+  const [demoAsk, setDemoAsk] = useState(false);
+  const [demoBusy, setDemoBusy] = useState(false);
   const toast = useToast();
+
+  const loadDemo = async () => {
+    setDemoBusy(true);
+    try {
+      await actions.loadDemo();
+      setDemoAsk(false);
+      toast({ title: 'Avery Quinn is loaded', body: '24 sample applications with their replies. Every card is marked sample.', tone: 'success' });
+    } catch (e) {
+      toast({ title: 'Could not load the demo person', body: (e as Error).message, tone: 'error' });
+    } finally {
+      setDemoBusy(false);
+    }
+  };
 
   const all = apps.data ?? [];
   const open = all.find((a) => a.id === openId);
@@ -74,14 +89,19 @@ export function Tracker() {
             title="Nothing to learn from yet"
             body={
               state?.profile
-                ? 'Log the applications you have sent, or apply to one of the postings ranked below. After about a dozen, the tracker starts to show which kinds of roles reply.'
+                ? 'Log the applications you have sent, or apply to one of the postings ranked below. After about a dozen, the tracker starts to show which kinds of roles reply. To see it learn now, load the demo person and their 24 sample applications.'
                 : 'Add a résumé and read the market first, or load the demo person to see the tracker with 24 applications.'
             }
             action={
               state?.profile ? (
-                <Button variant="primary" iconLeft="plus" onClick={() => setAdding(true)}>
-                  Add application
-                </Button>
+                <div className="tr__empty-actions">
+                  <Button variant="primary" iconLeft="plus" onClick={() => setAdding(true)}>
+                    Add application
+                  </Button>
+                  <Button variant="ghost" onClick={() => setDemoAsk(true)}>
+                    Load the demo person
+                  </Button>
+                </div>
               ) : (
                 <Button variant="primary" icon="arrow-right" to="/">
                   Go to Start
@@ -105,7 +125,7 @@ export function Tracker() {
           ) : !insights.data ? (
             <RepliesSkeleton />
           ) : (
-            <Replies insights={insights.data} fetching={insights.fetching} />
+            <Replies insights={insights.data} fetching={insights.fetching} sample={all.filter((a) => a.origin === 'demo').length} />
           )}
 
           {insights.data && <ApplyNext insights={insights.data} postings={postings.data} engineOn={!!state?.engine.available} />}
@@ -113,6 +133,27 @@ export function Tracker() {
           <Pipeline apps={all} onOpen={setOpenId} />
         </>
       )}
+
+      <Modal
+        open={demoAsk}
+        onClose={() => setDemoAsk(false)}
+        eyebrow="Sample history"
+        title="Load the demo person?"
+        footer={
+          <>
+            <Button variant="quiet" onClick={() => setDemoAsk(false)}>
+              Keep mine
+            </Button>
+            <Button variant="primary" onClick={loadDemo} loading={demoBusy}>
+              Load Avery Quinn
+            </Button>
+          </>
+        }
+      >
+        <p className="t-mute">
+          Avery Quinn comes with 24 sample applications and their replies, so the tracker has something to learn from. Loading her replaces your profile, postings, plan and interviews.
+        </p>
+      </Modal>
 
       <AppDrawer app={open} onClose={() => setOpenId(undefined)} />
       <AddApplication open={adding} onClose={() => setAdding(false)} postings={postings.data ?? []} />
@@ -144,7 +185,7 @@ function useChanged(insights: TrackerInsights) {
   return changed;
 }
 
-function Replies({ insights, fetching }: { insights: TrackerInsights; fetching: boolean }) {
+function Replies({ insights, fetching, sample }: { insights: TrackerInsights; fetching: boolean; sample: number }) {
   const { overall, lessons } = insights;
   const groups = useMemo(() => groupSegments(insights.segments), [insights.segments]);
   const changed = useChanged(insights);
@@ -167,13 +208,21 @@ function Replies({ insights, fetching }: { insights: TrackerInsights; fetching: 
             ) : changed.keys.size > 0 ? (
               `Relearned · ${changed.keys.size} segment${changed.keys.size === 1 ? '' : 's'} moved`
             ) : (
-              `Learned from ${overall.sent} application${overall.sent === 1 ? '' : 's'}`
+              `Learned from ${overall.sent}${sample ? ' sample' : ''} application${overall.sent === 1 ? '' : 's'}`
             )}
           </span>
         }
       />
 
       <Card pad="lg" className="replies" settle>
+        {sample > 0 && (
+          <p className="replies__sample">
+            <span className="origin origin--demo">sample</span>
+            {sample === overall.sent
+              ? `Learning from sample data: these ${sample} applications come with the demo person, so the patterns below are illustrative, not yours.`
+              : `${sample} of these ${overall.sent} applications are sample data that came with the demo person; the patterns lean on them until yours outnumber them.`}
+          </p>
+        )}
         <div className="replies__overall">
           <span className="t-label">Response rate</span>
           <motion.span key={overall.rate} className="replies__rate t-num" initial={{ opacity: 0.4 }} animate={{ opacity: 1 }} transition={{ duration: 0.8, ease }}>

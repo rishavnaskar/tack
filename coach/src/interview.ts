@@ -1,5 +1,5 @@
 import type { GapMap, GapSkill, Goal, InterviewQuestion, InterviewSession, InterviewTurn, Posting, Profile, RubricScore } from './types.ts';
-import type { Ask } from './plan.ts';
+import { withArticle, type Ask } from './plan.ts';
 
 export type SessionKind = InterviewSession['kind'];
 type QKind = InterviewQuestion['kind'];
@@ -383,7 +383,7 @@ const JUDGE_SCHEMA = {
 
 export function judgeSystem(targetRole: string): string {
   const rubric = CRITERIA.map((c) => `${c}:\n` + ANCHORS[c].map((d, i) => `  ${i + 1} = ${d}`).join('\n')).join('\n');
-  return `You are a demanding but fair interview coach preparing a career changer for a ${targetRole} interview.
+  return `You are a demanding but fair interview coach preparing a career changer for ${withArticle(targetRole)} interview.
 Score the answer on exactly these five criteria, each an integer from 1 to 5, using the anchors below. Score what is on the page, not what the candidate might have meant. Most first attempts land at 2 or 3; give 5 only when the anchor is fully met.
 
 ${rubric}

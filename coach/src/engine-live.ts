@@ -162,25 +162,48 @@ const CITIES: Array<[RegExp, string, string]> = [
   [/\btel aviv\b/, 'tel aviv', 'Israel'],
 ];
 
-export function placeOf(text: string): { cities: Set<string>; countries: Set<string>; remote: boolean } {
+const REGIONS: Array<[RegExp, string]> = [
+  [/\b(apac|asia[\s-]?pacific|asia|south asia)\b/, 'apac'],
+  [/\b(emea|europe|middle east)\b/, 'emea'],
+  [/\b(amer|americas|north america|latam|latin america)\b/, 'americas'],
+];
+
+const COUNTRY_REGION: Record<string, string> = {
+  India: 'apac', Singapore: 'apac', Japan: 'apac', Australia: 'apac', 'New Zealand': 'apac', Indonesia: 'apac',
+  Philippines: 'apac', Malaysia: 'apac', Vietnam: 'apac', Thailand: 'apac', 'Sri Lanka': 'apac', Bangladesh: 'apac',
+  'United Kingdom': 'emea', Ireland: 'emea', Germany: 'emea', France: 'emea', Netherlands: 'emea', Spain: 'emea',
+  Israel: 'emea', 'United Arab Emirates': 'emea', 'European Union': 'emea', Poland: 'emea', Portugal: 'emea',
+  'United States': 'americas', Canada: 'americas', Mexico: 'americas', Brazil: 'americas',
+};
+
+export function placeOf(text: string): { cities: Set<string>; countries: Set<string>; regions: Set<string>; remote: boolean } {
   const low = text.toLowerCase();
   const cities = new Set<string>();
   const countries = new Set<string>(countriesIn(text));
   for (const [re, city, country] of CITIES) if (re.test(low)) { cities.add(city); countries.add(country); }
-  return { cities, countries, remote: /\b(remote|anywhere|worldwide|distributed)\b/.test(low) };
+  const regions = new Set(REGIONS.filter(([re]) => re.test(low)).map(([, r]) => r));
+  return { cities, countries, regions, remote: /\b(remote|anywhere|worldwide|distributed)\b/.test(low) };
 }
 
-/** 0-40: the requested city first, then its country, then remote roles open to it. */
+/**
+ * 0-40: the requested city first, then its country, then remote roles open to it.
+ * A remote role tied to other countries ("Remote - USA") is not open to someone in India, so it scores 0.
+ */
 export function locationScore(want: string, location: string): number {
   if (!want.trim()) return 0;
   const w = placeOf(want);
   const p = placeOf(location);
   if ([...w.cities].some((c) => p.cities.has(c))) return 40;
   if ([...w.countries].some((c) => p.countries.has(c))) return p.remote ? 35 : 30;
-  if (p.remote && p.countries.size === 0) return 25;
-  if (w.remote && p.remote) return 10;
+  const wRegions = new Set([...w.countries].map((c) => COUNTRY_REGION[c]).filter(Boolean));
+  if (p.remote && p.countries.size === 0 && [...p.regions].some((r) => wRegions.has(r))) return 30;
+  if (p.remote && p.countries.size === 0 && p.regions.size === 0) return 25;
+  if (w.remote && p.remote && w.countries.size === 0) return 10;
   return 0;
 }
+
+/** Postings placed only somewhere the person did not ask for sink below every posting that is open to them. */
+export const AWAY_PENALTY = 100;
 
 function recencyScore(postedAt: string | null, now: number): number {
   const t = postedAt ? Date.parse(postedAt) : NaN;
@@ -219,10 +242,39 @@ export function salaryIn(text: string): string | undefined {
   return text.match(SALARY)?.[0].replace(/\s+/g, ' ').replace(/[.,]+$/, '').trim();
 }
 
+const BULLET = /^[-•*·▪◦]\s+/;
+
+/**
+ * Plain text as paragraphs. Lever's plain text keeps one line per paragraph and
+ * its list HTML puts each bullet mark on a line of its own, which a reader shows
+ * as one block. Every prose line becomes its own paragraph; bullets stay
+ * together, under the short heading line that leads them.
+ */
+export function paragraphs(text: string): string {
+  const lines = text.replace(/^[-•*·▪◦][ \t]*\n+(?=\S)/gm, '- ').split('\n').map((l) => l.trim());
+  const blocks: string[][] = [];
+  let cur: string[] = [];
+  let gap = false;
+  const flush = (): void => { if (cur.length) blocks.push(cur); cur = []; };
+  const isHead = (l: string): boolean => l.length <= 80 && !/[.!?;,]$/.test(l);
+  for (const raw of lines) {
+    if (!raw) { gap = true; continue; }
+    const bullet = BULLET.test(raw);
+    const line = bullet ? raw.replace(BULLET, '- ') : raw;
+    const last = cur.at(-1);
+    if (bullet && last && (BULLET.test(last) || (!gap && cur.length === 1 && isHead(last)))) cur.push(line);
+    else { flush(); cur.push(line); }
+    gap = false;
+  }
+  flush();
+  return blocks.map((b) => b.join('\n')).join('\n\n');
+}
+
 /** Board text as clean prose, cut near `cap` characters at a line or sentence end. */
 export function cleanText(raw: string, cap = 6000): string {
   let t = /<\/?[a-z][^>]*>|&(?:[a-z]+|#\d+|#x[0-9a-f]+);/i.test(raw) ? htmlText(raw) : raw;
   t = t.replace(/\r/g, '').replace(/[ \t ]+/g, ' ').replace(/ *\n */g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+  t = paragraphs(t);
   if (t.length <= cap) return t;
   const cut = t.slice(0, cap);
   const end = Math.max(cut.lastIndexOf('\n'), cut.lastIndexOf('. '));
@@ -414,7 +466,9 @@ export async function harvest(role: string, location: string, count: number, opt
         const t = titleScore(role, listing.title, listing.department);
         if (t <= 0) continue;
         fits++;
-        candidates.push({ board, listing, score: t + locationScore(location, listing.location) + recencyScore(listing.postedAt, now()) });
+        const place = locationScore(location, listing.location);
+        const away = location.trim() && listing.location.trim() && place === 0 ? AWAY_PENALTY : 0;
+        candidates.push({ board, listing, score: t + place + recencyScore(listing.postedAt, now()) - away });
       }
       step('board', `${board.name} (${board.ats}): ${r.postings.length} open roles, ${fits} fit${hit ? ', cached' : ''}, ${Date.now() - t0} ms`);
     });

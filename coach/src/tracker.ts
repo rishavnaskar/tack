@@ -122,13 +122,17 @@ const round = (n: number, d: number) => Math.round(n * 10 ** d) / 10 ** d;
 const pct = (n: number) => `${Math.round(n * 100)}%`;
 
 const SIZE_NAMES: Record<string, string> = { startup: 'startups', scaleup: 'scaleups', enterprise: 'enterprises' };
+const SOURCE_NAMES: Record<string, string> = {
+  'company-site': 'company sites', 'job-board': 'job boards', 'startup-board': 'startup boards', referral: 'referrals',
+  greenhouse: 'Greenhouse', lever: 'Lever', ashby: 'Ashby', workable: 'Workable', linkedin: 'LinkedIn',
+};
 
 export function segmentLabel(s: Pick<Segment, 'dimension' | 'value'>): string {
   switch (s.dimension) {
     case 'roleFamily': return `${s.value} roles`;
     case 'seniority': return `${s.value}-level roles`;
     case 'companySize': return SIZE_NAMES[s.value] ?? `${s.value} companies`;
-    case 'source': return `applications through ${s.value}`;
+    case 'source': return `applications through ${SOURCE_NAMES[s.value] ?? s.value.replace(/-/g, ' ')}`;
     case 'fitBand': return `${s.value}-fit postings`;
     default: return `${s.dimension} ${s.value}`;
   }

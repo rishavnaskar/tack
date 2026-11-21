@@ -10,3 +10,5 @@ state
 CLAUDE.md
 .claude
 coverage
+submission/video/*.mp4
+submission/video/*.webm

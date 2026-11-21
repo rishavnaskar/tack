@@ -2,8 +2,8 @@ import type { GapSkill } from '../../api/types';
 
 /*
  * Deterministic constellation layout. Categories sit in a grid of cells; inside a cell
- * skills start on a golden-angle spiral (largest demand in the middle) and a fixed number
- * of box-overlap passes push them apart, label included. Same input, same picture.
+ * each skill, largest demand first, takes the first free spot on a spiral where neither
+ * its circle nor its label touches another. Same input, same picture.
  */
 
 export const CATEGORY_ORDER = [
@@ -58,7 +58,7 @@ export interface Layout {
 const CHAR_W = 6.6;
 const LINE_H = 14;
 const LABEL_GAP = 8;
-const PAD = 16;
+const PAD = 18;
 
 function splitLabel(name: string): string[] {
   if (name.length <= 15 || !name.includes(' ')) return [name];
@@ -83,6 +83,49 @@ const OFFSETS: [number, number][] = [
   [0.02, 0.04],
 ];
 
+type Placed = { skill: GapSkill; x: number; y: number; r: number; lines: string[]; w: number; h: number };
+
+// box centre is below the circle centre because the label hangs under it
+const boxCy = (n: Placed) => n.y - n.r + n.h / 2;
+
+function clash(a: Placed, b: Placed, pad: number) {
+  return (a.w + b.w) / 2 + pad - Math.abs(b.x - a.x) > 0 && (a.h + b.h) / 2 + pad - Math.abs(boxCy(b) - boxCy(a)) > 0;
+}
+
+// Null when the cell is too small for every label to clear the others; the row then grows.
+function placeCell(members: GapSkill[], ci: number, x0: number, y0: number, cellW: number, cellH: number): Placed[] | null {
+  const [ox, oy] = OFFSETS[ci % OFFSETS.length];
+  const cx = x0 + cellW / 2 + ox * cellW;
+  const cy = y0 + cellH / 2 + 14 + oy * cellH;
+  const minX = x0 + 14;
+  const maxX = x0 + cellW - 14;
+  const minY = y0 + 40;
+  const maxY = y0 + cellH - 8;
+
+  const placed: Placed[] = [];
+  for (const skill of members) {
+    const r = radiusFor(skill.demand);
+    const lines = splitLabel(skill.name);
+    const n: Placed = {
+      skill, r, lines, x: cx, y: cy,
+      w: Math.max(2 * r, Math.max(...lines.map((l) => l.length)) * CHAR_W),
+      h: 2 * r + LABEL_GAP + lines.length * LINE_H,
+    };
+    let found = false;
+    for (let k = 0; k < 2400 && !found; k++) {
+      const a = k * 2.39996 + ci * 0.9;
+      const d = 5 * Math.sqrt(k);
+      n.x = cx + d * Math.cos(a);
+      n.y = cy + d * Math.sin(a) * 0.8;
+      if (n.x - n.w / 2 < minX || n.x + n.w / 2 > maxX || n.y - n.r < minY || n.y - n.r + n.h > maxY) continue;
+      found = placed.every((p) => !clash(p, n, PAD));
+    }
+    if (!found) return null;
+    placed.push(n);
+  }
+  return placed;
+}
+
 export function layoutConstellation(skills: GapSkill[], cols: number, width = 1000): Layout {
   const present = [...new Set(skills.map((s) => s.category))];
   const cats = [
@@ -92,112 +135,60 @@ export function layoutConstellation(skills: GapSkill[], cols: number, width = 10
   const rows = Math.max(1, Math.ceil(cats.length / cols));
   const cellW = width / cols;
   const baseH = cellW * (cols >= 3 ? 0.92 : 0.9);
-  // A row with a crowded category gets taller instead of stacking labels.
-  const rowH = Array.from({ length: rows }, (_, r) => {
-    const most = Math.max(0, ...cats.slice(r * cols, r * cols + cols).map((c) => skills.filter((s) => s.category === c).length));
-    return baseH * Math.max(1, Math.sqrt(most / 7));
-  });
-  const rowY = rowH.map((_, r) => rowH.slice(0, r).reduce((a, h) => a + h, 0));
-  const height = Math.round(rowH.reduce((a, h) => a + h, 0));
+  const membersOf = (cat: string) => skills.filter((s) => s.category === cat).sort((a, b) => b.demand - a.demand || a.id.localeCompare(b.id));
 
   const nodes: LaidNode[] = [];
   const clusters: LaidCluster[] = [];
   const links: [number, number][] = [];
+  let y0 = 0;
 
-  cats.forEach((cat, ci) => {
-    const col = ci % cols;
-    const row = Math.floor(ci / cols);
-    const x0 = col * cellW;
-    const y0 = rowY[row];
-    const cellH = rowH[row];
-    const [ox, oy] = OFFSETS[ci % OFFSETS.length];
-    const cx = x0 + cellW / 2 + ox * cellW;
-    const cy = y0 + cellH / 2 + 14 + oy * cellH;
-    const members = skills.filter((s) => s.category === cat).sort((a, b) => b.demand - a.demand || a.id.localeCompare(b.id));
-
-    const local = members.map((skill, i) => {
-      const r = radiusFor(skill.demand);
-      const a = i * 2.39996 + ci * 0.9;
-      const d = i === 0 ? 0 : 54 * Math.sqrt(i);
-      const lines = splitLabel(skill.name);
-      return {
-        skill,
-        x: cx + d * Math.cos(a),
-        y: cy + d * Math.sin(a) * 0.8,
-        r,
-        lines,
-        w: Math.max(2 * r, Math.max(...lines.map((l) => l.length)) * CHAR_W),
-        h: 2 * r + LABEL_GAP + lines.length * LINE_H,
-      };
-    });
-
-    // box centre is below the circle centre because the label hangs under it
-    const boxCy = (n: (typeof local)[number]) => n.y - n.r + n.h / 2;
-    const minX = x0 + 14;
-    const maxX = x0 + cellW - 14;
-    const minY = y0 + 40;
-    const maxY = y0 + cellH - 8;
-
-    for (let iter = 0; iter < 260; iter++) {
-      for (const n of local) {
-        n.x += (cx - n.x) * 0.006;
-        n.y += (cy - n.y) * 0.006;
-      }
-      for (let i = 0; i < local.length; i++) {
-        for (let j = i + 1; j < local.length; j++) {
-          const a = local[i];
-          const b = local[j];
-          const dx = b.x - a.x;
-          const dy = boxCy(b) - boxCy(a);
-          const ox = (a.w + b.w) / 2 + PAD - Math.abs(dx);
-          const oy = (a.h + b.h) / 2 + PAD - Math.abs(dy);
-          if (ox <= 0 || oy <= 0) continue;
-          if (ox < oy) {
-            const s = (dx === 0 ? (i % 2 ? 1 : -1) : Math.sign(dx)) * ox * 0.5;
-            a.x -= s;
-            b.x += s;
-          } else {
-            const s = (dy === 0 ? (j % 2 ? 1 : -1) : Math.sign(dy)) * oy * 0.5;
-            a.y -= s;
-            b.y += s;
-          }
-        }
-      }
-      for (const n of local) {
-        n.x = Math.max(minX + n.w / 2, Math.min(maxX - n.w / 2, n.x));
-        n.y = Math.max(minY + n.r, Math.min(maxY - (n.h - n.r), n.y));
-      }
+  for (let row = 0; row < rows; row++) {
+    const rowCats = cats.slice(row * cols, row * cols + cols);
+    const most = Math.max(0, ...rowCats.map((c) => membersOf(c).length));
+    // A row with a crowded category gets taller instead of stacking labels, until nothing overlaps.
+    let cellH = baseH * Math.max(1, Math.sqrt(most / 7));
+    const tryRow = () => rowCats.map((cat, k) => placeCell(membersOf(cat), row * cols + k, k * cellW, y0, cellW, cellH));
+    let placed = tryRow();
+    for (let grow = 0; grow < 12 && placed.some((p) => !p); grow++) {
+      cellH *= 1.1;
+      placed = tryRow();
     }
 
-    const base = nodes.length;
-    local.forEach((n, i) => {
-      nodes.push({ skill: n.skill, x: round(n.x), y: round(n.y), r: round(n.r), lines: n.lines, cluster: ci });
-      if (i > 0) {
-        let best = 0;
-        let bd = Infinity;
-        for (let k = 0; k < i; k++) {
-          const d = (local[k].x - n.x) ** 2 + (local[k].y - n.y) ** 2;
-          if (d < bd) {
-            bd = d;
-            best = k;
+    placed.forEach((cell, k) => {
+      const local = cell ?? [];
+      const ci = row * cols + k;
+      const x0 = k * cellW;
+      const base = nodes.length;
+      local.forEach((n, i) => {
+        nodes.push({ skill: n.skill, x: round(n.x), y: round(n.y), r: round(n.r), lines: n.lines, cluster: ci });
+        if (i > 0) {
+          let best = 0;
+          let bd = Infinity;
+          for (let q = 0; q < i; q++) {
+            const d = (local[q].x - n.x) ** 2 + (local[q].y - n.y) ** 2;
+            if (d < bd) {
+              bd = d;
+              best = q;
+            }
           }
+          links.push([base + best, base + i]);
         }
-        links.push([base + best, base + i]);
-      }
+      });
+      if (!local.length) return;
+      const top = Math.min(...local.map((n) => n.y - n.r));
+      const left = Math.min(...local.map((n) => n.x - n.w / 2));
+      clusters.push({
+        name: rowCats[k],
+        index: ci + 1,
+        count: local.length,
+        x: round(Math.max(x0 + 14, left)),
+        y: round(Math.max(y0 + 22, top - 18)),
+      });
     });
+    y0 += cellH;
+  }
 
-    const top = Math.min(...local.map((n) => n.y - n.r));
-    const left = Math.min(...local.map((n) => n.x - n.w / 2));
-    clusters.push({
-      name: cat,
-      index: ci + 1,
-      count: members.length,
-      x: round(Math.max(x0 + 14, left)),
-      y: round(Math.max(y0 + 22, top - 18)),
-    });
-  });
-
-  return { width, height, nodes, clusters, links };
+  return { width, height: Math.round(y0), nodes, clusters, links };
 }
 
 const round = (v: number) => Math.round(v * 10) / 10;

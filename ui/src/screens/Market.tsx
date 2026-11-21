@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router';
 import { motion } from 'motion/react';
 import { actions, useAppState, usePostings } from '../api/hooks';
 import type { Posting } from '../api/types';
-import { ago, cityOf, countBy, hostOf, median, sizeLabel } from '../lib/format';
+import { ago, agoShort, cityOf, countBy, hostOf, median, sizeLabel } from '../lib/format';
 import { Bar, Button, Card, Chip, Drawer, EmptyState, ErrorState, Icon, Meter, PageHeader, Skeleton, Stat, Tabs, ease, useToast } from '../ui';
 import { KitSheet, type KitTarget } from './kit/KitSheet';
 import './Market.css';
@@ -358,17 +358,29 @@ function PostingCard({ posting: p, index, onOpen }: { posting: Posting; index: n
           </span>
         )}
         <span className="win__skills">
-          {top.slice(0, 3).map((s) => (
-            <Chip key={s.skillId} size="sm" tone={s.importance === 'must' ? 'default' : 'mute'}>
-              {s.name}
-            </Chip>
-          ))}
-          {top.length > 3 && <span className="win__more t-num">+{top.length - 3}</span>}
+          {top.slice(0, 3).map((s, i, shown) => {
+            const chip = (
+              <Chip key={s.skillId} size="sm" tone={s.importance === 'must' ? 'default' : 'mute'}>
+                {s.name}
+              </Chip>
+            );
+            // the count rides with the last chip so it never wraps onto a line alone
+            return i === shown.length - 1 && top.length > 3 ? (
+              <span key={s.skillId} className="win__last">
+                {chip}
+                <span className="win__more t-num">+{top.length - 3}</span>
+              </span>
+            ) : (
+              chip
+            );
+          })}
         </span>
         <span className="win__foot t-micro">
-          {p.companySize ? sizeLabel[p.companySize] : ''}
-          {sen(p) ? ` · ${sen(p)}` : ''}
-          {p.postedAt ? ` · ${ago(p.postedAt)}` : ''}
+          <span>
+            {p.companySize ? sizeLabel[p.companySize] : ''}
+            {sen(p) ? ` · ${sen(p)}` : ''}
+          </span>
+          {p.postedAt && <span title={ago(p.postedAt)}>{agoShort(p.postedAt)}</span>}
         </span>
       </motion.span>
     </motion.button>
@@ -490,18 +502,18 @@ function PostingDrawer({ posting, onClose, engineOn, onPrepare }: { posting?: Po
       }
       footer={
         p ? (
-          <>
+          <div className="pd-foot">
             {!engineOn && <span className="drawer-note">Applying needs live mode.</span>}
-            <Button variant="ghost" onClick={onClose}>
+            <Button variant="ghost" className="pd-foot__close" onClick={onClose}>
               Close
             </Button>
-            <Button variant="ghost" iconLeft="file" onClick={() => onPrepare(p)}>
+            <Button variant="ghost" className="pd-foot__prep" iconLeft="file" onClick={() => onPrepare(p)}>
               Prepare application
             </Button>
-            <Button variant="primary" icon="arrow-right" onClick={apply} loading={applying}>
+            <Button variant="primary" className="pd-foot__apply" icon="arrow-right" onClick={apply} loading={applying}>
               Apply through the engine
             </Button>
-          </>
+          </div>
         ) : undefined
       }
     >
@@ -600,12 +612,26 @@ function PostingText({ posting, focus }: { posting: Posting; focus?: string }) {
     return parts;
   };
 
-  const blocks = posting.text.split(/\n{2,}/);
+  // A block that is not a list is one paragraph per line: some boards send one line per paragraph.
+  const isBullet = (l: string) => /^\s*[-•*]\s+/.test(l);
+  const blocks = posting.text.split(/\n{2,}/).flatMap((b) => {
+    const lines = b.split('\n');
+    const n = lines.filter(isBullet).length;
+    return n && n >= lines.length - 1 ? [b] : lines.filter((l) => l.trim());
+  });
+  const isHeading = (b: string, i: number) => i < blocks.length - 1 && b.length <= 70 && !/[.!?,;]$/.test(b.trim()) && !isBullet(b);
   return (
     <div className="pd__text" ref={root}>
       {blocks.map((b, i) => {
         const lines = b.split('\n');
-        const bullets = lines.filter((l) => /^\s*[-•*]\s+/.test(l));
+        const bullets = lines.filter(isBullet);
+        if (isHeading(b, i)) {
+          return (
+            <h4 key={i} className="t-label pd__subhead">
+              {renderLine(b, `${i}`)}
+            </h4>
+          );
+        }
         if (bullets.length && bullets.length >= lines.length - 1) {
           const head = lines.length > bullets.length ? lines[0] : undefined;
           return (

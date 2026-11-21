@@ -5,7 +5,7 @@ import { run } from './trace.ts';
 import { haveLevel, postingFit } from './gap.ts';
 import { canonical, findQuote, skillId } from './skills.ts';
 import { guardInvented, tokens } from './interview.ts';
-import { joinNames, type Ask } from './plan.ts';
+import { joinNames, withArticle, type Ask } from './plan.ts';
 
 type Bullet = Kit['bullets'][number];
 type PostingSkill = NonNullable<Posting['skills']>[number];
@@ -227,7 +227,7 @@ export function fallbackKit(ctx: KitCtx): Kit {
   const doing = gaps.flatMap((g) => underway(ctx, g.id)).filter((x, i, a) => a.indexOf(x) === i).slice(0, 2);
   const coverNote = [
     `Hello ${p.company} team,`,
-    `I would like to apply for the ${p.title} role. I am a ${profile.currentRole || 'professional'}${years ? ` with ${years} of experience` : ''}${names.length ? `, and the ${names.length > 1 ? 'parts of my work closest to what you describe are' : 'part of my work closest to what you describe is'} ${joinNames(names)}` : ''}.`,
+    `I would like to apply for the ${p.title} role. I am ${withArticle(profile.currentRole || 'professional')}${years ? ` with ${years} of experience` : ''}${names.length ? `, and the ${names.length > 1 ? 'parts of my work closest to what you describe are' : 'part of my work closest to what you describe is'} ${joinNames(names)}` : ''}.`,
     ['Most relevant from my résumé:', ...bullets.slice(0, 2).map((b) => `- ${sentence(b.text)}`)].join('\n'),
     missingMust.length
       ? `Your posting also asks for ${joinNames(missingMust.slice(0, 3))}. I have not done ${missingMust.length > 1 ? 'these' : 'this'} in a job yet${doing.length ? `, and I am working on ${missingMust.length > 1 ? 'them' : 'it'} now through ${joinNames(doing)}` : ''}.`

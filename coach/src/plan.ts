@@ -133,6 +133,15 @@ export function joinNames(names: string[]): string {
   return names.slice(0, -1).join(', ') + ' and ' + names[names.length - 1];
 }
 
+/** "an AI Product Manager", "a Product Manager": by sound, so acronyms go by their first letter. */
+export function withArticle(noun: string): string {
+  const w = noun.trim();
+  const first = w.split(/\s+/)[0] ?? '';
+  const acronym = first.length > 1 && /^[A-Z]+$/.test(first);
+  const vowel = acronym ? /^[AEFHILMNORSX]/.test(first) : /^[aeiou]/i.test(w) && !/^(uni|use|usu|eu|one)/i.test(w);
+  return `${vowel ? 'an' : 'a'} ${w}`;
+}
+
 const LEARN = [
   (n: string) => `Study ${n}: core ideas, vocabulary and how product teams use it`,
   (n: string) => `Work through two real case studies of ${n} and note what decided the outcome`,

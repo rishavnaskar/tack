@@ -291,9 +291,26 @@ button.win:hover .win__dots i:first-child {
   padding-left: 2px;
 }
 
+.win__last {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+
 .win__foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
   margin-top: auto;
   padding-top: 10px;
+  white-space: nowrap;
+}
+
+.win__foot > span:first-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .win--ghost .win__body {
@@ -378,6 +395,24 @@ button.win:hover .win__dots i:first-child {
 
 .pd__head {
   margin-bottom: 10px;
+}
+
+.pd__subhead {
+  margin-top: var(--s-2);
+  margin-bottom: calc(var(--s-5) * -1 + 10px);
+  color: var(--mute);
+}
+
+.pd__subhead:first-child {
+  margin-top: 0;
+}
+
+.pd-foot {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--s-3);
+  width: 100%;
 }
 
 .pd__block ul {
@@ -480,8 +515,34 @@ button.win:hover .win__dots i:first-child {
     scroll-snap-align: start;
   }
 
-  .drawer-note {
-    flex-basis: 100%;
+  .pd-foot {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--s-2);
+  }
+
+  .pd-foot .drawer-note {
+    grid-column: 1 / -1;
+    margin: 0;
+    text-align: center;
+  }
+
+  .pd-foot__prep {
+    order: 1;
+  }
+
+  .pd-foot__close {
+    order: 2;
+  }
+
+  .pd-foot__apply {
+    order: 3;
+    grid-column: 1 / -1;
+  }
+
+  .pd-foot .btn {
+    width: 100%;
+    justify-content: center;
   }
 
   .filters {

@@ -44,18 +44,55 @@ test('the requested city wins, then its country, then remote roles open to it', 
   assert.equal(locationScore('Bengaluru', 'Remote'), 25);
   assert.equal(locationScore('Bengaluru', 'Remote - USA'), 0);
   assert.equal(locationScore('Bengaluru', 'San Francisco, CA'), 0);
-  assert.equal(locationScore('India or remote', 'Remote, US'), 10);
+  assert.equal(locationScore('India or remote', 'Remote, US'), 0);
+  assert.equal(locationScore('Bengaluru or remote', 'Remote - APAC'), 30);
+  assert.equal(locationScore('Bengaluru or remote', 'Remote - EMEA'), 0);
+  assert.equal(locationScore('remote', 'Remote, US'), 10);
   assert.equal(locationScore('', 'Anywhere'), 0);
+});
+
+test('for a goal in India, roles in India or remote in India rank above US-only remote roles', async () => {
+  const json = (body: unknown) => new Response(JSON.stringify(body), { status: 200, headers: { 'content-type': 'application/json' } });
+  const jobs = [
+    { id: 1, title: 'Senior Product Manager, AI', location: 'Remote - USA' },
+    { id: 2, title: 'AI Product Manager', location: 'Remote, US' },
+    { id: 3, title: 'Product Manager, GenAI', location: 'San Francisco, CA; Remote' },
+    { id: 4, title: 'Product Manager', location: 'Bengaluru, India' },
+    { id: 5, title: 'Product Manager II', location: 'Remote - India' },
+    { id: 6, title: 'Product Manager, Payments', location: 'Hyderabad, India' },
+  ];
+  // one company per posting, so the per-company cap does not decide the order
+  const fetchImpl = (async (input: string | URL | Request) => {
+    const url = String(input);
+    const j = jobs.find((x) => url.includes(`/boards/co${x.id}/`));
+    if (!j) return json({});
+    if (url.endsWith('/jobs?content=false')) {
+      return json({ jobs: [{ title: j.title, location: { name: j.location }, absolute_url: `https://job-boards.greenhouse.io/co${j.id}/jobs/${j.id}`, departments: [] }] });
+    }
+    return json({ title: j.title, location: { name: j.location }, content: '&lt;p&gt;Own the roadmap.&lt;/p&gt;' });
+  }) as typeof fetch;
+  const boards = jobs.map((j) => board(`Co${j.id}`));
+  const r = await harvest(ROLE, 'Bengaluru or remote', 6, { fetch: fetchImpl, boards, cacheDir: null });
+  assert.ok(r.ok, r.ok ? '' : r.reason);
+  const places = r.postings.map((p) => p.location);
+  assert.deepEqual(places.slice(0, 3).sort(), ['Bengaluru, India', 'Hyderabad, India', 'Remote - India']);
+  assert.deepEqual(places.slice(3).sort(), ['Remote - USA', 'Remote, US', 'San Francisco, CA; Remote']);
 });
 
 test('board html becomes clean text, cut at a sentence near the cap', () => {
   const html = '&lt;p&gt;About us&lt;/p&gt;&lt;ul&gt;&lt;li&gt;Ship &amp;amp; learn&lt;/li&gt;&lt;/ul&gt;';
   assert.equal(cleanText(html), 'About us\n\n- Ship & learn');
-  assert.equal(cleanText('<div>One <b>two</b></div>three'), 'One two\nthree');
+  assert.equal(cleanText('<div>One <b>two</b></div>three'), 'One two\n\nthree');
   const long = 'This sentence is about ten words or so long here. '.repeat(200);
   const cut = cleanText(long, 6000);
   assert.ok(cut.length <= 6000 && cut.length > 4800);
   assert.ok(cut.endsWith('.'));
+});
+
+test('plain posting text gets its paragraph and list breaks back', () => {
+  const lever = 'About the Team\nWe build payments.\nWe ship weekly.\n\nWhat you will do\n-\nOwn the roadmap.\n\n-\nTalk to merchants.\nYou have\n- SQL\n- Five years';
+  assert.equal(cleanText(lever), 'About the Team\n\nWe build payments.\n\nWe ship weekly.\n\nWhat you will do\n- Own the roadmap.\n- Talk to merchants.\n\nYou have\n- SQL\n- Five years');
+  assert.equal(cleanText('<p>Intro.</p><p>Second.</p><ul><li><p>One</p></li><li><p>Two</p></li></ul>'), 'Intro.\n\nSecond.\n\n- One\n- Two');
 });
 
 test('salary ranges and seniority are read from plain words', () => {
@@ -146,7 +183,7 @@ test('harvest reads every board, ranks by title and place, and returns clean liv
   assert.equal(acme.url, 'https://acme.example/careers?gh_jid=1001');
   assert.equal(acme.source, 'greenhouse');
   assert.equal(acme.live, true);
-  assert.equal(acme.text, 'About\nLead our LLM work. Salary $150,000 - $190,000.');
+  assert.equal(acme.text, 'About\n\nLead our LLM work. Salary $150,000 - $190,000.');
   assert.equal(acme.salary, '$150,000 - $190,000');
   assert.equal(acme.postedAt, '2026-11-10T00:00:00Z');
   assert.equal(acme.seniority, 'senior');

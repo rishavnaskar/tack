@@ -305,7 +305,9 @@ function buildApplications(now: Date, postings: Posting[]): Application[] {
     // an application cannot predate its posting
     const ago = p?.postedAt ? Math.min(spec.ago, Math.max(1, daysBetween(p.postedAt, localDate(now)) - 1)) : spec.ago;
     const appliedAt = daysAgo(now, ago, 9 + (i % 9), (i * 13) % 60);
-    const events: Application['events'] = [{ at: appliedAt, kind: 'applied', note: p ? 'Applied on the careers page with a tailored résumé' : 'Applied with a tailored résumé' }];
+    const source = p?.source ?? spec.source;
+    const via = source === 'company-site' ? 'on the careers page' : source === 'job-board' ? 'through a job board' : source === 'startup-board' ? 'through a startup job board' : '';
+    const events: Application['events'] = [{ at: appliedAt, kind: 'applied', note: `Applied ${via ? `${via} ` : ''}with a tailored résumé` }];
     for (const [d, kind, note] of spec.steps ?? []) {
       if (d >= ago) continue;
       events.push({ at: new Date(Date.parse(appliedAt) + d * DAY + 3 * 3_600_000).toISOString(), kind, note });
@@ -320,7 +322,7 @@ function buildApplications(now: Date, postings: Posting[]): Application[] {
       title, company,
       url: p?.url ?? `https://careers.${slug(company).replace(/-/g, '')}.example/jobs/${slug(title)}`,
       roleFamily: p?.roleFamily ?? spec.family, seniority: p?.seniority ?? spec.seniority,
-      companySize: p?.companySize ?? spec.size, source: p?.source ?? spec.source,
+      companySize: p?.companySize ?? spec.size, source,
       fit: Math.round(p?.fit ?? spec.fit),
       appliedAt, status, lastEventAt: last.at, events, origin: 'demo',
     };
