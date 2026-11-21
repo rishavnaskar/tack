@@ -1,0 +1,17 @@
+Problem
+Pivoting careers is hard. A backend engineer moving to AI Product Manager in Bengaluru lacks clear data on what local employers actually demand, where their résumé falls short, and how to structure their preparation week by week.
+
+What I built
+I built Tack, a career pivot coach running as a local web app, a macOS Electron app, and an 8-tool MCP server over stdio, all sharing one SQLite store. Tack takes a PDF or pasted résumé, suggests 5 adjacent roles, and scans 60 public boards (33 Greenhouse, 18 Ashby, 9 Lever). In testing, it scanned 10,654 roles, found 450 AI PM titles, and harvested 40 postings in 11 seconds. It maps 30 to 32 skills, builds a plan of 55 to 60 tasks in 8.6 seconds, suggests 3 projects covering at least 2 gap skills, and runs 5-question mock interviews. Passing checkpoints updates your readiness, which rose from 34 to 39 in testing. A tracker uses Thompson sampling to rank target roles. Tack includes 112 passing tests and a demo profile with 40 postings and 24 applications.
+
+How it uses AI
+I used Gemini (gemini-3.5-flash-lite) through an OpenAI-compatible endpoint with JSON schemas, disk caching, and a 12-call-per-minute limit for 8 tasks: résumé parsing, adjacent roles, extracting skills from 5-job batches, plan wording, project briefs, interview questions, 5-criterion rubric scoring (1 to 5), and application kits. All math, rankings, gap formulas, dates, and tracker insights run in deterministic code, not AI.
+
+What is different
+Every claim is backed by verbatim evidence. Skills require exact résumé quotes, job demand requires exact posting quotes, and interview scores quote the user's answers. Unverified quotes are dropped. Interview scores above 4 raise readiness, while scores under 50 add practice. When checkpoints fail, replanning instantly rebalances tasks in code without AI hallucinations.
+
+Honest limits
+The macOS app is unsigned. Gmail sync is opt-in. Applications are prepared to copy and paste, not auto-submitted. The free model tier limits requests to 15 per minute, making cold gap builds take about 65 seconds. The board list is fixed to 60 companies, and the demo tracker uses 24 sample applications.
+
+Built on
+Node 22, TypeScript, React 19, Electron, and SQLite. The job-board reader and résumé parser were vendored from my earlier project Fanfold; all coaching workflows, gap math, interview tools, and the MCP server were built new for this hackathon.
