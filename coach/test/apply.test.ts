@@ -265,6 +265,11 @@ test('at the Submit the engine holds, Tack presses it once on the standing conse
   assert.ok(end.runs[0].steps.some((s) => s.kind === 'submit'));
   assert.equal(apply.waitsOnYes('failed', 'Shall I?'), false);
   assert.equal(apply.waitsOnYes('done', 'Application submitted. Reference TQ-1.'), false);
+  // Seen on a real run: the agent asks for the yes in its own words.
+  assert.equal(apply.holdOf('awaiting_approval', 'The application for the Product Manager role at Marigold Media is ready to be submitted. Please confirm if you would like me to proceed with the final submission.'), 'submit');
+  assert.equal(apply.holdOf('awaiting_approval', 'The form asks: "Do you agree to the privacy notice?" before it can be submitted. Should I tick it?'), 'consent');
+  assert.equal(apply.holdOf('awaiting_approval', 'The form asks "What is your expected CTC?"'), 'question');
+  assert.equal(apply.holdOf('failed', 'The page shows a reCAPTCHA'), 'captcha');
 });
 
 test('without standing consent a run stops at the Submit and says why; nothing is pressed', async () => {

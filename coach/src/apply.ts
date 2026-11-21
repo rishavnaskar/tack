@@ -320,6 +320,8 @@ export function holdOf(status: string, message: string): Hold | null {
   if (status !== 'awaiting_approval') return 'other';
   if (/only you can do|which only you/.test(m)) return 'question';
   if (/submits? (?:a job |an )?application|may send an application|sends something to someone|ready (?:to|for) (?:submit|send|review)|shall i (?:press|submit|send|proceed)|press (?:the )?(?:final )?submit|confirm (?:the )?submi|needs your approval/.test(m)) return 'submit';
+  // "Ready to be submitted. Please confirm if I should proceed": the agent asking for the yes the person already gave.
+  if (/\bsubmi(?:t|ts|tted|tting|ssion)\b/.test(m) && /\b(confirm|proceed|go ahead|shall i|should i|would you like|ready)\b/.test(m) && !/\b(consent|privacy|agree)\b/.test(m)) return 'submit';
   if (/consent|privacy|data processing|gdpr|terms|agree/.test(m)) return 'consent';
   return 'question';
 }

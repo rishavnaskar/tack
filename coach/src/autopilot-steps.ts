@@ -207,6 +207,8 @@ export async function tick(now = new Date()): Promise<string[]> {
   const a = autopilot();
   const ready = currentReadiness().ready;
   const quiet = inQuiet(now, s.quietHours);
+  // A run a crashed process left is picked up once its lock has gone quiet.
+  if (!a.running() && a.recover()) did.push('resume');
   if (s.on && ready && !a.running() && !quiet) {
     const at = nextRunAt(s, listRuns(1)[0], now);
     if (at && now >= at && !activeBatches().length) {

@@ -282,8 +282,9 @@ function JobRow({ j, onChange }: { j: ApplyJob; onChange: () => void }) {
       {approval ? (
         <p className="ap__job-detail">{j.why ?? `Fit ${j.fit ?? ''}`}</p>
       ) : (
-        <p className="ap__job-detail">{j.detail}</p>
+        j.detail && j.detail !== j.question && <p className="ap__job-detail">{j.detail}</p>
       )}
+      {asks && <p className="ap__question">{j.question}</p>}
       {asks && (
         <form
           className="ap__answer"
@@ -292,7 +293,7 @@ function JobRow({ j, onChange }: { j: ApplyJob; onChange: () => void }) {
             if (answer.trim()) void act('answer', () => api.answerJob(j.id, answer), 'Answered. It is remembered and the form goes again.');
           }}
         >
-          <TextField label={j.question} value={answer} onChange={(e) => setAnswer(e.target.value)} placeholder="Your answer, once" />
+          <TextField label="Your answer" value={answer} onChange={(e) => setAnswer(e.target.value)} placeholder="Answer once; later forms reuse it" />
           <Button variant="primary" size="sm" type="submit" loading={busy === 'answer'} disabled={!answer.trim()}>
             Answer and retry
           </Button>

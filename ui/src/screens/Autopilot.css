@@ -283,6 +283,14 @@
   box-shadow: none;
 }
 
+.ap__question {
+  padding-left: var(--s-3);
+  border-left: 2px solid var(--accent-line);
+  color: var(--paper);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
 .ap__answer {
   display: flex;
   flex-wrap: wrap;
