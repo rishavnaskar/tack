@@ -88,7 +88,11 @@ const http: Transport = async (method, path, body) => {
         ? (data as { error: string }).error
         : res.status === 429
           ? 'Tack is busy right now. Wait a minute and try again.'
-          : `Request failed with ${res.status}`;
+          : res.status === 413
+            ? path === '/profile/resume'
+              ? 'That résumé file is too large to upload. Try a smaller PDF, or paste the text.'
+              : 'That request is too large to send.'
+            : `Request failed with ${res.status}`;
     throw new ApiError(res.status, msg, path);
   }
   return data;

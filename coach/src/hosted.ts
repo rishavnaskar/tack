@@ -758,7 +758,7 @@ export function tooLarge(pattern: string): string {
     : `The request is larger than ${mb(l.jsonBytes)}.`;
 }
 
-/** The body limit for a route: the résumé route takes a 5 MB file as base64 inside JSON. */
+/** The body limit for a route: the résumé route takes a file of up to TACK_MAX_RESUME_MB as base64 inside JSON. */
 export function bodyLimit(pattern: string): number {
   const l = limits();
   return pattern === '/api/profile/resume' ? base64Len(l.resumeBytes) + 64 * 1024 : l.jsonBytes;

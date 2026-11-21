@@ -90,7 +90,7 @@ export interface AppState {
   hosted?: HostedInfo;
 }
 export interface Capabilities { apply: boolean; mail: boolean; autopilot: boolean; reason: string }
-export interface HostedInfo { preview: boolean; downloadUrl: string | null; retentionHours?: number }
+export interface HostedInfo { preview: boolean; downloadUrl: string | null; retentionHours?: number; resumeMaxBytes?: number }
 export interface Kit {
   postingId: string; generatedAt: string; fit: number; headline: string;
   bullets: { text: string; basedOn: string }[]; // basedOn is a verbatim line from the profile

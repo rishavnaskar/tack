@@ -287,6 +287,10 @@ function Intake({ onDone, onDemo, demoBusy, showDemo }: { onDone: () => void; on
   const [fileName, setFileName] = useState<string>();
   const [since, setSince] = useState(0);
   const latest = useLatestSince(since);
+  const { data: state } = useAppState();
+  // The web preview's host caps request bodies, so the server says how large a file it takes.
+  const maxBytes = state?.hosted?.resumeMaxBytes ?? 5 * 1024 * 1024;
+  const maxLabel = `${+(maxBytes / (1024 * 1024)).toFixed(1)} MB`;
 
   const submit = async (input: { text: string } | { pdfBase64: string; filename: string }) => {
     setErr(undefined);
@@ -307,8 +311,8 @@ function Intake({ onDone, onDemo, demoBusy, showDemo }: { onDone: () => void; on
       setErr('That file is not a PDF. Export your résumé as PDF, or paste the text instead.');
       return;
     }
-    if (file.size > 5 * 1024 * 1024) {
-      setErr('That PDF is over 5 MB. Try a smaller export, or paste the text.');
+    if (file.size > maxBytes) {
+      setErr(`That PDF is over ${maxLabel}. Try a smaller export, or paste the text.`);
       return;
     }
     setFileName(file.name);
@@ -349,7 +353,7 @@ function Intake({ onDone, onDemo, demoBusy, showDemo }: { onDone: () => void; on
                 }}
               />
               {mode === 'pdf' ? (
-                <DropZone onFile={onFile} title="Drop your résumé here" hint="PDF up to 5 MB, or click to choose a file." />
+                <DropZone onFile={onFile} title="Drop your résumé here" hint={`PDF up to ${maxLabel}, or click to choose a file.`} />
               ) : (
                 <div className="intake__paste">
                   <TextArea

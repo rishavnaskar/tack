@@ -363,8 +363,9 @@ export function createApp(): App {
     if (route.pattern !== '/api/state' || route.method !== 'GET' || !out || typeof out !== 'object' || Array.isArray(out)) return out;
     const o = out as Record<string, unknown>;
     if (!isHosted) return { ...o, capabilities: o.capabilities ?? hosted.capabilities() };
-    const retentionHours = Math.round(hosted.limits().sessionTtlMs / 3_600_000);
-    return { ...o, capabilities: hosted.capabilities(), hosted: { preview: true, downloadUrl: hosted.downloadUrl(), retentionHours } };
+    const l = hosted.limits();
+    const retentionHours = Math.round(l.sessionTtlMs / 3_600_000);
+    return { ...o, capabilities: hosted.capabilities(), hosted: { preview: true, downloadUrl: hosted.downloadUrl(), retentionHours, resumeMaxBytes: l.resumeBytes } };
   }
 
   function logError(err: unknown, where: string, rid: string): void {

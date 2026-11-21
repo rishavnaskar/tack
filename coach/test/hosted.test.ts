@@ -190,6 +190,7 @@ test('two visitors at once: neither sees the other\'s profile, postings, gap, pl
   assert.deepEqual(sa.capabilities, { apply: false, mail: false, autopilot: false, reason: sa.capabilities.reason });
   assert.match(sa.capabilities.reason, /desktop app/);
   assert.equal(sa.hosted.preview, true);
+  assert.equal(sa.hosted.resumeMaxBytes, 5 * 1024 * 1024);
   assert.notEqual(a.cookie, b.cookie);
 
   // The cookie: HttpOnly, SameSite=Lax, a 256-bit id signed by the server.
