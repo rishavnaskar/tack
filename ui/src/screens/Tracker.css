@@ -1164,6 +1164,13 @@
   color: var(--mute);
 }
 
+/* Outside the .topn row the section is a column, where the row's flex basis would become a height. */
+.topn__note--desktop {
+  flex: none;
+  max-width: 72ch;
+  margin-bottom: var(--s-2);
+}
+
 .topn__note svg {
   flex: none;
   margin-top: 3px;

@@ -112,7 +112,8 @@ export function useQuery<T>(key: string, fetcher: () => Promise<T>, opts: { enab
   const enabled = opts.enabled ?? true;
   const fetcherRef = useRef(fetcher);
   fetcherRef.current = fetcher;
-  fetchers.set(key, () => fetcherRef.current());
+  // A disabled query is not registered, so invalidate() and clearCache() never fetch it either.
+  if (enabled) fetchers.set(key, () => fetcherRef.current());
 
   const subscribe = useCallback(
     (l: () => void) => {

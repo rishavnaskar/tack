@@ -5,6 +5,7 @@ import { api, ApiError, fileToBase64 } from '../api/client';
 import { tracked, useTrace } from '../api/events';
 import { actions, useAppState, useGap } from '../api/hooks';
 import { invalidate, useQuery } from '../api/query';
+import { capabilitiesOf } from '../api/capabilities';
 import type { AppState, ApplicationDetails, Consent, Goal, Profile, ProfileSkill } from '../api/types';
 import {
   BlueprintLoader,
@@ -698,6 +699,8 @@ const DETAIL_FIELDS: { key: keyof ApplicationDetails; label: string; placeholder
 
 function DetailsSection({ state }: { state: AppState }) {
   const view = useQuery('details', api.details);
+  // On the web preview nothing is applied to, so readiness and consent belong to the desktop app.
+  const canApply = capabilitiesOf(state).apply;
   const [draft, setDraft] = useState<ApplicationDetails>();
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [problems, setProblems] = useState<Record<string, string>>({});
@@ -745,7 +748,9 @@ function DetailsSection({ state }: { state: AppState }) {
       <SectionHead
         index="04"
         title="Application details"
-        text="What forms ask for. Tack gives these and your résumé to the browser engine, which fills and submits applications for you."
+        text={canApply
+          ? 'What forms ask for. Tack gives these and your résumé to the browser engine, which fills and submits applications for you.'
+          : 'What forms ask for. In the desktop app, Tack gives these and your résumé to the browser engine, which fills and submits applications for you.'}
         aside={
           <span className={`savestate t-micro is-${saveState}`} aria-live="polite">
             {saveState === 'saving' ? 'Saving' : saveState === 'saved' ? 'Saved' : saveState === 'error' ? 'Not saved' : ''}
@@ -787,14 +792,20 @@ function DetailsSection({ state }: { state: AppState }) {
                   <span className="t-mute">No résumé file yet. Add one in 01 above; it is what gets uploaded to forms.</span>
                 )}
               </p>
-              {ready && (
+              {canApply && ready && (
                 <p className={['details__ready', ready.ready ? 'is-ready' : 'is-missing'].join(' ')} role="status">
                   <Icon name={ready.ready ? 'check' : 'warning'} size={16} />
                   <span>{ready.reason}</span>
                 </p>
               )}
+              {!canApply && (
+                <p className="details__ready" role="status">
+                  <Icon name="file" size={16} />
+                  <span>Applying with these, and the consent to submit, run in the desktop app.</span>
+                </p>
+              )}
             </div>
-            {view.data?.consent && <ConsentRow consent={view.data.consent} onChange={() => view.refetch().catch(() => undefined)} />}
+            {canApply && view.data?.consent && <ConsentRow consent={view.data.consent} onChange={() => view.refetch().catch(() => undefined)} />}
           </>
         )}
       </Card>
@@ -929,7 +940,7 @@ function MarketSection({ state }: { state: AppState }) {
                 </ol>
                 <p className="runcard__mode t-micro">
                   {state.engine.available ? 'Live: open roles are read straight from public company job boards.'
-                    : state.profile && state.profile.source !== 'demo' ? 'The public job boards are not reachable right now. Check the connection, then read the market.'
+                    : state.profile && state.profile.source !== 'demo' && !state.hosted ? 'The public job boards are not reachable right now. Check the connection, then read the market.'
                       : 'Demo: the engine is off, so Tack reads the bundled sample of 40 postings.'}
                 </p>
               </div>

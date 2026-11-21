@@ -4,11 +4,13 @@ import { api } from '../api/client';
 import { invalidate, useQuery } from '../api/query';
 import { keys } from '../api/hooks';
 import { useTrace } from '../api/events';
+import { useCan } from '../api/capabilities';
 import type { ApplyJob, ApplyRun, AutopilotRunBrief, AutopilotRunFull, AutopilotSettings, AutopilotStatus, RunStepView } from '../api/types';
 import { pad2 } from '../lib/format';
 import { Button, Card, EmptyState, ErrorState, Icon, PageHeader, Skeleton, Stepper, TextArea, TextField, Toggle, ease, useToast } from '../ui';
 import { SectionHead } from './tracker/Pipeline';
 import { RunCard } from './tracker/ApplyRuns';
+import { DesktopOnly } from './DesktopOnly';
 import './Autopilot.css';
 
 export const REASON_LABEL: Record<string, string> = {
@@ -45,9 +47,7 @@ export function useAutopilot() {
 }
 
 export function Autopilot() {
-  const ap = useAutopilot();
-  const s = ap.data;
-
+  const can = useCan('autopilot');
   return (
     <div className="ap">
       <PageHeader
@@ -56,6 +56,28 @@ export function Autopilot() {
         title="It runs while you get on with things"
         purpose="Every few hours Tack reads the market, rebuilds the gap, picks the best postings, applies to them in parallel, reads the replies and replans. Nothing waits on a click."
       />
+      {can === undefined ? (
+        <div className="ap__skel" aria-busy="true">
+          <Skeleton height={180} radius={16} />
+        </div>
+      ) : can ? (
+        <AutopilotBody />
+      ) : (
+        <DesktopOnly
+          title="The autopilot runs in the desktop app"
+          body="It keeps a browser and a schedule going on your own machine between visits, which a web preview cannot. Here you can read the market, build the gap map and plan, practise interviews and keep the tracker by hand."
+        />
+      )}
+    </div>
+  );
+}
+
+function AutopilotBody() {
+  const ap = useAutopilot();
+  const s = ap.data;
+
+  return (
+    <>
       {ap.error && !s ? (
         <ErrorState title="Could not load the autopilot" message={ap.error.message} onRetry={() => ap.refetch().catch(() => undefined)} />
       ) : !s ? (
@@ -80,7 +102,7 @@ export function Autopilot() {
           {s.remembered.length > 0 && <Remembered s={s} onChange={() => ap.refetch()} />}
         </>
       )}
-    </div>
+    </>
   );
 }
 
@@ -525,6 +547,23 @@ function Remembered({ s, onChange }: { s: AutopilotStatus; onChange: () => void 
 
 /** The compact block on Progress. */
 export function AutopilotBlock() {
+  const can = useCan('autopilot');
+  if (can === undefined) return null;
+  if (!can) {
+    return (
+      <Card pad="md" className="ap-block" label="Autopilot" index="00" settle>
+        <div className="ap-block__row">
+          <span className="ap-block__dot" aria-hidden="true" />
+          <span className="ap-block__state">Runs in the desktop app</span>
+        </div>
+        <p className="ap-block__line t-faint">Scheduled reading, applying and reply checks need the desktop app. Progress here counts what you log by hand.</p>
+      </Card>
+    );
+  }
+  return <LiveAutopilotBlock />;
+}
+
+function LiveAutopilotBlock() {
   const ap = useAutopilot();
   const s = ap.data;
   if (!s) return null;

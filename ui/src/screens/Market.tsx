@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router';
 import { motion } from 'motion/react';
 import { actions, useAppState, usePostings } from '../api/hooks';
 import { applying as applyStore } from '../api/applying';
+import { useCan } from '../api/capabilities';
 import type { Posting } from '../api/types';
 import { ago, agoShort, cityOf, countBy, hostOf, median, sizeLabel } from '../lib/format';
 import { Bar, Button, Card, Chip, Drawer, EmptyState, ErrorState, Icon, Meter, PageHeader, Skeleton, Stat, Tabs, ease, useToast } from '../ui';
@@ -466,6 +467,7 @@ function EmptyMarket({ canRun, onRun }: { canRun: boolean; onRun: () => void }) 
 function PostingDrawer({ posting, onClose, onPrepare }: { posting?: Posting; onClose: () => void; engineOn: boolean; onPrepare: (p: Posting) => void }) {
   const [focus, setFocus] = useState<string>();
   const [applying, setApplying] = useState(false);
+  const canApply = useCan('apply') !== false;
   const toast = useToast();
   const last = useRef<Posting | undefined>(posting);
   if (posting) last.current = posting;
@@ -506,16 +508,18 @@ function PostingDrawer({ posting, onClose, onPrepare }: { posting?: Posting; onC
       footer={
         p ? (
           <div className="pd-foot">
-            {!p.live && <span className="drawer-note">Sample posting: applies to Tack's practice form.</span>}
+            {!p.live && <span className="drawer-note">{canApply ? 'Sample posting: applies to Tack\'s practice form.' : 'Sample posting from the bundled market.'}</span>}
             <Button variant="ghost" className="pd-foot__close" onClick={onClose}>
               Close
             </Button>
-            <Button variant="ghost" className="pd-foot__prep" iconLeft="file" onClick={() => onPrepare(p)}>
+            <Button variant={canApply ? 'ghost' : 'primary'} className="pd-foot__prep" iconLeft="file" onClick={() => onPrepare(p)}>
               Prepare application
             </Button>
-            <Button variant="primary" className="pd-foot__apply" icon="arrow-right" onClick={apply} loading={applying}>
-              Apply through the engine
-            </Button>
+            {canApply && (
+              <Button variant="primary" className="pd-foot__apply" icon="arrow-right" onClick={apply} loading={applying}>
+                Apply through the engine
+              </Button>
+            )}
           </div>
         ) : undefined
       }

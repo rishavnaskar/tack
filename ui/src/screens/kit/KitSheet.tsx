@@ -5,6 +5,7 @@ import { actions, useApplications, useGap, useKit, usePostings } from '../../api
 import { applying, isActive, useRunFor } from '../../api/applying';
 import { api } from '../../api/client';
 import { useQuery } from '../../api/query';
+import { useCan } from '../../api/capabilities';
 import { RunCard } from '../tracker/ApplyRuns';
 import type { GapSkill, Kit } from '../../api/types';
 import { hostOf, pad2 } from '../../lib/format';
@@ -119,7 +120,8 @@ export function KitSheet({ target, onClose }: { target?: KitTarget; onClose: () 
   const applied = !!t && (apps.data ?? []).some((a) => a.postingId === t.postingId);
   const data = kit.data;
   const run = useRunFor(t?.postingId);
-  const ready = useQuery(`apply-readiness:${t?.postingId ?? ''}`, () => api.readiness(t?.postingId), { enabled: !!t });
+  const canApply = useCan('apply');
+  const ready = useQuery(`apply-readiness:${t?.postingId ?? ''}`, () => api.readiness(t?.postingId), { enabled: !!t && canApply === true });
   const [starting, setStarting] = useState(false);
 
   const apply = async () => {
@@ -204,19 +206,21 @@ export function KitSheet({ target, onClose }: { target?: KitTarget; onClose: () 
             <Button variant="ghost" icon="arrow-up-right" href={t.url} target="_blank">
               Open posting
             </Button>
-            <Button variant="ghost" iconLeft="check" onClick={mark} loading={marking} disabled={applied}>
+            <Button variant={canApply === false ? 'primary' : 'ghost'} iconLeft="check" onClick={mark} loading={marking} disabled={applied}>
               {applied ? 'Applied' : 'Mark applied'}
             </Button>
-            <Button
-              variant="primary"
-              icon="arrow-right"
-              onClick={apply}
-              loading={starting || (!!run && isActive(run))}
-              disabled={applied || run?.status === 'applied' || !!blocked}
-              title={blocked}
-            >
-              {ready.data?.target === 'practice' ? 'Apply (practice)' : 'Apply'}
-            </Button>
+            {canApply !== false && (
+              <Button
+                variant="primary"
+                icon="arrow-right"
+                onClick={apply}
+                loading={starting || (!!run && isActive(run))}
+                disabled={applied || run?.status === 'applied' || !!blocked}
+                title={blocked}
+              >
+                {ready.data?.target === 'practice' ? 'Apply (practice)' : 'Apply'}
+              </Button>
+            )}
           </div>
         ) : undefined
       }
@@ -224,6 +228,11 @@ export function KitSheet({ target, onClose }: { target?: KitTarget; onClose: () 
       {t && (run || blocked) && (
         <div className="kit__run">
           {run ? <RunCard run={run} /> : <p className="kit__blocked t-mute">{blocked}</p>}
+        </div>
+      )}
+      {t && canApply === false && (
+        <div className="kit__run">
+          <p className="kit__blocked t-mute">Applying for you runs in the desktop app. Copy the kit, send it on the company's site, then mark it applied.</p>
         </div>
       )}
       {t &&

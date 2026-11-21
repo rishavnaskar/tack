@@ -3,6 +3,7 @@ import { motion } from 'motion/react';
 import { api } from '../../api/client';
 import { actions } from '../../api/hooks';
 import { useQuery } from '../../api/query';
+import { useCan } from '../../api/capabilities';
 import type { MailKind, SyncResult } from '../../api/types';
 import { agoShort } from '../../lib/format';
 import { Button, Card, Icon, ease, useToast } from '../../ui';
@@ -18,6 +19,24 @@ const POLL_MS = 3000;
 const POLL_FOR_MS = 5 * 60_000;
 
 export function MailStrip({ onResult }: { onResult: (r: SyncResult) => void }) {
+  const can = useCan('mail');
+  if (can === undefined) return null;
+  if (!can) {
+    return (
+      <div className="mail is-off" role="region" aria-label="Mail">
+        <span className="t-label mail__label">Mail</span>
+        <span className="mail__state">
+          <span className="mail__dot" aria-hidden="true" />
+          Runs in the desktop app
+        </span>
+        <span className="mail__note">Reading replies from your mail needs the desktop app. Here, move a card when a company writes back.</span>
+      </div>
+    );
+  }
+  return <LiveMailStrip onResult={onResult} />;
+}
+
+function LiveMailStrip({ onResult }: { onResult: (r: SyncResult) => void }) {
   const status = useQuery('mail-status', api.mailStatus);
   const [checking, setChecking] = useState(false);
   const [connecting, setConnecting] = useState<'idle' | 'starting' | 'waiting'>('idle');

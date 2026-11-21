@@ -4,6 +4,7 @@ import { api } from '../api/client';
 import { actions, useAppState, useApplications, useInsights, usePostings } from '../api/hooks';
 import { applying, isActive, useBatches, useRunFor } from '../api/applying';
 import { useQuery } from '../api/query';
+import { useCan } from '../api/capabilities';
 import type { Posting, Segment, SyncResult, TrackerInsights } from '../api/types';
 import { hostOf, pad2 } from '../lib/format';
 import { Button, Card, Chip, EmptyState, ErrorState, Icon, PageHeader, Skeleton, ease, useToast } from '../ui';
@@ -19,6 +20,8 @@ export function Tracker() {
   const insights = useInsights();
   const postings = usePostings();
   const { data: state } = useAppState();
+  const canApply = useCan('apply');
+  const autopilot = useCan('autopilot') !== false;
   const [adding, setAdding] = useState(false);
   const [openId, setOpenId] = useState<string>();
   const [changed, setChanged] = useState<SyncResult>();
@@ -52,17 +55,21 @@ export function Tracker() {
             eyebrow="No applications yet"
             title="Nothing to learn from yet"
             body={
-              state?.profile
-                ? 'Switch the autopilot on and Tack applies to the best-ranked postings by itself, or apply to one below. After about a dozen, the tracker starts to show which kinds of roles reply.'
-                : 'Add a résumé and read the market first, or load the demo person to see the tracker with 24 applications.'
+              !state?.profile
+                ? 'Add a résumé and read the market first, or load the demo person to see the tracker with 24 applications.'
+                : autopilot
+                  ? 'Switch the autopilot on and Tack applies to the best-ranked postings by itself, or apply to one below. After about a dozen, the tracker starts to show which kinds of roles reply.'
+                  : 'Prepare an application for one of the postings below, send it on the company\'s site and mark it applied. After about a dozen, the tracker starts to show which kinds of roles reply.'
             }
             action={
               state?.profile ? (
                 <div className="tr__empty-actions">
-                  <Button variant="primary" icon="arrow-right" to="/autopilot">
-                    Open Autopilot
-                  </Button>
-                  <Button variant="ghost" iconLeft="plus" onClick={() => setAdding(true)}>
+                  {autopilot && (
+                    <Button variant="primary" icon="arrow-right" to="/autopilot">
+                      Open Autopilot
+                    </Button>
+                  )}
+                  <Button variant={autopilot ? 'ghost' : 'primary'} iconLeft="plus" onClick={() => setAdding(true)}>
                     Add application
                   </Button>
                 </div>
@@ -75,7 +82,7 @@ export function Tracker() {
           />
           {insights.data && insights.data.next.length > 0 && (
             <div className="tr__gap">
-              <ApplyNext insights={insights.data} postings={postings.data} engineOn={!!state?.engine.available} />
+              <ApplyNext insights={insights.data} postings={postings.data} engineOn={!!state?.engine.available} canApply={canApply} />
             </div>
           )}
         </>
@@ -94,7 +101,7 @@ export function Tracker() {
             <Replies insights={insights.data} fetching={insights.fetching} sample={all.filter((a) => a.origin === 'demo').length} />
           )}
 
-          {insights.data && <ApplyNext insights={insights.data} postings={postings.data} engineOn={!!state?.engine.available} />}
+          {insights.data && <ApplyNext insights={insights.data} postings={postings.data} engineOn={!!state?.engine.available} canApply={canApply} />}
 
           <Pipeline apps={all} onOpen={setOpenId} />
         </>
@@ -274,14 +281,14 @@ export function Confidence({ level }: { level: Segment['confidence'] }) {
 
 /* apply next */
 
-function ApplyNext({ insights, postings, engineOn }: { insights: TrackerInsights; postings?: Posting[]; engineOn: boolean }) {
+function ApplyNext({ insights, postings, engineOn, canApply }: { insights: TrackerInsights; postings?: Posting[]; engineOn: boolean; canApply?: boolean }) {
   const [all, setAll] = useState(false);
   const [busy, setBusy] = useState<string>();
   const [n, setN] = useState(3);
   const [kitFor, setKitFor] = useState<KitTarget>();
   const toast = useToast();
   const batches = useBatches();
-  const ready = useQuery('apply-readiness', () => api.readiness());
+  const ready = useQuery('apply-readiness', () => api.readiness(), { enabled: canApply === true });
   const running = batches.some((b) => b.runs.some(isActive));
   const list = all ? insights.next : insights.next.slice(0, 5);
   const blocked = ready.data && !ready.data.ready ? ready.data.reason : undefined;
@@ -335,12 +342,17 @@ function ApplyNext({ insights, postings, engineOn }: { insights: TrackerInsights
         title="Apply next"
         text="Postings you have not applied to, ranked by fit and by how often that kind of role has replied to you so far."
         aside={
-          <Chip size="sm" mono tone={engineOn ? 'olive' : 'mute'}>
-            {practice ? 'Practice applications' : engineOn ? 'Engine attached' : 'Engine off'}
+          <Chip size="sm" mono tone={engineOn && canApply !== false ? 'olive' : 'mute'}>
+            {canApply === false ? 'Desktop app' : practice ? 'Practice applications' : engineOn ? 'Engine attached' : 'Engine off'}
           </Chip>
         }
       />
-      {insights.next.length > 0 && (
+      {insights.next.length > 0 && canApply === false && (
+        <p className="topn__note topn__note--desktop">
+          Applying for you runs in the desktop app, where each form opens in its own Chrome window. Here, prepare an application, send it on the company's site and mark it applied.
+        </p>
+      )}
+      {insights.next.length > 0 && canApply !== false && (
         <div className="topn">
           <div className="topn__pick" role="group" aria-label="How many to apply to">
             <button type="button" className="topn__btn" onClick={() => setN((v) => Math.max(1, v - 1))} disabled={n <= 1} aria-label="One fewer">
@@ -381,6 +393,7 @@ function ApplyNext({ insights, postings, engineOn }: { insights: TrackerInsights
               i={i}
               busy={busy}
               blocked={blocked}
+              canApply={canApply !== false}
               onApply={() => start(`apply:${x.postingId}`, () => applying.start([x.postingId]))}
               onKit={() => setKitFor({ postingId: x.postingId, title: x.title, company: x.company, url: x.url })}
               onMark={() => mark(x)}
@@ -398,8 +411,8 @@ function ApplyNext({ insights, postings, engineOn }: { insights: TrackerInsights
   );
 }
 
-function NextRow({ x, i, busy, blocked, onApply, onKit, onMark }: {
-  x: TrackerInsights['next'][number]; i: number; busy?: string; blocked?: string;
+function NextRow({ x, i, busy, blocked, canApply, onApply, onKit, onMark }: {
+  x: TrackerInsights['next'][number]; i: number; busy?: string; blocked?: string; canApply: boolean;
   onApply: () => void; onKit: () => void; onMark: () => void;
 }) {
   const run = useRunFor(x.postingId);
@@ -443,18 +456,20 @@ function NextRow({ x, i, busy, blocked, onApply, onKit, onMark }: {
         </span>
       </div>
       <div className="nx__acts">
-        <Button
-          variant="primary"
-          size="sm"
-          icon="arrow-right"
-          onClick={onApply}
-          loading={busy === `apply:${x.postingId}` || live}
-          disabled={!!blocked || run?.status === 'applied' || (!!busy && busy !== `apply:${x.postingId}`)}
-          title={blocked}
-        >
-          {run?.status === 'applied' ? 'Applied' : 'Apply'}
-        </Button>
-        <Button variant="ghost" size="sm" iconLeft="file" onClick={onKit}>
+        {canApply && (
+          <Button
+            variant="primary"
+            size="sm"
+            icon="arrow-right"
+            onClick={onApply}
+            loading={busy === `apply:${x.postingId}` || live}
+            disabled={!!blocked || run?.status === 'applied' || (!!busy && busy !== `apply:${x.postingId}`)}
+            title={blocked}
+          >
+            {run?.status === 'applied' ? 'Applied' : 'Apply'}
+          </Button>
+        )}
+        <Button variant={canApply ? 'ghost' : 'primary'} size="sm" iconLeft="file" onClick={onKit}>
           Prepare application
         </Button>
         <Button variant="ghost" size="sm" iconLeft="check" onClick={onMark} loading={busy === `mark:${x.postingId}`} disabled={!!busy && busy !== `mark:${x.postingId}`}>

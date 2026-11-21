@@ -36,8 +36,9 @@ function useNav(): NavItem[] {
 
 function RailStatus() {
   const { data } = useAppState();
-  // A real person is never shown sample data, so the rail never calls their app a demo.
-  const real = !!data?.profile && data.profile.source !== 'demo';
+  // On the desktop a real person is never shown sample data, so the rail never calls their app a demo.
+  // The web preview falls back to the sample market when the boards cannot be read, and says so.
+  const real = !!data?.profile && data.profile.source !== 'demo' && !data.hosted;
   const live = !MOCK && (data?.mode === 'live' || real);
   const n = data?.counts.postings ?? 0;
   const source = !data
