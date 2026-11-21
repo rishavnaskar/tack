@@ -1,0 +1,360 @@
+/* empty */
+.empty {
+  display: flex;
+  align-items: center;
+  gap: clamp(var(--s-5), 4vw, var(--s-8));
+  padding: clamp(var(--s-6), 5vw, var(--s-8));
+  border-radius: var(--r-4);
+  box-shadow: inset 0 0 0 1px var(--line-soft);
+  background: rgba(247, 246, 244, 0.012);
+}
+
+.empty--compact {
+  padding: var(--s-5);
+  border-radius: var(--r-3);
+}
+
+.empty__mark {
+  width: clamp(96px, 12vw, 148px);
+  height: auto;
+  flex: none;
+}
+
+.empty__mark line {
+  stroke: var(--line-soft);
+  stroke-width: 0.6;
+}
+
+.empty__mark-box {
+  fill: none;
+  stroke: var(--paper);
+  stroke-width: 1;
+}
+
+.empty__mark-dot {
+  fill: var(--accent);
+}
+
+.empty__text {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  max-width: 54ch;
+}
+
+.empty__title {
+  font-size: clamp(22px, 2.2vw, 28px);
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+  font-weight: 540;
+}
+
+.empty--compact .empty__title {
+  font-size: 18px;
+}
+
+.empty__body {
+  color: var(--mute);
+  line-height: 1.55;
+}
+
+.empty__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-3);
+  margin-top: var(--s-2);
+}
+
+@media (max-width: 719px) {
+  .empty {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+/* error */
+.error-state {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: start;
+  gap: var(--s-4);
+  padding: var(--s-5);
+  border-radius: var(--r-3);
+  background: rgba(240, 82, 28, 0.05);
+  box-shadow: inset 0 0 0 1px rgba(240, 82, 28, 0.3);
+}
+
+.error-state__icon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  color: var(--accent);
+  box-shadow: inset 0 0 0 1px rgba(240, 82, 28, 0.4);
+}
+
+.error-state__text {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  padding-top: 6px;
+}
+
+.error-state__title {
+  font-size: 17px;
+  letter-spacing: -0.015em;
+  font-weight: 540;
+  line-height: 1.3;
+}
+
+.error-state__message {
+  font-size: 12px;
+  color: var(--mute);
+  overflow-wrap: anywhere;
+}
+
+.error-state__actions {
+  display: flex;
+  gap: var(--s-2);
+  align-self: center;
+}
+
+@media (max-width: 719px) {
+  .error-state {
+    grid-template-columns: auto 1fr;
+  }
+
+  .error-state__actions {
+    grid-column: 1 / -1;
+  }
+}
+
+/* skeleton */
+.skeleton {
+  display: block;
+  position: relative;
+  overflow: hidden;
+  background: rgba(247, 246, 244, 0.06);
+}
+
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(247, 246, 244, 0.06), transparent);
+  animation: skeleton-sweep 1.8s var(--ease-in-out) infinite;
+}
+
+.skeleton-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  width: 100%;
+}
+
+@keyframes skeleton-sweep {
+  to {
+    transform: translateX(100%);
+  }
+}
+
+/* blueprint loader */
+.blueprint {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-5);
+}
+
+.blueprint__grid {
+  position: relative;
+  border-radius: var(--r-3);
+  overflow: hidden;
+  background: rgba(247, 246, 244, 0.015);
+  box-shadow: inset 0 0 0 1px var(--line-soft);
+}
+
+.blueprint__grid svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.blueprint__grid line {
+  stroke: rgba(247, 246, 244, 0.05);
+  stroke-width: 1;
+  shape-rendering: crispEdges;
+}
+
+.blueprint__grid line.major {
+  stroke: rgba(247, 246, 244, 0.11);
+}
+
+.blueprint__cell {
+  fill: rgba(247, 246, 244, 0.05);
+  stroke: rgba(247, 246, 244, 0.55);
+  stroke-width: 1;
+  opacity: 0;
+  animation: blueprint-cell 3.2s var(--ease-in-out) infinite;
+}
+
+.blueprint__cell.is-hot {
+  fill: rgba(240, 82, 28, 0.14);
+  stroke: var(--accent);
+}
+
+@keyframes blueprint-cell {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  8% {
+    opacity: 1;
+  }
+  40% {
+    opacity: 0.12;
+  }
+}
+
+.blueprint__scan {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 1.5px;
+  background: var(--accent);
+  box-shadow: 0 0 24px 4px rgba(240, 82, 28, 0.35);
+  animation: blueprint-scan 3.2s linear infinite;
+}
+
+@keyframes blueprint-scan {
+  0% {
+    transform: translateX(0);
+    opacity: 0;
+  }
+  4% {
+    opacity: 1;
+  }
+  96% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(100cqw);
+    opacity: 0;
+  }
+}
+
+.blueprint__grid {
+  container-type: inline-size;
+}
+
+.blueprint__corner {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-color: var(--paper);
+  border-style: solid;
+  border-width: 0;
+}
+
+.blueprint__corner--tl {
+  top: 10px;
+  left: 10px;
+  border-top-width: 1px;
+  border-left-width: 1px;
+}
+
+.blueprint__corner--br {
+  right: 10px;
+  bottom: 10px;
+  border-bottom-width: 1px;
+  border-right-width: 1px;
+}
+
+.blueprint__caption {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.blueprint__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 20px;
+  letter-spacing: -0.02em;
+  font-weight: 520;
+}
+
+.blueprint__detail {
+  font-size: 12px;
+  color: var(--mute);
+  min-height: 1.4em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.blueprint__stages {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2) var(--s-5);
+}
+
+.blueprint__stages li {
+  display: inline-flex;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--faint);
+  transition: color var(--t-slow) var(--ease);
+}
+
+.blueprint__stages li .t-num {
+  font-size: 11px;
+}
+
+.blueprint__stages li.is-current {
+  color: var(--paper);
+}
+
+.blueprint__stages li.is-current .t-num {
+  color: var(--accent);
+}
+
+.blueprint__stages li.is-done {
+  color: var(--mute);
+}
+
+/* shared pulse */
+.pulse-dot {
+  position: relative;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex: none;
+}
+
+.pulse-dot::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 1px solid var(--accent);
+  animation: pulse-ring 1.6s var(--ease) infinite;
+}
+
+@keyframes pulse-ring {
+  from {
+    transform: scale(0.6);
+    opacity: 0.9;
+  }
+  to {
+    transform: scale(1.8);
+    opacity: 0;
+  }
+}

@@ -1,0 +1,143 @@
+.meter {
+  --meter-h: 4px;
+  --meter-fill: var(--paper);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.meter--xs {
+  --meter-h: 2px;
+  gap: 6px;
+}
+
+.meter--md {
+  --meter-h: 6px;
+}
+
+.meter--accent {
+  --meter-fill: var(--accent);
+}
+
+.meter--olive {
+  --meter-fill: var(--olive-hi);
+}
+
+.meter--cream {
+  --meter-fill: var(--cream);
+}
+
+.meter__top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-3);
+}
+
+.meter__label {
+  font-family: var(--font-mono);
+  font-size: var(--fs-label);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--mute);
+}
+
+.meter__value {
+  font-size: 12px;
+  color: var(--paper);
+}
+
+.meter__track {
+  position: relative;
+  height: var(--meter-h);
+  border-radius: var(--r-pill);
+  background: rgba(247, 246, 244, 0.1);
+}
+
+.meter__fill {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--meter-fill);
+  transform-origin: left center;
+}
+
+.meter__segments {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 2px;
+}
+
+.meter__segments span {
+  background: rgba(247, 246, 244, 0.1);
+  border-radius: 1px;
+  transition: background-color var(--t-slow) var(--ease);
+}
+
+.meter__segments span.is-on {
+  background: var(--meter-fill);
+}
+
+.meter:has(.meter__segments) .meter__track {
+  background: none;
+}
+
+.meter__marker {
+  position: absolute;
+  top: calc(var(--meter-h) * -1 - 3px);
+  bottom: calc(var(--meter-h) * -1 - 3px);
+  width: 1.5px;
+  margin-left: -0.75px;
+  background: var(--accent);
+  border-radius: 1px;
+}
+
+/* distribution row */
+.bar {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) 2.6em;
+  align-items: center;
+  gap: var(--s-3);
+  font-size: var(--fs-small);
+  min-height: 26px;
+}
+
+.bar__label {
+  color: var(--mute);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bar__track {
+  position: relative;
+  height: 3px;
+  background: rgba(247, 246, 244, 0.08);
+  border-radius: 2px;
+}
+
+.bar__fill {
+  position: absolute;
+  inset: 0;
+  background: rgba(247, 246, 244, 0.7);
+  border-radius: 2px;
+  transform-origin: left center;
+}
+
+.bar__figure {
+  text-align: right;
+  font-size: 12px;
+  color: var(--mute);
+}
+
+.bar--hi .bar__label {
+  color: var(--paper);
+}
+
+.bar--hi .bar__fill {
+  background: var(--accent);
+}

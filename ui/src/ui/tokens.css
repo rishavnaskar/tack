@@ -1,0 +1,82 @@
+:root {
+  /* palette */
+  --ink: #0b0b0c;
+  --ink-soft: #1a1918;
+  --ink-raised: #141413;
+  --paper: #f7f6f4;
+  --cream: #efe6d6;
+  --olive: #4e5a3c;
+  --olive-hi: #8a9a6c;
+  --accent: #f0521c;
+  --accent-hi: #ff7a3d;
+  --accent-wash: rgba(240, 82, 28, 0.12);
+  --accent-line: rgba(240, 82, 28, 0.55);
+
+  --line: rgba(247, 246, 244, 0.22);
+  --line-soft: rgba(247, 246, 244, 0.1);
+  --line-faint: rgba(247, 246, 244, 0.06);
+  --mute: rgba(247, 246, 244, 0.62);
+  --faint: rgba(247, 246, 244, 0.4);
+  --ghost: rgba(247, 246, 244, 0.06);
+
+  --glass: rgba(24, 23, 22, 0.58);
+  --glass-strong: rgba(20, 19, 18, 0.86);
+  --glass-blur: blur(18px) saturate(115%);
+
+  /* type */
+  --font-sans: 'Host Grotesk Variable', 'Host Grotesk', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  --fs-micro: 10.5px;
+  --fs-label: 11px;
+  --fs-small: 13px;
+  --fs-body: 15px;
+  --fs-lead: 18px;
+  --fs-h3: 21px;
+  --fs-h2: clamp(26px, 2.6vw, 34px);
+  --fs-h1: clamp(40px, 5.2vw, 76px);
+  --fs-display: clamp(120px, 21vw, 340px);
+
+  --track-display: -0.065em;
+  --track-tight: -0.035em;
+  --track-label: 0.09em;
+
+  /* space */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 24px;
+  --s-6: 32px;
+  --s-7: 48px;
+  --s-8: 64px;
+  --s-9: 96px;
+  --s-10: 140px;
+
+  --gutter: clamp(16px, 4vw, 56px);
+  --content-max: 1280px;
+
+  --r-1: 6px;
+  --r-2: 10px;
+  --r-3: 16px;
+  --r-4: 22px;
+  --r-pill: 999px;
+
+  /* motion */
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --t-fast: 160ms;
+  --t-med: 320ms;
+  --t-slow: 700ms;
+
+  /* layers */
+  --z-rail: 30;
+  --z-trace: 40;
+  --z-drawer: 60;
+  --z-modal: 70;
+  --z-toast: 80;
+
+  --rail-w: 232px;
+  --rail-w-compact: 76px;
+  --bar-h: 64px;
+}

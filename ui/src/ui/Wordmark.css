@@ -1,0 +1,31 @@
+.wordmark {
+  position: relative;
+  display: inline-flex;
+  align-items: baseline;
+  font-size: var(--fs-display);
+  font-weight: 600;
+  letter-spacing: var(--track-display);
+  line-height: 0.8;
+  color: var(--paper);
+  margin-left: -0.05em;
+}
+
+.wordmark__clip {
+  display: inline-block;
+  overflow: hidden;
+  padding: 0.04em 0 0.06em;
+  margin: -0.04em 0 -0.06em;
+}
+
+.wordmark__letter {
+  display: inline-block;
+}
+
+.wordmark__dot {
+  display: inline-block;
+  width: 0.13em;
+  height: 0.13em;
+  margin-left: 0.04em;
+  border-radius: 50%;
+  background: var(--accent);
+}

@@ -1,0 +1,56 @@
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.stat__label {
+  display: inline-flex;
+  gap: 8px;
+}
+
+.stat__value {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  font-size: 34px;
+  line-height: 1;
+  font-weight: 400;
+  letter-spacing: -0.045em;
+  color: var(--paper);
+}
+
+.stat--sm .stat__value {
+  font-size: 22px;
+  letter-spacing: -0.03em;
+}
+
+.stat--lg .stat__value {
+  font-size: clamp(44px, 5vw, 64px);
+}
+
+.stat__unit {
+  font-size: 0.4em;
+  letter-spacing: 0;
+  color: var(--faint);
+  min-width: max-content;
+}
+
+.stat__delta {
+  font-size: 12px;
+  letter-spacing: 0;
+  margin-left: 6px;
+  color: var(--paper);
+  align-self: flex-start;
+}
+
+.stat__delta.is-down {
+  color: var(--accent);
+}
+
+.stat__note {
+  font-size: var(--fs-small);
+  color: var(--mute);
+  line-height: 1.4;
+}
